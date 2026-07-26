@@ -1,85 +1,68 @@
 # NeuralDefend SDKs
 
-Client libraries for the **NeuroVerify Detection API** — AI-generated and manipulated media
-detection for images and video.
+Official clients for the **NeuroVerify Detection API**, which evaluates images and videos
+for signs of AI generation, manipulation, spoofing, and related authenticity risks.
 
-> **Pre-release.** Nothing in this repository is published yet and the public surface is
-> still subject to change. Keep the repository private until all package names are
-> reserved on their registries. Follow `CONTRIBUTING.md` and `docs/releasing.md`.
+## Choose an integration
 
-## Packages
-
-| Deliverable | Package | Registry | Status |
+| Integration | Best for | Install | Guide |
 |---|---|---|---|
-| Python SDK | `neuraldefend` | PyPI | Not yet published |
-| TypeScript SDK (browser + Node) | `@neuraldefend/sdk` | npm | Not yet published |
-| MCP server | `neuraldefend-mcp` | PyPI | Not yet published |
-| Agent skills | — | distributed as files | Included |
+| [Python `neuraldefend` 1.0.0](https://pypi.org/project/neuraldefend/1.0.0/) | Python services and scripts (Python 3.9+) | `pip install neuraldefend` | [Python SDK](packages/python/README.md) |
+| [TypeScript `@neuraldefend/sdk` 1.0.1](https://www.npmjs.com/package/@neuraldefend/sdk/v/1.0.1) | Node.js 22+ and evergreen browsers | `npm install @neuraldefend/sdk` | [TypeScript SDK](packages/typescript/README.md) |
+| [MCP `neuraldefend-mcp` 1.0.0](https://pypi.org/project/neuraldefend-mcp/1.0.0/) | MCP-compatible agents and tools (Python 3.10+) | `pip install neuraldefend-mcp` | [MCP server](packages/mcp/README.md) |
 
-## What the API does
+Use the Python or TypeScript SDK for application code. Use the MCP server when an agent
+needs controlled access to authorized local media; it requires an explicit directory
+allowlist.
 
-Two endpoints. `POST /detect/image` scores a single-face image for signs of spoofing or AI
-generation and returns one risk score. `POST /detect/video` returns separate video and
-audio risk scores; the API deliberately provides no combined score. Every score is from
-0.1 to 10.0 with a `low` / `medium` / `high` band. Treat those bands as decision-support
-signals: low is not proof of authenticity, and high should trigger human review rather
-than automatic rejection. Authentication is an `x-api-key` header on every request.
+## Quick start
 
-One behaviour is easy to get wrong and worth knowing before you read any code: **HTTP 200
-does not mean the media was scored.** An image with no face, or several faces, comes back
-as HTTP 200 with `status: "rejected"` and null risk fields. Branch on `status`, never on
-the HTTP status code alone. See `docs/client/` for every response scenario with worked
-examples.
+Obtain an API key through your Neural Defend account, store it in
+`NEURALDEFEND_API_KEY`, and install the client for your language. A minimal Python image
+and video flow is:
 
-Uploads may contain biometric or other sensitive personal data, and each request can
-create a billable transaction. Send only authorized media, minimize retention and
-logging, and follow your organization's privacy, residency, deletion, and access-control
-requirements.
+```python
+from neuraldefend import NeuroVerifyClient
 
-## Layout
+with NeuroVerifyClient() as client:
+    image = client.detect_image("selfie.jpg")
+    video = client.detect_video("clip.mp4")
 
-```
-spec/       OpenAPI contract and immutable provenance. Never edited by hand.
-scripts/    Spec synchronization, validation, generation, and drift checks.
-packages/
-  python/   Python SDK published as neuraldefend.
-  typescript/ TypeScript SDK published as @neuraldefend/sdk.
-  mcp/      Secure MCP server built on the Python SDK.
-tests/      Shared language-neutral response fixtures.
-skills/     Agent guidance distributed as files.
-docs/
-  client/   Endpoint documentation, copied from the API repo.
-  adr/      Architecture decision records.
+print(image.status, image.risk_level)
+print(video.status, video.video_risk_level, video.audio_risk_level)
 ```
 
-Each package has its own README and changelog. Generated cores are committed for
-reproducible releases but are private implementation details.
+For equivalent Node.js and browser examples, input types, configuration, retries, and
+result handling, see the [TypeScript guide](packages/typescript/README.md). For complete
+response scenarios, see the [image API guide](docs/client/unified-face-authenticity.md)
+and [video API guide](docs/client/unified-video-authenticity.md).
 
-## Building
+> **Use results as decision support.** Branch on the response `status`, not HTTP 200
+> alone: rejected media may return HTTP 200 and no score. Low risk is not proof of
+> authenticity, and high risk should trigger human review rather than automatic
+> rejection. Requests and retries may create billable transactions. Upload only
+> authorized media, protect API keys, and apply appropriate privacy, residency,
+> retention, deletion, logging, and access controls to biometric or other sensitive
+> data. Never embed a long-lived production API key in browser code.
 
-Read `CONTRIBUTING.md` and the endpoint contracts in `docs/client/` before changing SDK
-behavior.
+## Documentation
 
-| Tool | Version |
-|---|---|
-| Python | 3.10+ for repository tooling; the Python SDK supports 3.9+ |
-| Node.js | 22+ |
-| Docker | Current maintained release, for pinned code generation and security tooling |
-| git | any |
+- [Python SDK guide](packages/python/README.md) and [changelog](packages/python/CHANGELOG.md)
+- [TypeScript SDK guide](packages/typescript/README.md) and [changelog](packages/typescript/CHANGELOG.md)
+- [MCP server guide](packages/mcp/README.md) and [changelog](packages/mcp/CHANGELOG.md)
+- [Image endpoint and response scenarios](docs/client/unified-face-authenticity.md)
+- [Video endpoint and response scenarios](docs/client/unified-video-authenticity.md)
+- [OpenAPI contract](spec/public.yaml) and [architecture decisions](docs/adr/README.md)
+- [Contributing](CONTRIBUTING.md), [release process](docs/releasing.md), and
+  [security policy](SECURITY.md)
 
-See `CONTRIBUTING.md` for contract and verification rules and `SECURITY.md` for private
-vulnerability reporting.
+## Support and releases
 
-## The spec
-
-`spec/public.yaml` is the source of truth for the API contract and is copied from the API
-repository. Do not edit it here, and do not edit `spec/public.json`, which is derived from
-it — see `docs/adr/0001-derive-spec-json-from-yaml.md`.
-
-## Support
-
-Technical support: support@neuraldefend.com
+- Technical support and private vulnerability reports: support@neuraldefend.com
+- Issues: [GitHub Issues](https://github.com/Neural-Defend/NeuralDefend-SDKs/issues)
+- Releases: [GitHub Releases](https://github.com/Neural-Defend/NeuralDefend-SDKs/releases)
+- Repository changes: [CHANGELOG.md](CHANGELOG.md)
 
 ## License
 
-MIT — see `LICENSE`.
+MIT — see [LICENSE](LICENSE).

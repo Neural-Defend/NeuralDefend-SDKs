@@ -650,12 +650,14 @@ Each request generates a unique `unique_trx_id`. Requests are **not** idempotent
 
 ## SDKs & Libraries
 
-| Language | Package | Status |
-|----------|---------|--------|
-| Python | `pip install neuraldefend` | Coming soon |
-| JavaScript/TypeScript | `npm install @neuraldefend/sdk` | Coming soon |
+| Integration | Install | Documentation | Registry |
+|-------------|---------|---------------|----------|
+| Python 3.9+ | `pip install neuraldefend` | [Python SDK guide](../../packages/python/README.md) | [`neuraldefend` on PyPI](https://pypi.org/project/neuraldefend/) |
+| Node.js 22+ / browser | `npm install @neuraldefend/sdk` | [TypeScript SDK guide](../../packages/typescript/README.md) | [`@neuraldefend/sdk` on npm](https://www.npmjs.com/package/@neuraldefend/sdk) |
+| MCP (Python 3.10+) | `pip install neuraldefend-mcp` | [MCP server guide](../../packages/mcp/README.md) | [`neuraldefend-mcp` on PyPI](https://pypi.org/project/neuraldefend-mcp/) |
 
-For early access to SDKs, contact your account manager.
+The SDK guides provide typed image and video examples and explain normalized outcomes,
+retry behavior, and credential handling.
 
 ---
 
