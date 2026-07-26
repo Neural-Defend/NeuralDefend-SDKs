@@ -5,10 +5,17 @@ All notable changes to `neuraldefend-mcp` are documented here. This project foll
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-07-27
+
 ### Added
 
 - `NEURALDEFEND_MCP_ENVIRONMENT` configuration variable accepting `production`
   (default) or `staging`; arbitrary URLs are rejected.
+
+### Changed
+
+- Expanded the published guide with complete setup examples, explicit API-key injection,
+  tool documentation, structured response scenarios, security controls, and troubleshooting.
 
 ### Fixed
 
@@ -33,5 +40,6 @@ All notable changes to `neuraldefend-mcp` are documented here. This project foll
 
 Spec source: `494fc8c88585e0920efe54b41f3f8d355025c475` (`public.yaml` 1.0.0).
 
-[Unreleased]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/mcp-v1.0.0...HEAD
+[Unreleased]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/mcp-v1.0.1...HEAD
+[1.0.1]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/mcp-v1.0.0...mcp-v1.0.1
 [1.0.0]: https://github.com/Neural-Defend/NeuralDefend-SDKs/releases/tag/mcp-v1.0.0

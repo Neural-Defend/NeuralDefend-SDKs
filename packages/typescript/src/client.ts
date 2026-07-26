@@ -541,7 +541,7 @@ export class NeuroVerifyClientBase<MediaInput> {
     this.retryAfterCapMs = Math.max(0, options.retryAfterCapMs ?? 60_000);
     this.#userAgent =
       platform.name === "node"
-        ? (options.userAgent ?? "@neuraldefend/sdk/1.0.1")
+        ? (options.userAgent ?? "@neuraldefend/sdk/1.0.2")
         : undefined;
     this.#transport =
       runtime.transport ??
