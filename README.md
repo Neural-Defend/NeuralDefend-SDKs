@@ -1,5 +1,9 @@
 # NeuralDefend SDKs
 
+[![Python SDK on PyPI](https://img.shields.io/pypi/v/neuraldefend?label=Python%20SDK%20on%20PyPI)](https://pypi.org/project/neuraldefend/)
+[![TypeScript SDK on npm](https://img.shields.io/npm/v/%40neuraldefend%2Fsdk?label=TypeScript%20SDK%20on%20npm)](https://www.npmjs.com/package/@neuraldefend/sdk)
+[![MCP server on PyPI](https://img.shields.io/pypi/v/neuraldefend-mcp?label=MCP%20server%20on%20PyPI)](https://pypi.org/project/neuraldefend-mcp/)
+
 Official clients for the **NeuroVerify Detection API**, which evaluates images and videos
 for signs of AI generation, manipulation, spoofing, and related authenticity risks.
 
