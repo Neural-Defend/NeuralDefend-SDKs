@@ -5,6 +5,8 @@ and Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-07-27
+
 ### Changed
 
 - `JSON.stringify(result)` now emits only normalized public fields; the frozen
@@ -27,6 +29,11 @@ and Semantic Versioning.
 - Reject response scores outside `0.1` through `10.0`, release Node.js streams after
   validation failures, and accept valid cross-realm browser `Blob`/`File` inputs.
 
+### Fixed
+
+- Corrected the trusted-publishing workflow to treat the built tarball as a local file.
+  Version `1.0.0` was not uploaded to npm; `1.0.1` is the first usable registry release.
+
 ## [1.0.0] - 2026-07-26
 
 ### Added
@@ -39,5 +46,6 @@ and Semantic Versioning.
 Built against public API specification 1.0.0 from source commit
 `494fc8c88585e0920efe54b41f3f8d355025c475`.
 
-[Unreleased]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/ts-v1.0.0...HEAD
+[Unreleased]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/ts-v1.0.1...HEAD
+[1.0.1]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/ts-v1.0.0...ts-v1.0.1
 [1.0.0]: https://github.com/Neural-Defend/NeuralDefend-SDKs/releases/tag/ts-v1.0.0

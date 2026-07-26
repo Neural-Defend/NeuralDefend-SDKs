@@ -172,7 +172,7 @@ jobs:
         run: |
           version="${GITHUB_REF_NAME#ts-v}"
           if [[ "$version" == *-* ]]; then
-            npm publish dist/*.tgz --access public --provenance --tag next
+            npm publish ./dist/*.tgz --access public --provenance --tag next
           else
-            npm publish dist/*.tgz --access public --provenance
+            npm publish ./dist/*.tgz --access public --provenance
           fi
