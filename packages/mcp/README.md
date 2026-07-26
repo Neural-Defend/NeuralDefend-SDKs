@@ -1,6 +1,6 @@
 # neuraldefend-mcp
 
-`neuraldefend-mcp` 1.0.0 is a secure, local Model Context Protocol (MCP) server for
+`neuraldefend-mcp` 1.0.1 is a secure, local Model Context Protocol (MCP) server for
 NeuroVerify image and video authenticity analysis. It gives an MCP client two tools while
 keeping API credentials out of tool arguments, restricting which local media can be read,
 and returning a bounded integration contract instead of the Python SDK's raw response.
@@ -39,10 +39,10 @@ time-of-check/time-of-use risk.
 
 ## Installation
 
-Install the published 1.0.0 release:
+Install the published 1.0.1 release:
 
 ```bash
-python -m pip install "neuraldefend-mcp==1.0.0"
+python -m pip install "neuraldefend-mcp==1.0.1"
 ```
 
 The package installs the `neuraldefend-mcp` command. The equivalent module entry point is:
@@ -157,6 +157,10 @@ only if your client expands that syntax. Otherwise, omit the key from the `env` 
 launch the MCP client from a securely populated environment, or replace the token with the
 client's documented secret-store reference. Never replace it with a real key in a file
 that may be committed, synchronized, backed up without encryption, or shared.
+
+Every complete configuration below explicitly passes `NEURALDEFEND_API_KEY` into the MCP
+server process. Startup validates that it is a non-empty string; the NeuroVerify API then
+validates the credential and its endpoint scope on each request.
 
 ### Windows
 

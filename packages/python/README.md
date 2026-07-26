@@ -1,7 +1,7 @@
 # NeuralDefend Python SDK
 
 The official synchronous Python client for the NeuroVerify image and video authenticity
-API. Version `1.0.0` provides typed result objects, streaming multipart uploads, bounded
+API. Version `1.0.1` provides typed result objects, streaming multipart uploads, bounded
 retries, normalized JSON output, and explicit exceptions for operational failures.
 
 NeuroVerify returns decision-support signals for signs of spoofing, AI generation, or
@@ -22,14 +22,14 @@ policy, and human review where appropriate.
 - A NeuroVerify API key with access to the image and/or video endpoint
 - Network access to the configured HTTPS API origin
 
-This guide documents `neuraldefend==1.0.0`.
+This guide documents `neuraldefend==1.0.1`.
 
 ## Installation
 
 Install the pinned release in the same environment as your application:
 
 ```bash
-python -m pip install "neuraldefend==1.0.0"
+python -m pip install "neuraldefend==1.0.1"
 ```
 
 Confirm the package can be imported:
@@ -85,6 +85,7 @@ Save this complete synchronous example as `detect_image.py`, set
 
 ```python
 import json
+import os
 import sys
 
 from neuraldefend import NeuroVerifyClient
@@ -94,7 +95,8 @@ def main() -> None:
     if len(sys.argv) != 2:
         raise SystemExit("usage: python detect_image.py IMAGE_PATH")
 
-    with NeuroVerifyClient() as client:
+    api_key = os.environ["NEURALDEFEND_API_KEY"]
+    with NeuroVerifyClient(api_key=api_key) as client:
         result = client.detect_image(sys.argv[1])
 
     # to_dict() contains normalized, JSON-serializable public fields.
@@ -121,6 +123,7 @@ Save this complete synchronous example as `detect_video.py`, set
 
 ```python
 import json
+import os
 import sys
 
 from neuraldefend import NeuroVerifyClient
@@ -130,7 +133,8 @@ def main() -> None:
     if len(sys.argv) != 2:
         raise SystemExit("usage: python detect_video.py VIDEO_PATH")
 
-    with NeuroVerifyClient() as client:
+    api_key = os.environ["NEURALDEFEND_API_KEY"]
+    with NeuroVerifyClient(api_key=api_key) as client:
         result = client.detect_video(
             sys.argv[1],
             max_frames=24,
@@ -463,7 +467,7 @@ NeuroVerifyClient(
 - `max_retries: int`: retry count from `0` through `3`. The default `3` permits four total
   HTTP attempts.
 - `user_agent: str | None`: custom `User-Agent`; a falsey value uses
-  `neuraldefend-python/1.0.0`.
+  `neuraldefend-python/1.0.1`.
 - `allow_custom_base_url: bool`: explicit opt-in required for a non-Neural Defend origin.
   That origin receives the API key and uploaded media.
 - `transport: httpx.BaseTransport | None`: advanced transport injection, intended for

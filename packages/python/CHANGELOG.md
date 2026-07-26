@@ -4,6 +4,8 @@ All notable changes to this package follow Keep a Changelog and Semantic Version
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-07-27
+
 ### Changed
 
 - Replaced platform-dependent `mimetypes.guess_type()` with a deterministic
@@ -17,6 +19,8 @@ All notable changes to this package follow Keep a Changelog and Semantic Version
   set; redirects remain disabled so credentials and media cannot be forwarded.
 - Keep path uploads bound to one validated file handle across retries, require a literal
   boolean custom-origin opt-in, and reject response scores outside `0.1` through `10.0`.
+- Expanded the published guide with complete onboarding, method documentation, normalized
+  response examples, retry and billing guidance, privacy controls, and troubleshooting.
 
 ## [1.0.0] - 2026-07-26
 
@@ -31,5 +35,6 @@ All notable changes to this package follow Keep a Changelog and Semantic Version
 Contract: NeuroVerify OpenAPI 1.0.0 from source commit
 `494fc8c88585e0920efe54b41f3f8d355025c475`.
 
-[Unreleased]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/python-v1.0.0...HEAD
+[Unreleased]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/python-v1.0.1...HEAD
+[1.0.1]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/python-v1.0.0...python-v1.0.1
 [1.0.0]: https://github.com/Neural-Defend/NeuralDefend-SDKs/releases/tag/python-v1.0.0

@@ -17,7 +17,7 @@ evidence, policy checks, and human review appropriate to your use case.
 
 ## Requirements
 
-- `@neuraldefend/sdk` version `1.0.1`
+- `@neuraldefend/sdk` version `1.0.2`
 - Node.js 22 or newer for server-side use
 - A current evergreen browser for browser use
 - A Neural Defend API key with access to the image and/or video endpoint
@@ -27,7 +27,7 @@ The package has no runtime dependencies.
 ## Installation
 
 ```sh
-npm install @neuraldefend/sdk@1.0.1
+npm install @neuraldefend/sdk@1.0.2
 ```
 
 The package supports ESM imports and CommonJS `require()` in Node.js. Bundlers
@@ -65,12 +65,15 @@ Save the following as `detect-image.mjs`, then run
 ```js
 import { NeuroVerifyClient } from "@neuraldefend/sdk";
 
+const apiKey = process.env.NEURALDEFEND_API_KEY;
+if (!apiKey) throw new Error("NEURALDEFEND_API_KEY is required");
+
 const imagePath = process.argv[2];
 if (!imagePath) {
   console.error("Usage: node detect-image.mjs <image-path>");
   process.exitCode = 1;
 } else {
-  const client = new NeuroVerifyClient(); // Reads NEURALDEFEND_API_KEY.
+  const client = new NeuroVerifyClient({ apiKey });
   const result = await client.detectImage(imagePath);
 
   switch (result.status) {
@@ -113,12 +116,15 @@ Save the following as `detect-video.mjs`, then run
 ```js
 import { NeuroVerifyClient } from "@neuraldefend/sdk";
 
+const apiKey = process.env.NEURALDEFEND_API_KEY;
+if (!apiKey) throw new Error("NEURALDEFEND_API_KEY is required");
+
 const videoPath = process.argv[2];
 if (!videoPath) {
   console.error("Usage: node detect-video.mjs <video-path>");
   process.exitCode = 1;
 } else {
-  const client = new NeuroVerifyClient(); // Reads NEURALDEFEND_API_KEY.
+  const client = new NeuroVerifyClient({ apiKey });
   const result = await client.detectVideo(videoPath, {
     maxFrames: 24,
   });
@@ -257,7 +263,7 @@ Constructor options:
 - `retryAfterCapMs?: number` — maximum wait applied to a `Retry-After` value.
   Default: `60000`. Negative values are normalized to `0`.
 - `userAgent?: string` — Node.js user agent override. The Node.js default for
-  this release is `@neuraldefend/sdk/1.0.1`; browsers cannot set this header
+  this release is `@neuraldefend/sdk/1.0.2`; browsers cannot set this header
   through the SDK.
 - `fetch?: typeof globalThis.fetch` — custom Fetch-compatible implementation,
   primarily for controlled runtimes and testing.
