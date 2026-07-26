@@ -1,0 +1,34 @@
+{
+  "case_id": "image-high-risk-spoof",
+  "endpoint": "/detect/image",
+  "http_status": 200,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "provenance": {
+    "kind": "documented",
+    "source": "docs/client/unified-face-authenticity.md",
+    "section": "SPOOF detected — High risk (presentation attack)"
+  },
+  "body_kind": "json",
+  "body": {
+    "unified_face_authenticity_score": {
+      "unique_trx_id": "trx_k8mdf2ab1xpqr7w3e9t6",
+      "filename": "printed_photo.jpg",
+      "content_type": "image/jpeg",
+      "status": "success",
+      "status_code": 1,
+      "billable": "Y",
+      "risk_score": 8.7,
+      "risk_level": "high",
+      "message": "Likely to be Spoof detected",
+      "ai_threat_signals": [
+        "Visual Safety Screening",
+        "Liveness Verification",
+        "Face Swap Detection",
+        "AI Generative Model Analysis",
+        "AI Content Compliance"
+      ]
+    }
+  }
+}

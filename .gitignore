@@ -1,0 +1,35 @@
+# Generator scratch space. Step 3 generates here, then copies the package directory into
+# packages/*/src/. The committed cores live there, not here, and are not ignored.
+build/
+dist/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Node
+node_modules/
+*.tsbuildinfo
+*.tgz
+*.cdx.json
+.npm/
+
+# Secrets. API keys belong in the environment, never in the repo.
+.env
+.env.*
+!.env.example
+
+# Editor and OS
+.DS_Store
+Thumbs.db
+.idea/
+*.swp

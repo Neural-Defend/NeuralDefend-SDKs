@@ -1,0 +1,596 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "NeuroVerify Detection API",
+    "version": "1.0.0",
+    "description": "AI-generated and manipulated media detection for images and video.\n\nNeuroVerify scores uploaded media for signs of spoofing and AI manipulation and returns an opaque risk score with a risk band, so you can accept, review, or reject without handling model internals.\n\n**Authentication.** Send your API key in the `x-api-key` header on every request.\n\n**Response envelopes.** Each endpoint wraps its result in a single named object, and that envelope is returned for successes, rejections, and errors alike. Read `status` and `status_code` to tell them apart rather than relying on the HTTP status code alone: a rejection for no face detected arrives as HTTP 200.\n\n**Retries.** Retry HTTP 500 and 503 with exponential backoff, up to three attempts. Retry HTTP 429 after the interval given in `Retry-After`. Do not retry HTTP 400 or 401; correct the input or the key instead.",
+    "contact": {
+      "name": "NeuralDefend Support",
+      "email": "support@neuraldefend.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://deepscan.neuraldefend.com",
+      "description": "Production"
+    },
+    {
+      "url": "https://stage.deepscan.neuraldefend.com",
+      "description": "Staging"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Image Authenticity",
+      "description": "Face authenticity scoring for still images."
+    },
+    {
+      "name": "Video Authenticity",
+      "description": "Video and audio authenticity scoring."
+    }
+  ],
+  "paths": {
+    "/detect/image": {
+      "post": {
+        "operationId": "detectImage",
+        "tags": [
+          "Image Authenticity"
+        ],
+        "summary": "Score the authenticity of a face image",
+        "description": "Analyzes a single-face image and returns an opaque authenticity risk score with a risk band and a human-readable message.\n\n**Requirements.** JPEG, PNG, BMP, TIFF, WebP, or HEIC. Maximum 10 MB, minimum 224x224 pixels, exactly one face. EXIF rotation is corrected automatically. Images with no face or several faces return `status: \"rejected\"` on HTTP 200 and are billable.\n\n**Reading the result.** Branch on `status` first, then apply business rules to `risk_level` rather than to `risk_score`, since band thresholds may be tuned.\n\nEvery request produces a new `unique_trx_id`; requests are not idempotent.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Image to analyze."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request processed. Either scored, with `status: \"success\"`, `status_code: 1`, and `risk_score` populated; or a face policy rejection, with `status: \"rejected\"` and `status_code` 6 for no face or 7 for multiple faces. Both outcomes are billable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectImageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Input validation rejection with `status: \"rejected\"` and `status_code: 2`. Not billable. Fix the input rather than retrying.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectImageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API key missing, empty, or invalid. Do not retry; check the key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "API key is valid but not authorized for this endpoint. Contact your account manager.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Wait for the interval in `Retry-After`, then retry.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Daily request allowance for this key.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "When the allowance resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server-side failure with `status: \"error\"` and `status_code: 5`. Not billable. Retry with exponential backoff, up to three attempts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectImageResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service temporarily unavailable, with `status: \"error\"` and `status_code: 5`. Not billable. Retry with exponential backoff.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectImageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/detect/video": {
+      "post": {
+        "operationId": "detectVideo",
+        "tags": [
+          "Video Authenticity"
+        ],
+        "summary": "Score the authenticity of a video and its audio track",
+        "description": "Analyzes a video and returns independent risk scores for the video and audio modalities, each with its own risk band and message.\n\n**Requirements.** MP4, AVI, MOV, MKV, WMV, FLV, WebM, OGG, or OGV. Maximum 1.5 GB. Frames are sampled uniformly, 12 by default. Frames containing several faces are skipped; if no single-face frames remain, the response is a rejection with `status_code: 6` on HTTP 200, and it is billable.\n\n**Reading the result.** Video and audio are scored separately and no combined score is returned. Derive one client-side when you need it, for example max(video_risk_score, audio_risk_score or 0). Silent videos return null audio scores with `audio_message` set to \"No audio track detected\"; this is a success, not an error.\n\nEvery request produces a new `unique_trx_id`; requests are not idempotent.",
+        "parameters": [
+          {
+            "name": "max_frames",
+            "in": "query",
+            "required": false,
+            "description": "Maximum number of frames to sample, from 1 to 100. Defaults to 12.",
+            "schema": {
+              "type": "integer",
+              "nullable": true,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "sample_rate",
+            "in": "query",
+            "required": false,
+            "description": "Optional frame sampling override. Must be 1 or greater.",
+            "schema": {
+              "type": "integer",
+              "nullable": true,
+              "minimum": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Video to analyze."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request processed. Either scored, with `status: \"success\"` and `status_code: 1`; or a no-face rejection, with `status: \"rejected\"` and `status_code: 6`. Both outcomes are billable.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectVideoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Input validation rejection with `status: \"rejected\"` and `status_code: 2`. Not billable. Fix the input rather than retrying.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectVideoResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "API key missing, empty, or invalid. Do not retry; check the key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "API key is valid but not authorized for this endpoint. Contact your account manager.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded. Wait for the interval in `Retry-After`, then retry.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds to wait before retrying.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-RateLimit-Limit": {
+                "description": "Daily request allowance for this key.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-RateLimit-Remaining": {
+                "description": "Requests remaining in the current window.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-RateLimit-Reset": {
+                "description": "When the allowance resets.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server-side failure with `status: \"error\"` and `status_code: 5`. Not billable. Retry with exponential backoff, up to three attempts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectVideoResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service temporarily unavailable, with `status: \"error\"` and `status_code: 5`. Not billable. Retry with exponential backoff.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DetectVideoResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-api-key",
+        "description": "API key issued at onboarding. Required on every request."
+      }
+    },
+    "schemas": {
+      "UnifiedFaceAuthenticityScore": {
+        "type": "object",
+        "description": "Face authenticity result for a single uploaded image.",
+        "required": [
+          "unique_trx_id",
+          "filename",
+          "content_type",
+          "status",
+          "status_code",
+          "billable",
+          "risk_score",
+          "risk_level",
+          "message"
+        ],
+        "properties": {
+          "unique_trx_id": {
+            "type": "string",
+            "description": "Unique transaction identifier. Store it for audit trail correlation and dispute resolution.",
+            "example": "trx_c1r7n6oy69zhunjrkp0p"
+          },
+          "filename": {
+            "type": "string",
+            "description": "Name of the uploaded file, as received.",
+            "example": "selfie.jpg"
+          },
+          "content_type": {
+            "type": "string",
+            "description": "MIME type detected for the uploaded file.",
+            "example": "image/jpeg"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "success",
+              "rejected",
+              "error"
+            ],
+            "description": "Outcome of the request. `success` means the file was scored. `rejected` means the file did not pass pre-analysis validation and was not scored. `error` means a server-side failure prevented analysis."
+          },
+          "billable": {
+            "type": "string",
+            "enum": [
+              "Y",
+              "N"
+            ],
+            "description": "`Y` when the request counts toward billing, `N` otherwise."
+          },
+          "status_code": {
+            "type": "integer",
+            "enum": [
+              1,
+              2,
+              5,
+              6,
+              7
+            ],
+            "description": "1 scored successfully (HTTP 200, billable). 2 input validation rejection (HTTP 400, not billable). 5 server-side error (HTTP 500 or 503, not billable). 6 no face detected (HTTP 200, billable). 7 multiple faces detected (HTTP 200, billable)."
+          },
+          "risk_score": {
+            "type": "number",
+            "format": "float",
+            "nullable": true,
+            "minimum": 0.1,
+            "maximum": 10.0,
+            "description": "Authenticity risk from 0.1 to 10.0, where higher means a higher likelihood of spoofing or AI generation. Null when the request was rejected or errored. Prefer `risk_level` for business rules, since band thresholds may be tuned.",
+            "example": 2.2
+          },
+          "risk_level": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "nullable": true,
+            "description": "Risk band derived from `risk_score`: low is 0.1-3.9, medium is 4.0-6.9, high is 7.0-10.0. Null when the request was not scored."
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable explanation of the result, safe to surface to end users.",
+            "example": "Not likely to be Spoof or AI-generated"
+          },
+          "ai_threat_signals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Checks applied during analysis. Present only on scored responses.",
+            "example": [
+              "Visual Safety Screening",
+              "Liveness Verification",
+              "Face Swap Detection",
+              "AI Generative Model Analysis",
+              "AI Content Compliance"
+            ]
+          }
+        }
+      },
+      "UnifiedVideoAuthenticityScore": {
+        "type": "object",
+        "description": "Video authenticity result with independent video and audio risk scores. Derive an overall decision client-side, for example max(video_risk_score, audio_risk_score or 0).",
+        "required": [
+          "unique_trx_id",
+          "filename",
+          "content_type",
+          "status",
+          "status_code",
+          "billable",
+          "video_risk_score",
+          "video_risk_level",
+          "video_message",
+          "audio_risk_score",
+          "audio_risk_level",
+          "audio_message"
+        ],
+        "properties": {
+          "unique_trx_id": {
+            "type": "string",
+            "description": "Unique transaction identifier. Store it for audit trail correlation and dispute resolution.",
+            "example": "trx_c1r7n6oy69zhunjrkp0p"
+          },
+          "filename": {
+            "type": "string",
+            "description": "Name of the uploaded file, as received.",
+            "example": "selfie_video.mp4"
+          },
+          "content_type": {
+            "type": "string",
+            "description": "MIME type detected for the uploaded file.",
+            "example": "video/mp4"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "success",
+              "rejected",
+              "error"
+            ],
+            "description": "Outcome of the request. `success` means the file was scored. `rejected` means the file did not pass pre-analysis validation and was not scored. `error` means a server-side failure prevented analysis."
+          },
+          "billable": {
+            "type": "string",
+            "enum": [
+              "Y",
+              "N"
+            ],
+            "description": "`Y` when the request counts toward billing, `N` otherwise."
+          },
+          "status_code": {
+            "type": "integer",
+            "enum": [
+              1,
+              2,
+              5,
+              6
+            ],
+            "description": "1 scored successfully (HTTP 200, billable). 2 input validation rejection (HTTP 400, not billable). 5 server-side error (HTTP 500 or 503, not billable). 6 no scorable single-face frames (HTTP 200, billable)."
+          },
+          "video_risk_score": {
+            "type": "number",
+            "format": "float",
+            "nullable": true,
+            "minimum": 0.1,
+            "maximum": 10.0,
+            "description": "Video modality risk from 0.1 to 10.0, where higher means a higher likelihood of AI manipulation. Null when the request was rejected or errored.",
+            "example": 2.4
+          },
+          "video_risk_level": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "nullable": true,
+            "description": "Video risk band: low is 0.1-3.9, medium is 4.0-6.9, high is 7.0-10.0. Null when the video was not scored."
+          },
+          "video_message": {
+            "type": "string",
+            "description": "Human-readable explanation for the video modality. Rejection and error copy is carried on this field.",
+            "example": "Not likely to be AI-generated"
+          },
+          "audio_risk_score": {
+            "type": "number",
+            "format": "float",
+            "nullable": true,
+            "minimum": 0.1,
+            "maximum": 10.0,
+            "description": "Audio modality risk from 0.1 to 10.0. Null when the video has no audio track, or when audio analysis was skipped or failed.",
+            "example": 2.0
+          },
+          "audio_risk_level": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "nullable": true,
+            "description": "Audio risk band, using the same thresholds as video. Null when the audio was not scored."
+          },
+          "audio_message": {
+            "type": "string",
+            "nullable": true,
+            "description": "Human-readable explanation for the audio modality, such as \"No audio track detected\". Null on rejected requests.",
+            "example": "Not likely to be AI-generated"
+          },
+          "ai_threat_signals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Checks applied during analysis. Present only on scored responses.",
+            "example": [
+              "Photometric Liveness Signal",
+              "Identity Consistency Analysis",
+              "Face Swap Detection",
+              "AI Generative Model Analysis",
+              "Audio Frequency Analysis",
+              "AI Pixel-Level Manipulation",
+              "Digital Content Provenance",
+              "Frame-Level Visual Analysis"
+            ]
+          }
+        }
+      },
+      "DetectImageResponse": {
+        "type": "object",
+        "description": "Envelope returned by POST /detect/image for every outcome.",
+        "required": [
+          "unified_face_authenticity_score"
+        ],
+        "properties": {
+          "unified_face_authenticity_score": {
+            "$ref": "#/components/schemas/UnifiedFaceAuthenticityScore"
+          }
+        }
+      },
+      "DetectVideoResponse": {
+        "type": "object",
+        "description": "Envelope returned by POST /detect/video for every outcome.",
+        "required": [
+          "unified_video_authenticity_score"
+        ],
+        "properties": {
+          "unified_video_authenticity_score": {
+            "$ref": "#/components/schemas/UnifiedVideoAuthenticityScore"
+          }
+        }
+      },
+      "ApiError": {
+        "type": "object",
+        "description": "Authentication, authorization, and rate limit failures.",
+        "required": [
+          "detail"
+        ],
+        "properties": {
+          "detail": {
+            "type": "string",
+            "description": "Reason the request was refused.",
+            "example": "Invalid API key"
+          }
+        }
+      }
+    }
+  }
+}

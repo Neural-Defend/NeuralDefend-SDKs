@@ -1,0 +1,40 @@
+{
+  "case_id": "video-silent-no-audio",
+  "endpoint": "/detect/video",
+  "http_status": 200,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "provenance": {
+    "kind": "documented",
+    "source": "docs/client/unified-video-authenticity.md",
+    "section": "Silent video — no audio track"
+  },
+  "body_kind": "json",
+  "body": {
+    "unified_video_authenticity_score": {
+      "unique_trx_id": "trx_vid_na123abc456def789",
+      "filename": "silent_clip.mp4",
+      "content_type": "video/mp4",
+      "status": "success",
+      "status_code": 1,
+      "billable": "Y",
+      "video_risk_score": 2.1,
+      "video_risk_level": "low",
+      "video_message": "Not likely to be AI-generated",
+      "audio_risk_score": null,
+      "audio_risk_level": null,
+      "audio_message": "No audio track detected",
+      "ai_threat_signals": [
+        "Photometric Liveness Signal",
+        "Identity Consistency Analysis",
+        "Face Swap Detection",
+        "AI Generative Model Analysis",
+        "Audio Frequency Analysis",
+        "AI Pixel-Level Manipulation",
+        "Digital Content Provenance",
+        "Frame-Level Visual Analysis"
+      ]
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "case_id": "image-missing-envelope",
+  "endpoint": "/detect/image",
+  "http_status": 200,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "provenance": {
+    "kind": "synthetic",
+    "source": "spec/public.yaml plus documented image success response",
+    "derivation": "Removes the required top-level response envelope."
+  },
+  "body_kind": "json",
+  "body": {
+    "unique_trx_id": "trx_synthetic_image_base",
+    "filename": "future.jpg",
+    "content_type": "image/jpeg",
+    "status": "success",
+    "status_code": 1,
+    "billable": "Y",
+    "risk_score": 2.2,
+    "risk_level": "low",
+    "message": "Not likely to be Spoof or AI-generated",
+    "ai_threat_signals": [
+      "Visual Safety Screening",
+      "Liveness Verification",
+      "Face Swap Detection",
+      "AI Generative Model Analysis",
+      "AI Content Compliance"
+    ]
+  }
+}

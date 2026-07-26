@@ -1,0 +1,17 @@
+{
+  "case_id": "image-forbidden-403",
+  "endpoint": "/detect/image",
+  "http_status": 403,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "provenance": {
+    "kind": "synthetic",
+    "source": "spec/public.yaml",
+    "derivation": "ApiError schema plus the documented endpoint-authorization meaning."
+  },
+  "body_kind": "json",
+  "body": {
+    "detail": "Endpoint not included in your plan"
+  }
+}

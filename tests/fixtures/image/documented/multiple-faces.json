@@ -1,0 +1,27 @@
+{
+  "case_id": "image-multiple-faces",
+  "endpoint": "/detect/image",
+  "http_status": 200,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "provenance": {
+    "kind": "documented",
+    "source": "docs/client/unified-face-authenticity.md",
+    "section": "Multiple faces detected"
+  },
+  "body_kind": "json",
+  "body": {
+    "unified_face_authenticity_score": {
+      "unique_trx_id": "trx_mf456def789abc012",
+      "filename": "group_photo.jpg",
+      "content_type": "image/jpeg",
+      "status": "rejected",
+      "status_code": 7,
+      "billable": "Y",
+      "risk_score": null,
+      "risk_level": null,
+      "message": "Multiple faces detected in the image"
+    }
+  }
+}

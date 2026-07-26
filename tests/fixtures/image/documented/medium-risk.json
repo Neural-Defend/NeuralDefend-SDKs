@@ -1,0 +1,34 @@
+{
+  "case_id": "image-medium-risk",
+  "endpoint": "/detect/image",
+  "http_status": 200,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "provenance": {
+    "kind": "documented",
+    "source": "docs/client/unified-face-authenticity.md",
+    "section": "Medium risk band (inconclusive)"
+  },
+  "body_kind": "json",
+  "body": {
+    "unified_face_authenticity_score": {
+      "unique_trx_id": "trx_med123abc456def789",
+      "filename": "portrait.jpg",
+      "content_type": "image/jpeg",
+      "status": "success",
+      "status_code": 1,
+      "billable": "Y",
+      "risk_score": 5.5,
+      "risk_level": "medium",
+      "message": "Less likely to be Spoof or AI-generated",
+      "ai_threat_signals": [
+        "Visual Safety Screening",
+        "Liveness Verification",
+        "Face Swap Detection",
+        "AI Generative Model Analysis",
+        "AI Content Compliance"
+      ]
+    }
+  }
+}

@@ -1,0 +1,188 @@
+name: Release MCP package
+
+on:
+  push:
+    tags:
+      - "mcp-v*"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build and validate only; manual runs never publish
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-mcp-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Enforce manual dry-run
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run != true
+        run: |
+          echo "::error::workflow_dispatch is restricted to an explicit dry run."
+          exit 1
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: constraints/release.txt
+      - name: Verify tag matches package version
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          expected="${GITHUB_REF_NAME#mcp-v}"
+          actual="$(python -c 'import tomllib; print(tomllib.load(open("packages/mcp/pyproject.toml", "rb"))["project"]["version"])')"
+          if [[ "$expected" != "$actual" ]]; then
+            echo "::error::Tag version '$expected' does not match MCP package version '$actual'."
+            exit 1
+          fi
+      - name: Validate package version consistency
+        run: python scripts/validate_versions.py
+      - name: Require release tag on the default branch
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          git fetch --no-tags origin "${{ github.event.repository.default_branch }}"
+          git merge-base --is-ancestor "$GITHUB_SHA" "origin/${{ github.event.repository.default_branch }}" || {
+            echo "::error::Release tags must point to a commit on the default branch."
+            exit 1
+          }
+      - name: Install hash-locked release dependencies
+        run: |
+          python -m pip install --require-hashes -r constraints/release.txt
+          python -m pip install --no-deps --no-build-isolation ./packages/python ./packages/mcp
+      - name: Test package
+        working-directory: packages/mcp
+        run: |
+          python -m ruff check .
+          python -m ruff format --check .
+          python -m mypy --strict
+          python -m pytest
+      - name: Build distributions
+        working-directory: packages/mcp
+        run: python -m build --no-isolation --outdir "${{ github.workspace }}/dist"
+      - name: Inspect distributions
+        run: |
+          python -m twine check dist/*
+          python - <<'PY'
+          import tarfile
+          import zipfile
+          from pathlib import Path
+
+          artifacts = sorted(Path("dist").iterdir())
+          assert len(artifacts) == 2, artifacts
+          wheel = next(path for path in artifacts if path.suffix == ".whl")
+          source = next(path for path in artifacts if path.name.endswith(".tar.gz"))
+          with zipfile.ZipFile(wheel) as archive:
+              assert archive.testzip() is None
+              names = archive.namelist()
+              assert any(name.endswith("neuraldefend_mcp/server.py") for name in names)
+              assert any(name.endswith(".dist-info/entry_points.txt") for name in names)
+          with tarfile.open(source, "r:gz") as archive:
+              assert archive.getmembers()
+          print("\n".join(path.name for path in artifacts))
+          PY
+      - name: Scan distributions for forbidden content
+        run: python scripts/scan_public_artifacts.py dist
+      - name: Extract wheel for SBOM analysis
+        run: |
+          mkdir -p sbom/mcp-root
+          python - <<'PY'
+          import zipfile
+          from pathlib import Path
+
+          wheel = next(Path("dist").glob("*.whl"))
+          with zipfile.ZipFile(wheel) as archive:
+              archive.extractall("sbom/mcp-root")
+          PY
+      - name: Generate SBOM with digest-pinned Syft
+        run: >-
+          docker run --rm
+          -v "${{ github.workspace }}:/repo"
+          anchore/syft@sha256:13b53ebabe3d215268c90cf8fb9b875f0183908245f376fd4b3a2cb69d21d484
+          dir:/repo/sbom/mcp-root
+          --output cyclonedx-json=/repo/sbom/mcp.cdx.json
+      - name: Clean-install built wheel with published Python dependency
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          python -m venv .release-venv
+          .release-venv/bin/python -m pip install --require-hashes -r constraints/release.txt
+          sdk_version="$(python -c 'import tomllib; print(tomllib.load(open("packages/python/pyproject.toml", "rb"))["project"]["version"])')"
+          .release-venv/bin/python -m pip install --no-deps "neuraldefend==${sdk_version}" dist/*.whl
+          .release-venv/bin/python -c 'import neuraldefend; import neuraldefend_mcp.server'
+          test -x .release-venv/bin/neuraldefend-mcp
+      - name: Clean-install built wheel for manual dry run
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          python -m venv .release-venv
+          .release-venv/bin/python -m pip install --require-hashes -r constraints/release.txt
+          .release-venv/bin/python -m pip install --no-deps --no-build-isolation ./packages/python
+          .release-venv/bin/python -m pip install --no-deps dist/*.whl
+          .release-venv/bin/python -c 'import neuraldefend_mcp.server'
+          test -x .release-venv/bin/neuraldefend-mcp
+      - name: Upload distributions
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: mcp-distributions
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload release SBOM
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: mcp-sbom
+          path: sbom/mcp.cdx.json
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: mcp-pypi
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: mcp-distributions
+          path: dist
+      - name: Download release SBOM
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: mcp-sbom
+          path: sbom
+      - name: Attest distributions
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-path: dist/*
+      - name: Attest release SBOM
+        uses: actions/attest@f7c74d28b9d84cb8768d0b8ca14a4bac6ef463e6 # v4.2.0
+        with:
+          subject-path: dist/*
+          sbom-path: sbom/mcp.cdx.json
+      - name: Publish to PyPI with trusted publishing
+        uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247 # v1.13.0
+        with:
+          packages-dir: dist/
+          print-hash: true

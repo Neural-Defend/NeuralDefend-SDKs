@@ -1,0 +1,8 @@
+* @sumit-neural
+
+/.github/ @sumit-neural
+/constraints/ @sumit-neural
+/packages/*/pyproject.toml @sumit-neural
+/packages/typescript/package.json @sumit-neural
+/packages/typescript/package-lock.json @sumit-neural
+/spec/ @sumit-neural

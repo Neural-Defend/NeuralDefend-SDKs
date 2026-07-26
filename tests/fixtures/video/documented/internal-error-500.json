@@ -1,0 +1,30 @@
+{
+  "case_id": "video-internal-error-500",
+  "endpoint": "/detect/video",
+  "http_status": 500,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "provenance": {
+    "kind": "documented",
+    "source": "docs/client/unified-video-authenticity.md",
+    "section": "Internal server error (500)"
+  },
+  "body_kind": "json",
+  "body": {
+    "unified_video_authenticity_score": {
+      "unique_trx_id": "trx_500def789abc012345",
+      "filename": "video.mp4",
+      "content_type": "video/mp4",
+      "status": "error",
+      "status_code": 5,
+      "billable": "N",
+      "video_risk_score": null,
+      "video_risk_level": null,
+      "video_message": "Internal server error during video detection",
+      "audio_risk_score": null,
+      "audio_risk_level": null,
+      "audio_message": null
+    }
+  }
+}

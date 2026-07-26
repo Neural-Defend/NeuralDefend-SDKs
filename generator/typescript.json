@@ -1,0 +1,14 @@
+{
+  "globalProperties": {
+    "apiDocs": false,
+    "apiTests": false,
+    "modelDocs": false,
+    "modelTests": false
+  },
+  "npmName": "@neuraldefend/core",
+  "supportsES6": true,
+  "typescriptThreePlus": true,
+  "withoutRuntimeChecks": false,
+  "useSingleRequestParameter": true,
+  "hideGenerationTimestamp": true
+}

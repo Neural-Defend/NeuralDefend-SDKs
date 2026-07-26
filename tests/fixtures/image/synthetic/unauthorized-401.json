@@ -1,0 +1,17 @@
+{
+  "case_id": "image-unauthorized-401",
+  "endpoint": "/detect/image",
+  "http_status": 401,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "provenance": {
+    "kind": "synthetic",
+    "source": "spec/public.yaml",
+    "derivation": "ApiError schema plus the documented invalid-key meaning."
+  },
+  "body_kind": "json",
+  "body": {
+    "detail": "Invalid API key"
+  }
+}

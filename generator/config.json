@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "generator_version": "7.14.0",
+  "image_repository": "openapitools/openapi-generator-cli",
+  "image_digest": "sha256:a620610d9fabf7ce05310c648417ba168125aac2f4517580030e115921ac1a52"
+}

@@ -1,0 +1,30 @@
+{
+  "case_id": "video-security-rejection",
+  "endpoint": "/detect/video",
+  "http_status": 400,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "provenance": {
+    "kind": "documented",
+    "source": "docs/client/unified-video-authenticity.md",
+    "section": "Security rejection"
+  },
+  "body_kind": "json",
+  "body": {
+    "unified_video_authenticity_score": {
+      "unique_trx_id": "trx_sec345def678abc901",
+      "filename": "suspicious.mp4.exe",
+      "content_type": "application/octet-stream",
+      "status": "rejected",
+      "status_code": 2,
+      "billable": "N",
+      "video_risk_score": null,
+      "video_risk_level": null,
+      "video_message": "File failed security validation",
+      "audio_risk_score": null,
+      "audio_risk_level": null,
+      "audio_message": null
+    }
+  }
+}

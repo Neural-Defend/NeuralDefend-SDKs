@@ -1,0 +1,9 @@
+# Normalise line endings to LF everywhere. The generated cores are byte-compared by
+# check-generated.yml, and the generator emits LF; a CRLF checkout on Windows would fail
+# that check for reasons unrelated to the spec.
+* text=auto eol=lf
+
+packages/python/src/neuraldefend/_core/** linguist-generated=true
+packages/typescript/src/core/**           linguist-generated=true
+spec/public.yaml                          linguist-generated=true
+spec/public.json                          linguist-generated=true

@@ -1,0 +1,9 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Public documentation credential placeholders"
+regexTarget = "secret"
+regexes = [
+  '''YOUR_API_KEY''',
+]

@@ -1,0 +1,27 @@
+{
+  "case_id": "image-internal-error-500",
+  "endpoint": "/detect/image",
+  "http_status": 500,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "provenance": {
+    "kind": "documented",
+    "source": "docs/client/unified-face-authenticity.md",
+    "section": "Internal server error (500)"
+  },
+  "body_kind": "json",
+  "body": {
+    "unified_face_authenticity_score": {
+      "unique_trx_id": "trx_500def789abc012345",
+      "filename": "photo.jpg",
+      "content_type": "image/jpeg",
+      "status": "error",
+      "status_code": 5,
+      "billable": "N",
+      "risk_score": null,
+      "risk_level": null,
+      "message": "Internal server error during unified detection"
+    }
+  }
+}

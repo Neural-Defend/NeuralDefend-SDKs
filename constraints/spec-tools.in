@@ -1,0 +1,2 @@
+# Linux spec-tooling dependencies for Python 3.13.
+PyYAML>=6,<7

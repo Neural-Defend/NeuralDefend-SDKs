@@ -1,0 +1,21 @@
+{
+  "case_id": "image-rate-limited-429",
+  "endpoint": "/detect/image",
+  "http_status": 429,
+  "headers": {
+    "content-type": "application/json",
+    "retry-after": "60",
+    "x-ratelimit-limit": "1000",
+    "x-ratelimit-remaining": "0",
+    "x-ratelimit-reset": "2026-07-27T00:00:00Z"
+  },
+  "provenance": {
+    "kind": "synthetic",
+    "source": "spec/public.yaml",
+    "derivation": "ApiError schema and all four documented rate-limit response headers."
+  },
+  "body_kind": "json",
+  "body": {
+    "detail": "Rate limit exceeded"
+  }
+}

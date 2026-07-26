@@ -1,0 +1,27 @@
+{
+  "case_id": "image-blurry",
+  "endpoint": "/detect/image",
+  "http_status": 400,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "provenance": {
+    "kind": "documented",
+    "source": "docs/client/unified-face-authenticity.md",
+    "section": "Image quality error (blur, brightness, contrast, dimensions)"
+  },
+  "body_kind": "json",
+  "body": {
+    "unified_face_authenticity_score": {
+      "unique_trx_id": "trx_qe789abc012def345",
+      "filename": "blurry.jpg",
+      "content_type": "image/jpeg",
+      "status": "rejected",
+      "status_code": 2,
+      "billable": "N",
+      "risk_score": null,
+      "risk_level": null,
+      "message": "Image is too blurry for analysis"
+    }
+  }
+}

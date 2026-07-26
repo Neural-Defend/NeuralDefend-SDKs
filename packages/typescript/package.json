@@ -1,0 +1,76 @@
+{
+  "name": "@neuraldefend/sdk",
+  "version": "1.0.0",
+  "description": "Browser and Node.js SDK for NeuroVerify media authenticity detection",
+  "license": "MIT",
+  "author": "Neural Defend",
+  "homepage": "https://neuraldefend.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Neural-Defend/NeuralDefend-SDKs.git",
+    "directory": "packages/typescript"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "browser": {
+        "types": "./dist/browser.d.ts",
+        "import": "./dist/browser.js",
+        "default": "./dist/browser.js"
+      },
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsup && tsc -p tsconfig.build.json && node scripts/cjs-types.mjs",
+    "test": "vitest run",
+    "test:smoke": "vitest run tests/staging.smoke.test.ts",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "lint": "prettier --check \"src/*.ts\" \"src/platform/*.ts\" tests scripts *.ts *.json *.md",
+    "validate:package": "publint && attw --pack .",
+    "pack:dry-run": "npm pack --dry-run"
+  },
+  "keywords": [
+    "media-authenticity",
+    "fraud-detection",
+    "typescript",
+    "browser",
+    "node"
+  ],
+  "devDependencies": {
+    "@arethetypeswrong/cli": "^0.18.5",
+    "@types/node": "^26.1.1",
+    "@vitest/coverage-v8": "^4.1.10",
+    "prettier": "^3.9.6",
+    "publint": "^0.3.22",
+    "tsup": "^8.5.1",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.10"
+  },
+  "overrides": {
+    "tsup": {
+      "esbuild": "0.27.2"
+    }
+  }
+}

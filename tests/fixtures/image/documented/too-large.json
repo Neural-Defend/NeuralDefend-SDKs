@@ -1,0 +1,27 @@
+{
+  "case_id": "image-too-large",
+  "endpoint": "/detect/image",
+  "http_status": 400,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "provenance": {
+    "kind": "documented",
+    "source": "docs/client/unified-face-authenticity.md",
+    "section": "File too large"
+  },
+  "body_kind": "json",
+  "body": {
+    "unified_face_authenticity_score": {
+      "unique_trx_id": "trx_big901def234abc567",
+      "filename": "huge_image.jpg",
+      "content_type": "image/jpeg",
+      "status": "rejected",
+      "status_code": 2,
+      "billable": "N",
+      "risk_score": null,
+      "risk_level": null,
+      "message": "File exceeds maximum size limit"
+    }
+  }
+}

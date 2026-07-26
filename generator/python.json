@@ -1,0 +1,13 @@
+{
+  "globalProperties": {
+    "apiDocs": false,
+    "apiTests": false,
+    "modelDocs": false,
+    "modelTests": false
+  },
+  "packageName": "neuraldefend._core",
+  "projectName": "neuraldefend-core",
+  "library": "urllib3",
+  "generateSourceCodeOnly": true,
+  "hideGenerationTimestamp": true
+}

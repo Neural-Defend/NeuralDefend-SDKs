@@ -1,0 +1,15 @@
+{
+  "case_id": "image-malformed-json",
+  "endpoint": "/detect/image",
+  "http_status": 200,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "provenance": {
+    "kind": "synthetic",
+    "source": "spec/public.yaml plus documented image success response",
+    "derivation": "Truncates a response body to exercise JSON parse failure handling."
+  },
+  "body_kind": "raw",
+  "body": "{\"unified_face_authenticity_score\": {\"status\": \"success\","
+}

@@ -1,0 +1,34 @@
+{
+  "case_id": "image-low-risk",
+  "endpoint": "/detect/image",
+  "http_status": 200,
+  "headers": {
+    "content-type": "application/json"
+  },
+  "provenance": {
+    "kind": "documented",
+    "source": "docs/client/unified-face-authenticity.md",
+    "section": "GENUINE — Low risk (all checks passed)"
+  },
+  "body_kind": "json",
+  "body": {
+    "unified_face_authenticity_score": {
+      "unique_trx_id": "trx_c1r7n6oy69zhunjrkp0p",
+      "filename": "selfie.jpg",
+      "content_type": "image/jpeg",
+      "status": "success",
+      "status_code": 1,
+      "billable": "Y",
+      "risk_score": 2.2,
+      "risk_level": "low",
+      "message": "Not likely to be Spoof or AI-generated",
+      "ai_threat_signals": [
+        "Visual Safety Screening",
+        "Liveness Verification",
+        "Face Swap Detection",
+        "AI Generative Model Analysis",
+        "AI Content Compliance"
+      ]
+    }
+  }
+}

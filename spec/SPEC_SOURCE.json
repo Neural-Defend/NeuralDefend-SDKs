@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "source_repo": "private NeuroVerify API repository",
+  "source_ref": "494fc8c88585e0920efe54b41f3f8d355025c475",
+  "resolved_commit": "494fc8c88585e0920efe54b41f3f8d355025c475",
+  "source_path": "openapi/public.yaml",
+  "source_blob_sha": "d64d9d0125d186ed24a870dc92390a8140e79eb5",
+  "source_raw_sha256": "0074354b4101a22bb4e1997706cf43e6d9f4703e6d2b366c150c86123d29f810",
+  "local_normalized_sha256": "0074354b4101a22bb4e1997706cf43e6d9f4703e6d2b366c150c86123d29f810",
+  "derived_json_sha256": "3bd7a9f4b98e5c4e040d26a2fd5edd048f70f62100699c67b46ce7c561c4f6ce",
+  "spec_version": "1.0.0",
+  "source_timestamp": "2026-07-26T03:49:30Z",
+  "synced_at": "2026-07-26T07:02:35Z"
+}
