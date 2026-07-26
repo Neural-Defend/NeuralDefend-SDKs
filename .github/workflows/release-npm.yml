@@ -110,8 +110,8 @@ jobs:
       - name: Clean-install npm tarball
         shell: bash
         run: |
-          mkdir .release-consumer
-          cd .release-consumer
+          mkdir release-consumer
+          cd release-consumer
           npm init -y >/dev/null
           npm install ../dist/*.tgz
           node --input-type=module -e "import { NeuroVerifyClient } from '@neuraldefend/sdk'; if (!NeuroVerifyClient) process.exit(1)"
