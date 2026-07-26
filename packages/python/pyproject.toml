@@ -78,3 +78,7 @@ follow_imports = "skip"
 [[tool.mypy.overrides]]
 module = ["anyio", "anyio.*"]
 follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+module = ["click", "click.*"]
+follow_imports = "skip"
