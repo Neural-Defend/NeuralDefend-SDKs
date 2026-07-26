@@ -413,8 +413,7 @@ class NeuroVerifyClient:
             if Path(selected_name).suffix.lower() not in extensions:
                 suffix = Path(selected_name).suffix
                 warnings.warn(
-                    f"unsupported file extension {suffix!r}; "
-                    "the server will inspect the content",
+                    f"unsupported file extension {suffix!r}; the server will inspect the content",
                     UserWarning,
                     stacklevel=3,
                 )
