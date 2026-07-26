@@ -223,7 +223,14 @@ class GeneratorTests(unittest.TestCase):
     def test_docker_invocation_uses_an_argument_array_and_offline_network(self) -> None:
         with tempfile.TemporaryDirectory(prefix="path with spaces ") as temporary:
             output = Path(temporary)
-            with mock.patch.object(generate, "_run") as run:
+            with (
+                mock.patch.object(
+                    generate,
+                    "_docker_user_arguments",
+                    return_value=["--user", "1000:1000"],
+                ),
+                mock.patch.object(generate, "_run") as run,
+            ):
                 generate._docker_generate(
                     image="repository@sha256:" + ("a" * 64),
                     generator="python",
@@ -232,8 +239,22 @@ class GeneratorTests(unittest.TestCase):
                 )
         arguments = run.call_args.args[0]
         self.assertIsInstance(arguments, list)
-        self.assertEqual(arguments[:5], ["docker", "run", "--rm", "--network", "none"])
+        self.assertEqual(
+            arguments[:7],
+            ["docker", "run", "--rm", "--user", "1000:1000", "--network", "none"],
+        )
         self.assertIn(f"type=bind,source={output},target=/output", arguments)
+
+    def test_docker_user_mapping_is_linux_only(self) -> None:
+        with (
+            mock.patch.object(generate.sys, "platform", "linux"),
+            mock.patch.object(generate.os, "getuid", return_value=1001, create=True),
+            mock.patch.object(generate.os, "getgid", return_value=1002, create=True),
+        ):
+            self.assertEqual(generate._docker_user_arguments(), ["--user", "1001:1002"])
+
+        with mock.patch.object(generate.sys, "platform", "win32"):
+            self.assertEqual(generate._docker_user_arguments(), [])
 
     def test_generator_configs_exclude_docs_and_tests(self) -> None:
         for path in (generate.PYTHON_CONFIG, generate.TYPESCRIPT_CONFIG):

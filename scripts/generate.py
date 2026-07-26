@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -88,6 +89,18 @@ def verify_local_image(image: str) -> None:
         raise SpecError(f"local Docker image does not attest the configured digest: {image}")
 
 
+def _docker_user_arguments() -> list[str]:
+    """Keep bind-mounted generator output owned by the invoking Linux user."""
+
+    if not sys.platform.startswith("linux"):
+        return []
+    getuid = getattr(os, "getuid", None)
+    getgid = getattr(os, "getgid", None)
+    if not callable(getuid) or not callable(getgid):
+        return []
+    return ["--user", f"{getuid()}:{getgid()}"]
+
+
 def _docker_generate(
     *,
     image: str,
@@ -103,6 +116,7 @@ def _docker_generate(
             "docker",
             "run",
             "--rm",
+            *_docker_user_arguments(),
             "--network",
             "none",
             "--mount",

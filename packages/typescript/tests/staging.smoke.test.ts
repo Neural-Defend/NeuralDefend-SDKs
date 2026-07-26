@@ -7,12 +7,11 @@ const videoPath = process.env.NEURALDEFEND_STAGING_VIDEO;
 const enabled = Boolean(apiKey && imagePath && videoPath);
 
 describe.skipIf(!enabled)("staging contract", () => {
-  const client = NeuroVerifyClient.staging({
-    apiKey: apiKey!,
-    maxRetries: 0,
-  });
-
   it("returns a consistent image result", async () => {
+    const client = NeuroVerifyClient.staging({
+      apiKey: apiKey!,
+      maxRetries: 0,
+    });
     const result = await client.detectImage(imagePath!);
 
     expect(["success", "rejected"]).toContain(result.status);
@@ -23,6 +22,10 @@ describe.skipIf(!enabled)("staging contract", () => {
   });
 
   it("returns a consistent video result", async () => {
+    const client = NeuroVerifyClient.staging({
+      apiKey: apiKey!,
+      maxRetries: 0,
+    });
     const result = await client.detectVideo(videoPath!, { maxFrames: 2 });
 
     expect(["success", "rejected"]).toContain(result.status);

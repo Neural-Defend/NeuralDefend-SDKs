@@ -177,7 +177,7 @@ def test_out_of_contract_score_is_protocol_error(value: float) -> None:
 
     client = _client_with_handler(handler)
     try:
-        with pytest.raises(ProtocolError, match="0.1 through 10.0"):
+        with pytest.raises(ProtocolError, match=r"0\.1 through 10\.0"):
             client.detect_image(b"x", filename="x.jpg")
     finally:
         client.close()
@@ -199,7 +199,7 @@ def test_non_finite_json_score_is_protocol_error(raw_score: str) -> None:
 
     client = _client_with_handler(handler)
     try:
-        with pytest.raises(ProtocolError, match="0.1 through 10.0"):
+        with pytest.raises(ProtocolError, match=r"0\.1 through 10\.0"):
             client.detect_image(b"x", filename="x.jpg")
     finally:
         client.close()

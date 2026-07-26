@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import platform
 import stat
 import sys
 from collections.abc import Iterable
@@ -210,12 +211,15 @@ def _is_contained(candidate: Path, root: Path) -> bool:
 def _final_opened_path(descriptor: int) -> Path:
     """Resolve the path attached to an open handle without reopening it."""
 
-    if os.name == "nt":
+    system = platform.system()
+    if system == "Windows":
         import ctypes
         import msvcrt
         from ctypes import wintypes
 
         loader: Any = getattr(ctypes, "WinDLL")  # noqa: B009
+        get_last_error: Any = getattr(ctypes, "get_last_error")  # noqa: B009
+        get_osfhandle: Any = getattr(msvcrt, "get_osfhandle")  # noqa: B009
         kernel32: Any = loader("kernel32", use_last_error=True)
         get_final_path: Any = kernel32.GetFinalPathNameByHandleW
         get_final_path.argtypes = [
@@ -226,10 +230,10 @@ def _final_opened_path(descriptor: int) -> Path:
         ]
         get_final_path.restype = wintypes.DWORD
         buffer = ctypes.create_unicode_buffer(32_768)
-        handle = msvcrt.get_osfhandle(descriptor)
+        handle = get_osfhandle(descriptor)
         length = int(get_final_path(handle, buffer, len(buffer), 0))
         if length <= 0 or length >= len(buffer):
-            raise OSError(ctypes.get_last_error(), "cannot resolve opened file handle")
+            raise OSError(get_last_error(), "cannot resolve opened file handle")
         raw = buffer.value
         if raw.startswith("\\\\?\\UNC\\"):
             raw = "\\\\" + raw[8:]
@@ -237,13 +241,14 @@ def _final_opened_path(descriptor: int) -> Path:
             raw = raw[4:]
         return Path(raw)
 
-    if sys.platform.startswith("linux"):
+    if system == "Linux":
         return Path(f"/proc/self/fd/{descriptor}").resolve(strict=True)
 
-    if sys.platform == "darwin":
+    if system == "Darwin":
         import fcntl
 
-        raw = fcntl.fcntl(descriptor, 50, b"\0" * 1024)
+        fcntl_call: Any = getattr(fcntl, "fcntl")  # noqa: B009
+        raw = fcntl_call(descriptor, 50, b"\0" * 1024)
         if not isinstance(raw, bytes):
             raise OSError("cannot resolve opened file handle")
         value = raw.split(b"\0", 1)[0].decode(sys.getfilesystemencoding(), errors="strict")

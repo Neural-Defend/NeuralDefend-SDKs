@@ -1,8 +1,8 @@
-* @sumit-neural
+* @Siva-neural
 
-/.github/ @sumit-neural
-/constraints/ @sumit-neural
-/packages/*/pyproject.toml @sumit-neural
-/packages/typescript/package.json @sumit-neural
-/packages/typescript/package-lock.json @sumit-neural
-/spec/ @sumit-neural
+/.github/ @Siva-neural
+/constraints/ @Siva-neural
+/packages/*/pyproject.toml @Siva-neural
+/packages/typescript/package.json @Siva-neural
+/packages/typescript/package-lock.json @Siva-neural
+/spec/ @Siva-neural
