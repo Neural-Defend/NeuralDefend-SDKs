@@ -74,3 +74,7 @@ warn_unreachable = true
 [[tool.mypy.overrides]]
 module = ["_pytest", "_pytest.*"]
 follow_imports = "skip"
+
+[[tool.mypy.overrides]]
+module = ["anyio", "anyio.*"]
+follow_imports = "skip"
