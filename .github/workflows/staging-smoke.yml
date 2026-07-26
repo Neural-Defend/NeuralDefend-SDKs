@@ -67,10 +67,14 @@ jobs:
               + chunk(b"IEND", b"")
           )
           PY
-          ffmpeg -hide_banner -loglevel error \
+          docker run --rm --network none \
+            --user "$(id -u):$(id -g)" \
+            --mount "type=bind,source=${{ runner.temp }},target=/fixtures" \
+            jrottenberg/ffmpeg@sha256:8ec1ee1f6a0fcd37c97725827b6b7832795c9596e3439b8da56d7700d61ae778 \
+            -hide_banner -loglevel error \
             -f lavfi -i color=c=black:s=320x240:d=1 \
             -c:v libx264 -pix_fmt yuv420p -an -y \
-            "${{ runner.temp }}/neuraldefend-smoke.mp4"
+            /fixtures/neuraldefend-smoke.mp4
       - name: Run Python SDK smoke tests
         working-directory: packages/python
         env:
