@@ -4,13 +4,45 @@ build-backend = "hatchling.build"
 
 [project]
 name = "neuraldefend-mcp"
-version = "1.0.1"
-description = "Secure MCP server for the NeuroVerify media authenticity API"
+version = "1.0.2"
+description = "Secure MCP server for Neural Defend NeuroVerify — deepfake and AI-generated media detection for MCP agents"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
 authors = [{ name = "Neural Defend" }]
-keywords = ["mcp", "media", "authenticity", "fraud", "security"]
+keywords = [
+  "neuraldefend",
+  "neural-defend",
+  "neuroverify",
+  "deepfake",
+  "deepfake-detection",
+  "deepfake-detection-api",
+  "ai-detection",
+  "ai-generated-content",
+  "ai-generated-image-detection",
+  "ai-generated-video-detection",
+  "ai-image-detection",
+  "ai-video-detection",
+  "synthetic-media-detection",
+  "generative-ai-detection",
+  "media-authenticity",
+  "media-forensics",
+  "image-authenticity",
+  "video-authenticity",
+  "face-authenticity",
+  "spoof-detection",
+  "manipulation-detection",
+  "model-context-protocol",
+  "mcp",
+  "ai-agent",
+  "llm-tools",
+  "identity-verification",
+  "fraud-prevention",
+  "media",
+  "authenticity",
+  "fraud",
+  "security",
+]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
@@ -22,6 +54,10 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
   "Typing :: Typed",
+  "Topic :: Security",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Multimedia :: Video",
+  "Topic :: Multimedia :: Graphics",
 ]
 dependencies = [
   "anyio>=4,<5",
@@ -43,8 +79,11 @@ dev = [
 neuraldefend-mcp = "neuraldefend_mcp.server:main"
 
 [project.urls]
+Homepage = "https://neuraldefend.com/"
+Repository = "https://github.com/Neural-Defend/NeuralDefend-SDKs"
 Documentation = "https://github.com/Neural-Defend/NeuralDefend-SDKs/tree/main/packages/mcp"
 Issues = "https://github.com/Neural-Defend/NeuralDefend-SDKs/issues"
+Changelog = "https://github.com/Neural-Defend/NeuralDefend-SDKs/releases"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/neuraldefend_mcp"]

@@ -4,8 +4,9 @@ export async function inspectImage(
   file: File,
   shortLivedApiKey: string,
 ): Promise<string> {
-  // Never embed a long-lived production key in browser JavaScript. Obtain a
-  // short-lived, scoped, revocable credential from your authenticated backend.
+  // Production keys come from https://neuraldefend.com/ (Book a Demo). Never embed a
+  // long-lived key in browser JavaScript — obtain a short-lived, scoped credential from
+  // your authenticated backend instead.
   const client = new NeuroVerifyClient({ apiKey: shortLivedApiKey });
   const result = await client.detectImage(file);
 

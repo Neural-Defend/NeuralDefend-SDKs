@@ -1,6 +1,6 @@
 # neuraldefend-mcp
 
-`neuraldefend-mcp` 1.0.1 is a secure, local Model Context Protocol (MCP) server for
+`neuraldefend-mcp` 1.0.2 is a secure, local Model Context Protocol (MCP) server for
 NeuroVerify image and video authenticity analysis. It gives an MCP client two tools while
 keeping API credentials out of tool arguments, restricting which local media can be read,
 and returning a bounded integration contract instead of the Python SDK's raw response.
@@ -39,10 +39,10 @@ time-of-check/time-of-use risk.
 
 ## Installation
 
-Install the published 1.0.1 release:
+Install the published 1.0.2 release:
 
 ```bash
-python -m pip install "neuraldefend-mcp==1.0.1"
+python -m pip install "neuraldefend-mcp==1.0.2"
 ```
 
 The package installs the `neuraldefend-mcp` command. The equivalent module entry point is:
@@ -54,6 +54,26 @@ python -m neuraldefend_mcp
 Both entry points run the same stdio-only server. Starting either one directly is normally
 useful only for diagnosing configuration: the process waits for MCP messages on standard
 input after successful startup.
+
+## Get an API key
+
+NeuroVerify API keys are issued by **Neural Defend** after customer onboarding. There is no
+self-service key on PyPI — request access from the company first, then inject the key into
+the MCP server environment.
+
+1. Visit **[neuraldefend.com](https://neuraldefend.com/)** and choose **Book a Demo** to
+   discuss deepfake detection, AI-generated media analysis, and API access for agents or
+   applications.
+2. After onboarding, Neural Defend provides an API key scoped to the image and/or video
+   endpoints you need. Existing customers can also ask their account manager for a key or
+   staging credential.
+3. Set `NEURALDEFEND_API_KEY` in the process that launches `neuraldefend-mcp` (see
+   [Secure configuration](#secure-configuration)). Never pass the key as an MCP tool
+   argument or commit it to configuration files.
+4. For REST endpoint reference, see the
+   [Neural Defend API documentation](https://neuraldefend.gitbook.io/neural-defend).
+
+**Contact:** [support@neuraldefend.com](mailto:support@neuraldefend.com)
 
 ## Secure configuration
 
@@ -159,8 +179,10 @@ client's documented secret-store reference. Never replace it with a real key in 
 that may be committed, synchronized, backed up without encryption, or shared.
 
 Every complete configuration below explicitly passes `NEURALDEFEND_API_KEY` into the MCP
-server process. Startup validates that it is a non-empty string; the NeuroVerify API then
-validates the credential and its endpoint scope on each request.
+server process. Obtain that key from **[neuraldefend.com](https://neuraldefend.com/)** (Book
+a Demo) after Neural Defend onboarding — never paste a real key into a committed file.
+Startup validates that it is a non-empty string; the NeuroVerify API then validates the
+credential and its endpoint scope on each request.
 
 ### Windows
 

@@ -17,7 +17,7 @@ evidence, policy checks, and human review appropriate to your use case.
 
 ## Requirements
 
-- `@neuraldefend/sdk` version `1.0.2`
+- `@neuraldefend/sdk` version `1.0.3`
 - Node.js 22 or newer for server-side use
 - A current evergreen browser for browser use
 - A Neural Defend API key with access to the image and/or video endpoint
@@ -27,26 +27,43 @@ The package has no runtime dependencies.
 ## Installation
 
 ```sh
-npm install @neuraldefend/sdk@1.0.2
+npm install @neuraldefend/sdk@1.0.3
 ```
 
 The package supports ESM imports and CommonJS `require()` in Node.js. Bundlers
 automatically select the browser build for browser applications.
 
-## API key setup
+## Get an API key
 
-API keys are issued during Neural Defend customer onboarding. Contact your
-account representative or `support@neuraldefend.com` if you need a key, an
-endpoint scope, or environment access changed.
+NeuroVerify API keys are issued by **Neural Defend** after customer onboarding. There is no
+self-service key on npm — request access from the company first, then configure the SDK.
 
-For Node.js, keep the key in a secret manager or environment variable:
+1. Visit **[neuraldefend.com](https://neuraldefend.com/)** and choose **Book a Demo** to
+   talk with the Neural Defend team about deepfake detection, AI-generated media analysis,
+   and API access for your use case.
+2. After onboarding, Neural Defend provides an API key scoped to the image and/or video
+   endpoints you need. Existing customers can also ask their account manager for a key or
+   staging credential.
+3. Store the key in a secret manager or `NEURALDEFEND_API_KEY` (Node.js) or pass
+   `apiKey` explicitly. In browsers, use a short-lived credential from your backend — never
+   embed a long-lived production key in client-side code.
+4. For REST endpoint reference, see the
+   [Neural Defend API documentation](https://neuraldefend.gitbook.io/neural-defend).
+
+**Contact:** [support@neuraldefend.com](mailto:support@neuraldefend.com)
+
+## API key configuration
+
+For Node.js, keep the onboarding key in a secret manager or environment variable:
 
 ```sh
+# Request a key at https://neuraldefend.com/ (Book a Demo), then export it:
 # macOS/Linux
 export NEURALDEFEND_API_KEY="your-api-key"
 ```
 
 ```powershell
+# Request a key at https://neuraldefend.com/ (Book a Demo), then set it:
 # PowerShell
 $env:NEURALDEFEND_API_KEY = "your-api-key"
 ```
@@ -65,6 +82,7 @@ Save the following as `detect-image.mjs`, then run
 ```js
 import { NeuroVerifyClient } from "@neuraldefend/sdk";
 
+// Get an API key from https://neuraldefend.com/ (Book a Demo), then export NEURALDEFEND_API_KEY.
 const apiKey = process.env.NEURALDEFEND_API_KEY;
 if (!apiKey) throw new Error("NEURALDEFEND_API_KEY is required");
 
@@ -116,6 +134,7 @@ Save the following as `detect-video.mjs`, then run
 ```js
 import { NeuroVerifyClient } from "@neuraldefend/sdk";
 
+// Get an API key from https://neuraldefend.com/ (Book a Demo), then export NEURALDEFEND_API_KEY.
 const apiKey = process.env.NEURALDEFEND_API_KEY;
 if (!apiKey) throw new Error("NEURALDEFEND_API_KEY is required");
 
@@ -188,9 +207,10 @@ Do not treat it as a server-provided overall verdict.
 > extract it.**
 
 Browser clients require an explicit `apiKey`; the browser build never reads
-environment variables. The public API contract does not define a browser
-credential-issuance endpoint. Do not expose an onboarding-issued API key or
-invent a client-side key exchange based on this README.
+environment variables. Production keys are issued at **[neuraldefend.com](https://neuraldefend.com/)**
+(Book a Demo) and must stay on your backend — the public API contract does not define a
+browser credential-issuance endpoint. Do not expose an onboarding-issued API key or invent
+a client-side key exchange based on this README.
 
 For normal web applications, upload media to your authenticated application
 backend and call this SDK from Node.js. This keeps the Neural Defend key
@@ -263,7 +283,7 @@ Constructor options:
 - `retryAfterCapMs?: number` — maximum wait applied to a `Retry-After` value.
   Default: `60000`. Negative values are normalized to `0`.
 - `userAgent?: string` — Node.js user agent override. The Node.js default for
-  this release is `@neuraldefend/sdk/1.0.2`; browsers cannot set this header
+  this release is `@neuraldefend/sdk/1.0.3`; browsers cannot set this header
   through the SDK.
 - `fetch?: typeof globalThis.fetch` — custom Fetch-compatible implementation,
   primarily for controlled runtimes and testing.

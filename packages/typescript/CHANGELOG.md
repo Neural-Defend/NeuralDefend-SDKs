@@ -5,6 +5,15 @@ and Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-07-27
+
+### Changed
+
+- Expanded npm keywords and package description for deepfake and AI-generated media
+  detection discoverability.
+- Added Neural Defend website API-key onboarding steps and inline code comments across
+  guides and examples.
+
 ## [1.0.2] - 2026-07-27
 
 ### Changed
@@ -54,7 +63,8 @@ and Semantic Versioning.
 Built against public API specification 1.0.0 from source commit
 `494fc8c88585e0920efe54b41f3f8d355025c475`.
 
-[Unreleased]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/ts-v1.0.2...HEAD
+[Unreleased]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/ts-v1.0.3...HEAD
+[1.0.3]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/ts-v1.0.2...ts-v1.0.3
 [1.0.2]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/ts-v1.0.1...ts-v1.0.2
 [1.0.1]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/ts-v1.0.0...ts-v1.0.1
 [1.0.0]: https://github.com/Neural-Defend/NeuralDefend-SDKs/releases/tag/ts-v1.0.0

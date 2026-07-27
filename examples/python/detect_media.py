@@ -1,4 +1,11 @@
-"""Minimal NeuroVerify image and video example."""
+"""Minimal NeuroVerify image and video example.
+
+Get an API key from https://neuraldefend.com/ (Book a Demo), then:
+
+  export NEURALDEFEND_API_KEY="your-api-key"
+  export NEURALDEFEND_IMAGE="/path/to/selfie.jpg"   # optional
+  export NEURALDEFEND_VIDEO="/path/to/clip.mp4"     # optional
+"""
 
 import json
 import os
@@ -7,6 +14,7 @@ from neuraldefend import NeuroVerifyClient
 
 
 def main() -> None:
+    # Requires NEURALDEFEND_API_KEY from https://neuraldefend.com/ onboarding.
     image_path = os.environ.get("NEURALDEFEND_IMAGE")
     video_path = os.environ.get("NEURALDEFEND_VIDEO")
     if not image_path and not video_path:

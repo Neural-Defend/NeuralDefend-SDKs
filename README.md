@@ -11,25 +11,37 @@ for signs of AI generation, manipulation, spoofing, and related authenticity ris
 
 | Integration | Best for | Install | Guide |
 |---|---|---|---|
-| [Python `neuraldefend` 1.0.1](https://pypi.org/project/neuraldefend/1.0.1/) | Python services and scripts (Python 3.9+) | `pip install neuraldefend` | [Python SDK](packages/python/README.md) |
-| [TypeScript `@neuraldefend/sdk` 1.0.2](https://www.npmjs.com/package/@neuraldefend/sdk/v/1.0.2) | Node.js 22+ and evergreen browsers | `npm install @neuraldefend/sdk` | [TypeScript SDK](packages/typescript/README.md) |
-| [MCP `neuraldefend-mcp` 1.0.1](https://pypi.org/project/neuraldefend-mcp/1.0.1/) | MCP-compatible agents and tools (Python 3.10+) | `pip install neuraldefend-mcp` | [MCP server](packages/mcp/README.md) |
+| [Python `neuraldefend` 1.0.2](https://pypi.org/project/neuraldefend/1.0.2/) | Python services and scripts (Python 3.9+) | `pip install neuraldefend` | [Python SDK](packages/python/README.md) |
+| [TypeScript `@neuraldefend/sdk` 1.0.3](https://www.npmjs.com/package/@neuraldefend/sdk/v/1.0.3) | Node.js 22+ and evergreen browsers | `npm install @neuraldefend/sdk` | [TypeScript SDK](packages/typescript/README.md) |
+| [MCP `neuraldefend-mcp` 1.0.2](https://pypi.org/project/neuraldefend-mcp/1.0.2/) | MCP-compatible agents and tools (Python 3.10+) | `pip install neuraldefend-mcp` | [MCP server](packages/mcp/README.md) |
 
 Use the Python or TypeScript SDK for application code. Use the MCP server when an agent
 needs controlled access to authorized local media; it requires an explicit directory
 allowlist.
 
+## Get an API key
+
+NeuroVerify API keys are issued by **Neural Defend** after customer onboarding:
+
+1. Visit **[neuraldefend.com](https://neuraldefend.com/)** and choose **Book a Demo**.
+2. After onboarding, store your key in `NEURALDEFEND_API_KEY` (Python, Node.js, MCP) or
+   pass it explicitly to the client constructor.
+3. Contact [support@neuraldefend.com](mailto:support@neuraldefend.com) for existing
+   accounts, staging keys, or endpoint scope questions.
+4. API reference: [Neural Defend documentation](https://neuraldefend.gitbook.io/neural-defend).
+
 ## Quick start
 
-Obtain an API key through your Neural Defend account, store it in
-`NEURALDEFEND_API_KEY`, and install the client for your language. A minimal Python image
-and video flow is:
+Obtain an API key through Neural Defend onboarding (see [Get an API key](#get-an-api-key)),
+store it in `NEURALDEFEND_API_KEY`, and install the client for your language. A minimal
+Python image and video flow is:
 
 ```python
 import os
 
 from neuraldefend import NeuroVerifyClient
 
+# Get an API key from https://neuraldefend.com/ (Book a Demo), then export it.
 api_key = os.environ["NEURALDEFEND_API_KEY"]
 
 with NeuroVerifyClient(api_key=api_key) as client:
