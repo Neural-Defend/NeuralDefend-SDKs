@@ -5,6 +5,22 @@ description: Verifies whether an image, face photo, video, or audio track may be
 
 # Media Authenticity
 
+## API key (required before any call)
+
+NeuroVerify requires a Neural Defend API key. Keys are **not** on PyPI, npm, or MCP tool
+arguments — the user must obtain one from the company website first.
+
+1. Tell the user to visit **[neuraldefend.com](https://neuraldefend.com/)** and choose
+   **Book a Demo** (or email [support@neuraldefend.com](mailto:support@neuraldefend.com)).
+2. After Neural Defend onboarding, the user stores the key in `NEURALDEFEND_API_KEY` for the
+   Python/TypeScript SDK, or in the environment of the process that launches
+   `neuraldefend-mcp`.
+3. **Never** ask the user to paste an API key into chat, a tool argument, a prompt, or a
+   committed config file. If MCP is configured, assume the key is already injected
+   server-side.
+4. If no key is configured, stop and explain the onboarding steps above before uploading
+   media.
+
 ## Authorization gate
 
 Before uploading any media, explain that it will be sent to NeuralDefend for analysis and
@@ -23,9 +39,10 @@ filesystem access. Stop if authorization is absent or ambiguous.
 2. Pass only the authorized absolute path. Never request or pass an API key as a tool
    argument.
 3. If MCP is unavailable, use the installed `neuraldefend` Python SDK with
-   `NeuroVerifyClient`, reading `NEURALDEFEND_API_KEY` from the environment. Open the
-   authorized file in binary mode and call `detect_image` or `detect_video`; do not read the
-   whole file into memory. Let the SDK own retries.
+   `NeuroVerifyClient`, reading `NEURALDEFEND_API_KEY` from the environment (obtain the key
+   from [neuraldefend.com](https://neuraldefend.com/) after onboarding). Open the authorized
+   file in binary mode and call `detect_image` or `detect_video`; do not read the whole file
+   into memory. Let the SDK own retries.
 4. Never retry a rejected result automatically. Ask for a different authorized input only
    when the user wants to continue.
 
@@ -49,6 +66,7 @@ discovered by an agent. Copy this entire `media-authenticity` directory to eithe
 - `.cursor/skills/media-authenticity/` in a project, or
 - `~/.cursor/skills/media-authenticity/` for the current user.
 
-Install and configure `neuraldefend-mcp` separately when MCP tools are desired. Its required
-`NEURALDEFEND_MCP_ALLOWED_DIRS` allowlist must contain only explicitly authorized media
-directories.
+Install and configure `neuraldefend-mcp` separately when MCP tools are desired. Request an
+API key from [neuraldefend.com](https://neuraldefend.com/) and set `NEURALDEFEND_API_KEY`
+in the MCP server environment. Its required `NEURALDEFEND_MCP_ALLOWED_DIRS` allowlist must
+contain only explicitly authorized media directories.

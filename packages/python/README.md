@@ -1,7 +1,7 @@
 # NeuralDefend Python SDK
 
 The official synchronous Python client for the NeuroVerify image and video authenticity
-API. Version `1.0.1` provides typed result objects, streaming multipart uploads, bounded
+API. Version `1.0.2` provides typed result objects, streaming multipart uploads, bounded
 retries, normalized JSON output, and explicit exceptions for operational failures.
 
 NeuroVerify returns decision-support signals for signs of spoofing, AI generation, or
@@ -22,14 +22,14 @@ policy, and human review where appropriate.
 - A NeuroVerify API key with access to the image and/or video endpoint
 - Network access to the configured HTTPS API origin
 
-This guide documents `neuraldefend==1.0.1`.
+This guide documents `neuraldefend==1.0.2`.
 
 ## Installation
 
 Install the pinned release in the same environment as your application:
 
 ```bash
-python -m pip install "neuraldefend==1.0.1"
+python -m pip install "neuraldefend==1.0.2"
 ```
 
 Confirm the package can be imported:
@@ -38,24 +38,38 @@ Confirm the package can be imported:
 python -c "from neuraldefend import NeuroVerifyClient; print('neuraldefend ready')"
 ```
 
-## API-key onboarding and configuration
+## Get an API key
 
-API keys are issued during Neural Defend onboarding. Ask your account manager or contact
-`support@neuraldefend.com` if you need a key, an endpoint scope, a staging credential, or
-your tenant's rate-limit details.
+NeuroVerify API keys are issued by **Neural Defend** after customer onboarding. There is no
+self-service key on PyPI — request access from the company first, then configure the SDK.
 
-Store the key in a secret manager or environment variable. Never commit it, place it in a
-client-side application, include it in logs, or send it in support material.
+1. Visit **[neuraldefend.com](https://neuraldefend.com/)** and choose **Book a Demo** to
+   talk with the Neural Defend team about deepfake detection, AI-generated media analysis,
+   and API access for your use case.
+2. After onboarding, Neural Defend provides an API key scoped to the image and/or video
+   endpoints you need. Existing customers can also ask their account manager for a key,
+   staging credential, or rate-limit details.
+3. Store the key in a secret manager or the `NEURALDEFEND_API_KEY` environment variable
+   (see below). Never commit it, embed it in client-side code, or paste it into logs or
+   support tickets.
+4. For REST endpoint reference while you wait for a key, see the
+   [Neural Defend API documentation](https://neuraldefend.gitbook.io/neural-defend).
+
+**Contact:** [support@neuraldefend.com](mailto:support@neuraldefend.com)
+
+## API-key configuration
 
 macOS/Linux:
 
 ```bash
+# Request a key at https://neuraldefend.com/ (Book a Demo), then export it:
 export NEURALDEFEND_API_KEY="replace-with-your-api-key"
 ```
 
 PowerShell:
 
 ```powershell
+# Request a key at https://neuraldefend.com/ (Book a Demo), then set it:
 $env:NEURALDEFEND_API_KEY = "replace-with-your-api-key"
 ```
 
@@ -64,6 +78,7 @@ The default constructor reads `NEURALDEFEND_API_KEY`:
 ```python
 from neuraldefend import NeuroVerifyClient
 
+# Requires NEURALDEFEND_API_KEY from https://neuraldefend.com/ onboarding.
 with NeuroVerifyClient() as client:
     ...
 ```
@@ -95,6 +110,7 @@ def main() -> None:
     if len(sys.argv) != 2:
         raise SystemExit("usage: python detect_image.py IMAGE_PATH")
 
+    # Get an API key from https://neuraldefend.com/ (Book a Demo), then export it.
     api_key = os.environ["NEURALDEFEND_API_KEY"]
     with NeuroVerifyClient(api_key=api_key) as client:
         result = client.detect_image(sys.argv[1])
@@ -133,6 +149,7 @@ def main() -> None:
     if len(sys.argv) != 2:
         raise SystemExit("usage: python detect_video.py VIDEO_PATH")
 
+    # Get an API key from https://neuraldefend.com/ (Book a Demo), then export it.
     api_key = os.environ["NEURALDEFEND_API_KEY"]
     with NeuroVerifyClient(api_key=api_key) as client:
         result = client.detect_video(
@@ -467,7 +484,7 @@ NeuroVerifyClient(
 - `max_retries: int`: retry count from `0` through `3`. The default `3` permits four total
   HTTP attempts.
 - `user_agent: str | None`: custom `User-Agent`; a falsey value uses
-  `neuraldefend-python/1.0.1`.
+  `neuraldefend-python/1.0.2`.
 - `allow_custom_base_url: bool`: explicit opt-in required for a non-Neural Defend origin.
   That origin receives the API key and uploaded media.
 - `transport: httpx.BaseTransport | None`: advanced transport injection, intended for

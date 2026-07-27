@@ -4,13 +4,45 @@ build-backend = "hatchling.build"
 
 [project]
 name = "neuraldefend"
-version = "1.0.1"
-description = "Official Python SDK for the NeuroVerify Detection API"
+version = "1.0.2"
+description = "Official Python SDK for Neural Defend NeuroVerify — deepfake, AI-generated image/video, and media authenticity detection"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { file = "LICENSE" }
 authors = [{ name = "Neural Defend" }]
-keywords = ["ai", "media", "authenticity", "fraud", "security"]
+keywords = [
+  "neuraldefend",
+  "neural-defend",
+  "neuroverify",
+  "deepfake",
+  "deepfake-detection",
+  "deepfake-detection-api",
+  "ai-detection",
+  "ai-generated-content",
+  "ai-generated-image-detection",
+  "ai-generated-video-detection",
+  "ai-image-detection",
+  "ai-video-detection",
+  "synthetic-media-detection",
+  "generative-ai-detection",
+  "media-authenticity",
+  "media-forensics",
+  "image-authenticity",
+  "video-authenticity",
+  "face-authenticity",
+  "spoof-detection",
+  "manipulation-detection",
+  "identity-verification",
+  "fraud-prevention",
+  "kyc",
+  "computer-vision",
+  "ai",
+  "media",
+  "authenticity",
+  "fraud",
+  "security",
+  "sdk",
+]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
@@ -23,6 +55,10 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.14",
   "Typing :: Typed",
+  "Topic :: Security",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Multimedia :: Video",
+  "Topic :: Multimedia :: Graphics",
 ]
 dependencies = [
   "httpx>=0.27,<1",
@@ -42,8 +78,11 @@ dev = [
 ]
 
 [project.urls]
+Homepage = "https://neuraldefend.com/"
+Repository = "https://github.com/Neural-Defend/NeuralDefend-SDKs"
 Documentation = "https://github.com/Neural-Defend/NeuralDefend-SDKs/tree/main/packages/python"
 Issues = "https://github.com/Neural-Defend/NeuralDefend-SDKs/issues"
+Changelog = "https://github.com/Neural-Defend/NeuralDefend-SDKs/releases"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/neuraldefend"]
