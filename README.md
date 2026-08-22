@@ -33,29 +33,77 @@ NeuroVerify API keys are issued by **Neural Defend** after customer onboarding:
 ## Quick start
 
 Obtain an API key through Neural Defend onboarding (see [Get an API key](#get-an-api-key)),
-store it in `NEURALDEFEND_API_KEY`, and install the client for your language. A minimal
-Python image and video flow is:
+store it in `NEURALDEFEND_API_KEY`, and install the client you need. Each snippet creates
+a client and runs image plus video detection.
 
-```python
-import os
+### Python
 
-from neuraldefend import NeuroVerifyClient
-
-# Get an API key from https://neuraldefend.com/ (Book a Demo), then export it.
-api_key = os.environ["NEURALDEFEND_API_KEY"]
-
-with NeuroVerifyClient(api_key=api_key) as client:
-    image = client.detect_image("selfie.jpg")
-    video = client.detect_video("clip.mp4")
-
-print(image.status, image.risk_level)
-print(video.status, video.video_risk_level, video.audio_risk_level)
+```bash
+pip install neuraldefend
 ```
 
-For equivalent Node.js and browser examples, input types, configuration, retries, and
-result handling, see the [TypeScript guide](packages/typescript/README.md). For complete
-response scenarios, see the [image API guide](docs/client/unified-face-authenticity.md)
-and [video API guide](docs/client/unified-video-authenticity.md).
+```python
+from neuraldefend import NeuroVerifyClient
+
+with NeuroVerifyClient() as client:
+    image = client.detect_image("selfie.jpg")
+    video = client.detect_video("clip.mp4")
+```
+
+### Node.js
+
+```bash
+npm install @neuraldefend/sdk
+```
+
+```js
+import { NeuroVerifyClient } from "@neuraldefend/sdk";
+
+const client = new NeuroVerifyClient();
+const image = await client.detectImage("selfie.jpg");
+const video = await client.detectVideo("clip.mp4");
+```
+
+### Browser
+
+The same `@neuraldefend/sdk` package is used; bundlers select the browser build. Pass a
+short-lived credential from your backend — never a long-lived production key.
+
+```js
+import { NeuroVerifyClient } from "@neuraldefend/sdk";
+
+const client = new NeuroVerifyClient({ apiKey });
+const image = await client.detectImage(file);
+```
+
+### MCP
+
+```bash
+pip install neuraldefend-mcp
+```
+
+```json
+{
+  "mcpServers": {
+    "neuraldefend": {
+      "command": "neuraldefend-mcp",
+      "env": {
+        "NEURALDEFEND_API_KEY": "${NEURALDEFEND_API_KEY}",
+        "NEURALDEFEND_MCP_ALLOWED_DIRS": "/absolute/path/to/authorized-media"
+      }
+    }
+  }
+}
+```
+
+The server exposes `detect_image_authenticity` and `detect_video_authenticity` for
+allowlisted local files.
+
+For input types, configuration, retries, and result handling, see the
+[Python](packages/python/README.md), [TypeScript](packages/typescript/README.md), and
+[MCP](packages/mcp/README.md) guides. For complete response scenarios, see the
+[image API guide](docs/client/unified-face-authenticity.md) and
+[video API guide](docs/client/unified-video-authenticity.md).
 
 > **Use results as decision support.** Branch on the response `status`, not HTTP 200
 > alone: rejected media may return HTTP 200 and no score. Low risk is not proof of
