@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "neuraldefend"
-version = "1.0.2"
+version = "1.0.3"
 description = "Official Python SDK for Neural Defend NeuroVerify — deepfake, AI-generated image/video, and media authenticity detection"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -71,9 +71,9 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
   "build>=1.2",
-  "mypy>=1.10,<2",
+  "mypy>=1.10,<3",
   "pytest>=8",
-  "ruff==0.16.0",
+  "ruff==0.16.1",
   "twine>=5",
 ]
 

@@ -5,6 +5,16 @@ All notable changes to `neuraldefend-mcp` are documented here. This project foll
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-08-22
+
+### Changed
+
+- Upgraded the MCP Python SDK dependency from v1 to v2 (`mcp>=2.0.0,<3`). `FastMCP`
+  is now `MCPServer` (`mcp.server.mcpserver`), and Python-side `CallToolResult` fields
+  use snake_case (`structured_content`, `is_error`). The JSON wire format is unchanged.
+- Raised the minimum `neuraldefend` dependency to `1.0.3`.
+- Pinned ruff to `0.16.1` in dev dependencies for parity with the Python SDK.
+
 ## [1.0.2] - 2026-07-27
 
 ### Changed
@@ -49,7 +59,8 @@ All notable changes to `neuraldefend-mcp` are documented here. This project foll
 
 Spec source: `494fc8c88585e0920efe54b41f3f8d355025c475` (`public.yaml` 1.0.0).
 
-[Unreleased]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/mcp-v1.0.2...HEAD
+[Unreleased]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/mcp-v2.0.0...HEAD
+[2.0.0]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/mcp-v1.0.2...mcp-v2.0.0
 [1.0.2]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/mcp-v1.0.1...mcp-v1.0.2
 [1.0.1]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/mcp-v1.0.0...mcp-v1.0.1
 [1.0.0]: https://github.com/Neural-Defend/NeuralDefend-SDKs/releases/tag/mcp-v1.0.0

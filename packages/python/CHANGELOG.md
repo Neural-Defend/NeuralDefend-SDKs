@@ -4,6 +4,12 @@ All notable changes to this package follow Keep a Changelog and Semantic Version
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-08-22
+
+### Changed
+
+- Relaxed the mypy dev dependency upper bound to `<3` and pinned ruff to `0.16.1`.
+
 ## [1.0.2] - 2026-07-27
 
 ### Changed
@@ -44,7 +50,8 @@ All notable changes to this package follow Keep a Changelog and Semantic Version
 Contract: NeuroVerify OpenAPI 1.0.0 from source commit
 `494fc8c88585e0920efe54b41f3f8d355025c475`.
 
-[Unreleased]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/python-v1.0.2...HEAD
+[Unreleased]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/python-v1.0.3...HEAD
+[1.0.3]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/python-v1.0.2...python-v1.0.3
 [1.0.2]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/python-v1.0.1...python-v1.0.2
 [1.0.1]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/python-v1.0.0...python-v1.0.1
 [1.0.0]: https://github.com/Neural-Defend/NeuralDefend-SDKs/releases/tag/python-v1.0.0

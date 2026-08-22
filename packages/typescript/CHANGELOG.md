@@ -5,6 +5,13 @@ and Semantic Versioning.
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-08-22
+
+### Changed
+
+- Updated dev dependencies: `@types/node` to `26.1.2`, `publint` to `0.3.23`, and
+  `nanoid` to `3.3.18`.
+
 ## [1.0.3] - 2026-07-27
 
 ### Changed
@@ -63,7 +70,8 @@ and Semantic Versioning.
 Built against public API specification 1.0.0 from source commit
 `494fc8c88585e0920efe54b41f3f8d355025c475`.
 
-[Unreleased]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/ts-v1.0.3...HEAD
+[Unreleased]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/ts-v1.0.4...HEAD
+[1.0.4]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/ts-v1.0.3...ts-v1.0.4
 [1.0.3]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/ts-v1.0.2...ts-v1.0.3
 [1.0.2]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/ts-v1.0.1...ts-v1.0.2
 [1.0.1]: https://github.com/Neural-Defend/NeuralDefend-SDKs/compare/ts-v1.0.0...ts-v1.0.1

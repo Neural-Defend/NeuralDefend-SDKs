@@ -17,7 +17,7 @@ evidence, policy checks, and human review appropriate to your use case.
 
 ## Requirements
 
-- `@neuraldefend/sdk` version `1.0.3`
+- `@neuraldefend/sdk` version `1.0.4`
 - Node.js 22 or newer for server-side use
 - A current evergreen browser for browser use
 - A Neural Defend API key with access to the image and/or video endpoint
@@ -27,7 +27,7 @@ The package has no runtime dependencies.
 ## Installation
 
 ```sh
-npm install @neuraldefend/sdk@1.0.3
+npm install @neuraldefend/sdk@1.0.4
 ```
 
 The package supports ESM imports and CommonJS `require()` in Node.js. Bundlers
@@ -283,7 +283,7 @@ Constructor options:
 - `retryAfterCapMs?: number` — maximum wait applied to a `Retry-After` value.
   Default: `60000`. Negative values are normalized to `0`.
 - `userAgent?: string` — Node.js user agent override. The Node.js default for
-  this release is `@neuraldefend/sdk/1.0.3`; browsers cannot set this header
+  this release is `@neuraldefend/sdk/1.0.4`; browsers cannot set this header
   through the SDK.
 - `fetch?: typeof globalThis.fetch` — custom Fetch-compatible implementation,
   primarily for controlled runtimes and testing.
