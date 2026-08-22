@@ -172,8 +172,8 @@ def test_fastmcp_result_uses_same_internal_object_for_both_channels() -> None:
     outcome = image_outcome(_fixture("image", "documented", "medium-risk"), ())
     result = _call_result(outcome)
     assert result.content[0].text == outcome.text()  # type: ignore[union-attr]
-    assert result.structuredContent == outcome.structured()
-    assert result.isError is False
+    assert result.structured_content == outcome.structured()
+    assert result.is_error is False
 
 
 def test_unknown_status_becomes_sanitized_protocol_error() -> None:

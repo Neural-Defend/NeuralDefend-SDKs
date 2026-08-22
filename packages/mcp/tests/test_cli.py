@@ -60,6 +60,6 @@ async def test_stdio_protocol_lists_and_calls_tools(tmp_path: Path) -> None:
                 "detect_image_authenticity",
                 {"file_path": str(tmp_path / "missing.jpg")},
             )
-            assert result.isError
-            assert result.structuredContent is not None
-            assert result.structuredContent["error"]["code"] == "local_validation"
+            assert result.is_error
+            assert result.structured_content is not None
+            assert result.structured_content["error"]["code"] == "local_validation"
