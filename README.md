@@ -13,7 +13,7 @@ for signs of AI generation, manipulation, spoofing, and related authenticity ris
 |---|---|---|---|
 | [Python `neuraldefend` 1.0.3](https://pypi.org/project/neuraldefend/1.0.3/) | Python services and scripts (Python 3.9+) | `pip install neuraldefend` | [Python SDK](packages/python/README.md) |
 | [TypeScript `@neuraldefend/sdk` 1.0.4](https://www.npmjs.com/package/@neuraldefend/sdk/v/1.0.4) | Node.js 22+ and evergreen browsers | `npm install @neuraldefend/sdk` | [TypeScript SDK](packages/typescript/README.md) |
-| [MCP `neuraldefend-mcp` 1.0.3](https://pypi.org/project/neuraldefend-mcp/1.0.3/) | MCP-compatible agents and tools (Python 3.10+) | `pip install neuraldefend-mcp` | [MCP server](packages/mcp/README.md) |
+| [MCP `neuraldefend-mcp` 2.0.0](https://pypi.org/project/neuraldefend-mcp/2.0.0/) | MCP-compatible agents and tools (Python 3.10+) | `pip install neuraldefend-mcp` | [MCP server](packages/mcp/README.md) |
 
 Use the Python or TypeScript SDK for application code. Use the MCP server when an agent
 needs controlled access to authorized local media; it requires an explicit directory

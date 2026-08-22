@@ -1,4 +1,4 @@
-# 0005. Post-process OpenAPI Generator 7.14.0 Python template debt
+# 0006. Post-process OpenAPI Generator 7.14.0 Python template debt
 
 - **Status:** Accepted
 - **Date:** 2026-08-22

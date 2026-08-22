@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "neuraldefend-mcp"
-version = "1.0.3"
+version = "2.0.0"
 description = "Secure MCP server for Neural Defend NeuroVerify — deepfake and AI-generated media detection for MCP agents"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -62,7 +62,7 @@ classifiers = [
 dependencies = [
   "anyio>=4.14.2,<5",
   "mcp>=2.0.0,<3",
-  "neuraldefend>=1.0.2,<2",
+  "neuraldefend>=1.0.3,<2",
 ]
 
 [project.optional-dependencies]
