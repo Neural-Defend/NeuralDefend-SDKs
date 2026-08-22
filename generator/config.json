@@ -2,5 +2,10 @@
   "schema_version": 1,
   "generator_version": "7.14.0",
   "image_repository": "openapitools/openapi-generator-cli",
-  "image_digest": "sha256:a620610d9fabf7ce05310c648417ba168125aac2f4517580030e115921ac1a52"
+  "image_digest": "sha256:a620610d9fabf7ce05310c648417ba168125aac2f4517580030e115921ac1a52",
+  "accepted_upstream_debt": {
+    "summary": "OpenAPI Generator 7.14.0 Python templates still emit pydantic-v1-style to_json helpers and a Java-era long type mapping with TODO comments.",
+    "remediation": "scripts/generate.py post-processes these after Docker generation. Revisit when upgrading past 7.21.0, which fixes to_json upstream.",
+    "tracked_in": "docs/adr/0005-postprocess-python-generator-debt.md"
+  }
 }

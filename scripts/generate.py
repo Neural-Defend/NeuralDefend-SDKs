@@ -23,6 +23,15 @@ TYPESCRIPT_CONFIG = REPO_ROOT / "generator" / "typescript.json"
 PYTHON_DESTINATION = REPO_ROOT / "packages" / "python" / "src" / "neuraldefend" / "_core"
 TYPESCRIPT_DESTINATION = REPO_ROOT / "packages" / "typescript" / "src" / "core"
 DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
+_TO_JSON_LEGACY = (
+    "        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead\n"
+    "        return json.dumps(self.to_dict())"
+)
+_TO_JSON_PYDANTIC_V2 = (
+    "        return self.model_dump_json(by_alias=True, exclude_unset=True)"
+)
+_LONG_LEGACY = "'long': int, # TODO remove as only py3 is supported?"
+_LONG_CLEAN = "'long': int,"
 
 
 def _load_object(path: Path) -> dict[str, Any]:
@@ -148,6 +157,32 @@ def _combined_text(root: Path) -> str:
     return "\n".join(chunks)
 
 
+def _postprocess_python_generated(root: Path) -> None:
+    """Apply stable fixes for known OpenAPI Generator 7.14.0 Python template debt."""
+
+    if not root.is_dir():
+        raise SpecError(f"Python generator output is missing: {root}")
+
+    models_dir = root / "models"
+    if models_dir.is_dir():
+        for path in models_dir.glob("*.py"):
+            text = path.read_text(encoding="utf-8")
+            if _TO_JSON_LEGACY in text:
+                path.write_text(
+                    text.replace(_TO_JSON_LEGACY, _TO_JSON_PYDANTIC_V2),
+                    encoding="utf-8",
+                )
+
+    api_client = root / "api_client.py"
+    if api_client.is_file():
+        text = api_client.read_text(encoding="utf-8")
+        if _LONG_LEGACY in text:
+            api_client.write_text(
+                text.replace(_LONG_LEGACY, _LONG_CLEAN),
+                encoding="utf-8",
+            )
+
+
 def _assert_generated_contract(python_source: Path, typescript_source: Path) -> None:
     python_text = _combined_text(python_source)
     typescript_text = _combined_text(typescript_source)
@@ -203,6 +238,7 @@ def generate_snapshot(snapshot: Path) -> None:
         if not typescript_source.is_dir():
             raise SpecError(f"TypeScript generator output is missing: {typescript_source}")
         _assert_generated_contract(python_source, typescript_source)
+        _postprocess_python_generated(python_source)
         leaked_generated_artifacts = [
             path
             for path in (python_source / "test", python_source / "docs")
