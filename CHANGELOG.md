@@ -13,6 +13,16 @@ surface.
 
 ## [Unreleased]
 
+### Changed
+
+- Pinned GitHub Actions to current major releases (`actions/checkout` v7,
+  `actions/setup-python` and `actions/setup-node` v7, `actions/upload-artifact` v7,
+  `actions/download-artifact` v8) across CI, release, spec-sync, and security workflows.
+- Updated Python dev tooling pins (`mypy<3`, `ruff==0.16.1`), TypeScript dev dependencies
+  (`@types/node`, `publint`, `nanoid`), and grouped GitHub Actions updates in Dependabot.
+- Prepared patch releases: `neuraldefend` 1.0.3, `@neuraldefend/sdk` 1.0.4, and
+  `neuraldefend-mcp` 1.0.3.
+
 ### Added
 
 - OpenAPI contract (`spec/`) and endpoint documentation (`docs/client/`).

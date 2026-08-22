@@ -1,6 +1,6 @@
 {
   "name": "@neuraldefend/sdk",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Browser and Node.js SDK for Neural Defend NeuroVerify — deepfake and AI-generated media authenticity detection",
   "license": "MIT",
   "author": "Neural Defend",
