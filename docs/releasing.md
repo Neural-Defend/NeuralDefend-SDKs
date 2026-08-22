@@ -28,7 +28,8 @@ repository does not publish anything.
    retain registry publication tokens.
 6. Set repository variables `SPEC_SOURCE_REPOSITORY` and `SPEC_SOURCE_REF` (the production
    API branch), plus secret `SDK_SPEC_SYNC_TOKEN`, so the scheduled workflow can read the
-   private API repository.
+   private API repository. The scheduled `spec-sync` workflow fails loudly when any of
+   these are missing; it does not skip sync silently.
 7. Add `NEURALDEFEND_STAGING_API_KEY` to the protected `staging` environment.
 8. Protect `main` with pull-request reviews and required checks. Restrict creation,
    update, and deletion of `python-v*`, `ts-v*`, and `mcp-v*` tags to release managers.
@@ -39,6 +40,35 @@ Before making the repository public, scan the complete Git history—not only th
 tree—for credentials, customer media, biometric data, internal model details, and private
 infrastructure identifiers. Rewriting or squashing history is a separate destructive
 operation and requires explicit approval.
+
+## Spec synchronization credentials
+
+The scheduled `spec-sync` workflow and `python scripts/sync_spec.py --from-github`
+require all of the following:
+
+| Name | Kind | Purpose |
+| --- | --- | --- |
+| `SPEC_SOURCE_REPOSITORY` | repository variable | Private API repo as `owner/repo` |
+| `SPEC_SOURCE_REF` | repository variable | Production API branch or tag |
+| `SDK_SPEC_SYNC_TOKEN` | repository secret | GitHub token with read access to the private API repo (`GH_TOKEN` for local sync) |
+
+If any value is unset, `spec-sync.yml` exits with an explicit error before attempting
+sync. Local developers without the token can still sync from a local API checkout:
+
+```bash
+python scripts/sync_spec.py --from-path /path/to/private-api-checkout
+```
+
+Verify GitHub configuration before relying on automation:
+
+```bash
+# Repository variables (visible in repo Settings → Secrets and variables → Actions)
+test -n "${SPEC_SOURCE_REPOSITORY:-}" && echo "SPEC_SOURCE_REPOSITORY is set" \
+  || echo "SPEC_SOURCE_REPOSITORY is missing"
+test -n "${SPEC_SOURCE_REF:-}" && echo "SPEC_SOURCE_REF is set" \
+  || echo "SPEC_SOURCE_REF is missing"
+# Secret presence cannot be echoed; confirm SDK_SPEC_SYNC_TOKEN in repository secrets.
+```
 
 ## Before every release
 

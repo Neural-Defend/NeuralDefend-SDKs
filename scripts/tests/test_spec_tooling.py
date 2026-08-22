@@ -270,6 +270,40 @@ class GeneratorTests(unittest.TestCase):
                 },
             )
 
+    def test_python_postprocess_replaces_generator_todos(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "_core"
+            models = root / "models"
+            models.mkdir(parents=True)
+            (models / "sample.py").write_text(
+                "\n".join(
+                    [
+                        "    def to_json(self) -> str:",
+                        '        """Returns the JSON representation of the model using alias"""',
+                        "        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead",
+                        "        return json.dumps(self.to_dict())",
+                    ]
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            (root / "api_client.py").write_text(
+                "        'long': int, # TODO remove as only py3 is supported?\n",
+                encoding="utf-8",
+            )
+
+            generate._postprocess_python_generated(root)
+
+            model_text = (models / "sample.py").read_text(encoding="utf-8")
+            self.assertNotIn("TODO", model_text)
+            self.assertIn(
+                "return self.model_dump_json(by_alias=True, exclude_unset=True)",
+                model_text,
+            )
+            api_client_text = (root / "api_client.py").read_text(encoding="utf-8")
+            self.assertNotIn("TODO", api_client_text)
+            self.assertIn("'long': int,", api_client_text)
+
 
 if __name__ == "__main__":
     unittest.main()
