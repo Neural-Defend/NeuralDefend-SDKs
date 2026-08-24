@@ -8,8 +8,8 @@ data disclosure are higher risks than implementation convenience.
 1. Read the API behaviours and response scenarios in `docs/client/`.
 2. Treat `spec/public.yaml` as generated input. Never edit either spec file by hand.
 3. Never edit `packages/python/src/neuraldefend/_core/`,
-   `packages/typescript/src/core/`, or `packages/go/internal/core/`; regenerate them with
-   `scripts/generate.py`.
+   `packages/typescript/src/core/`, or the Go generated contract tree under
+   `packages/go/` (see ADR-0007); regenerate them with `scripts/generate.py`.
 4. Never commit API keys, customer media, biometric data, build outputs, or local
    environment files.
 
