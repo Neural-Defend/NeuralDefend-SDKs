@@ -20,21 +20,22 @@ import (
 	"os"
 )
 
+
 type VideoAuthenticityAPI interface {
 
 	/*
-		DetectVideo Score the authenticity of a video and its audio track
+	DetectVideo Score the authenticity of a video and its audio track
 
-		Analyzes a video and returns independent risk scores for the video and audio modalities, each with its own risk band and message.
+	Analyzes a video and returns independent risk scores for the video and audio modalities, each with its own risk band and message.
 
-	**Requirements.** MP4, AVI, MOV, MKV, WMV, FLV, WebM, OGG, or OGV. Maximum 1.5 GB. Frames are sampled uniformly, 12 by default. Frames containing several faces are skipped; if no single-face frames remain, the response is a rejection with `status_code: 6` on HTTP 200, and it is billable.
+**Requirements.** MP4, AVI, MOV, MKV, WMV, FLV, WebM, OGG, or OGV. Maximum 1.5 GB. Frames are sampled uniformly, 12 by default. Frames containing several faces are skipped; if no single-face frames remain, the response is a rejection with `status_code: 6` on HTTP 200, and it is billable.
 
-	**Reading the result.** Video and audio are scored separately and no combined score is returned. Derive one client-side when you need it, for example max(video_risk_score, audio_risk_score or 0). Silent videos return null audio scores with `audio_message` set to "No audio track detected"; this is a success, not an error.
+**Reading the result.** Video and audio are scored separately and no combined score is returned. Derive one client-side when you need it, for example max(video_risk_score, audio_risk_score or 0). Silent videos return null audio scores with `audio_message` set to "No audio track detected"; this is a success, not an error.
 
-	Every request produces a new `unique_trx_id`; requests are not idempotent.
+Every request produces a new `unique_trx_id`; requests are not idempotent.
 
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@return ApiDetectVideoRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiDetectVideoRequest
 	*/
 	DetectVideo(ctx context.Context) ApiDetectVideoRequest
 
@@ -47,10 +48,10 @@ type VideoAuthenticityAPI interface {
 type VideoAuthenticityAPIService service
 
 type ApiDetectVideoRequest struct {
-	ctx        context.Context
+	ctx context.Context
 	ApiService VideoAuthenticityAPI
-	file       *os.File
-	maxFrames  *int32
+	file *os.File
+	maxFrames *int32
 	sampleRate *int32
 }
 
@@ -87,25 +88,24 @@ Analyzes a video and returns independent risk scores for the video and audio mod
 
 Every request produces a new `unique_trx_id`; requests are not idempotent.
 
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiDetectVideoRequest
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return ApiDetectVideoRequest
 */
 func (a *VideoAuthenticityAPIService) DetectVideo(ctx context.Context) ApiDetectVideoRequest {
 	return ApiDetectVideoRequest{
 		ApiService: a,
-		ctx:        ctx,
+		ctx: ctx,
 	}
 }
 
 // Execute executes the request
-//
-//	@return DetectVideoResponse
+//  @return DetectVideoResponse
 func (a *VideoAuthenticityAPIService) DetectVideoExecute(r ApiDetectVideoRequest) (*DetectVideoResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod  = http.MethodPost
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue *DetectVideoResponse
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *DetectVideoResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "VideoAuthenticityAPIService.DetectVideo")
@@ -146,8 +146,8 @@ func (a *VideoAuthenticityAPIService) DetectVideoExecute(r ApiDetectVideoRequest
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	var fileLocalVarFormFileName string
-	var fileLocalVarFileName string
-	var fileLocalVarFileBytes []byte
+	var fileLocalVarFileName     string
+	var fileLocalVarFileBytes    []byte
 
 	fileLocalVarFormFileName = "file"
 	fileLocalVarFile := r.file
@@ -203,8 +203,8 @@ func (a *VideoAuthenticityAPIService) DetectVideoExecute(r ApiDetectVideoRequest
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 401 {
@@ -214,8 +214,8 @@ func (a *VideoAuthenticityAPIService) DetectVideoExecute(r ApiDetectVideoRequest
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 403 {
@@ -225,8 +225,8 @@ func (a *VideoAuthenticityAPIService) DetectVideoExecute(r ApiDetectVideoRequest
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 429 {
@@ -236,8 +236,8 @@ func (a *VideoAuthenticityAPIService) DetectVideoExecute(r ApiDetectVideoRequest
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 500 {
@@ -247,8 +247,8 @@ func (a *VideoAuthenticityAPIService) DetectVideoExecute(r ApiDetectVideoRequest
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 503 {
@@ -258,8 +258,8 @@ func (a *VideoAuthenticityAPIService) DetectVideoExecute(r ApiDetectVideoRequest
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

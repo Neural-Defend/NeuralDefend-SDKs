@@ -20,21 +20,22 @@ import (
 	"os"
 )
 
+
 type ImageAuthenticityAPI interface {
 
 	/*
-		DetectImage Score the authenticity of a face image
+	DetectImage Score the authenticity of a face image
 
-		Analyzes a single-face image and returns an opaque authenticity risk score with a risk band and a human-readable message.
+	Analyzes a single-face image and returns an opaque authenticity risk score with a risk band and a human-readable message.
 
-	**Requirements.** JPEG, PNG, BMP, TIFF, WebP, or HEIC. Maximum 10 MB, minimum 224x224 pixels, exactly one face. EXIF rotation is corrected automatically. Images with no face or several faces return `status: "rejected"` on HTTP 200 and are billable.
+**Requirements.** JPEG, PNG, BMP, TIFF, WebP, or HEIC. Maximum 10 MB, minimum 224x224 pixels, exactly one face. EXIF rotation is corrected automatically. Images with no face or several faces return `status: "rejected"` on HTTP 200 and are billable.
 
-	**Reading the result.** Branch on `status` first, then apply business rules to `risk_level` rather than to `risk_score`, since band thresholds may be tuned.
+**Reading the result.** Branch on `status` first, then apply business rules to `risk_level` rather than to `risk_score`, since band thresholds may be tuned.
 
-	Every request produces a new `unique_trx_id`; requests are not idempotent.
+Every request produces a new `unique_trx_id`; requests are not idempotent.
 
-		@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-		@return ApiDetectImageRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiDetectImageRequest
 	*/
 	DetectImage(ctx context.Context) ApiDetectImageRequest
 
@@ -47,9 +48,9 @@ type ImageAuthenticityAPI interface {
 type ImageAuthenticityAPIService service
 
 type ApiDetectImageRequest struct {
-	ctx        context.Context
+	ctx context.Context
 	ApiService ImageAuthenticityAPI
-	file       *os.File
+	file *os.File
 }
 
 // Image to analyze.
@@ -73,25 +74,24 @@ Analyzes a single-face image and returns an opaque authenticity risk score with 
 
 Every request produces a new `unique_trx_id`; requests are not idempotent.
 
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiDetectImageRequest
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return ApiDetectImageRequest
 */
 func (a *ImageAuthenticityAPIService) DetectImage(ctx context.Context) ApiDetectImageRequest {
 	return ApiDetectImageRequest{
 		ApiService: a,
-		ctx:        ctx,
+		ctx: ctx,
 	}
 }
 
 // Execute executes the request
-//
-//	@return DetectImageResponse
+//  @return DetectImageResponse
 func (a *ImageAuthenticityAPIService) DetectImageExecute(r ApiDetectImageRequest) (*DetectImageResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod  = http.MethodPost
-		localVarPostBody    interface{}
-		formFiles           []formFile
-		localVarReturnValue *DetectImageResponse
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *DetectImageResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ImageAuthenticityAPIService.DetectImage")
@@ -126,8 +126,8 @@ func (a *ImageAuthenticityAPIService) DetectImageExecute(r ApiDetectImageRequest
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	var fileLocalVarFormFileName string
-	var fileLocalVarFileName string
-	var fileLocalVarFileBytes []byte
+	var fileLocalVarFileName     string
+	var fileLocalVarFileBytes    []byte
 
 	fileLocalVarFormFileName = "file"
 	fileLocalVarFile := r.file
@@ -183,8 +183,8 @@ func (a *ImageAuthenticityAPIService) DetectImageExecute(r ApiDetectImageRequest
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 401 {
@@ -194,8 +194,8 @@ func (a *ImageAuthenticityAPIService) DetectImageExecute(r ApiDetectImageRequest
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 403 {
@@ -205,8 +205,8 @@ func (a *ImageAuthenticityAPIService) DetectImageExecute(r ApiDetectImageRequest
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 429 {
@@ -216,8 +216,8 @@ func (a *ImageAuthenticityAPIService) DetectImageExecute(r ApiDetectImageRequest
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 500 {
@@ -227,8 +227,8 @@ func (a *ImageAuthenticityAPIService) DetectImageExecute(r ApiDetectImageRequest
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 503 {
@@ -238,8 +238,8 @@ func (a *ImageAuthenticityAPIService) DetectImageExecute(r ApiDetectImageRequest
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-			newErr.model = v
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
