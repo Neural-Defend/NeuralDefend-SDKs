@@ -1,8 +1,9 @@
 # Release runbook
 
-The Python and TypeScript SDKs release independently. The MCP package depends on the
+The Python, TypeScript, and Go SDKs release independently. The MCP package depends on the
 published Python SDK and must be released after a compatible Python version is available
-on PyPI. Publishing requires an explicit protected-environment approval; building this
+on PyPI. Publishing requires an explicit protected-environment approval for PyPI and npm;
+the Go SDK publishes through GitHub tags and the public Go module proxy. Building this
 repository does not publish anything.
 
 ## One-time setup
@@ -32,7 +33,8 @@ repository does not publish anything.
    these are missing; it does not skip sync silently.
 7. Add `NEURALDEFEND_STAGING_API_KEY` to the protected `staging` environment.
 8. Protect `main` with pull-request reviews and required checks. Restrict creation,
-   update, and deletion of `python-v*`, `ts-v*`, and `mcp-v*` tags to release managers.
+   update, and deletion of `python-v*`, `ts-v*`, `mcp-v*`, and `packages/go/v*` tags to
+   release managers.
 9. Enable secret scanning, push protection, Dependabot security updates, and required CI
    checks.
 
@@ -74,7 +76,7 @@ test -n "${SPEC_SOURCE_REF:-}" && echo "SPEC_SOURCE_REF is set" \
 
 1. Synchronize and validate the spec; confirm `spec/SPEC_SOURCE.json` names the intended
    immutable source commit.
-2. Regenerate both private cores and require `scripts/check_generated.py` to report no
+2. Regenerate all private cores and require `scripts/check_generated.py` to report no
    drift.
 3. Run all lint, type, contract, security, package-content, and clean-install checks.
    Linux Python release jobs install `constraints/release.txt` with hash verification and
@@ -88,6 +90,7 @@ test -n "${SPEC_SOURCE_REF:-}" && echo "SPEC_SOURCE_REF is set" \
    - `python-vX.Y.Z`
    - `ts-vX.Y.Z`
    - `mcp-vX.Y.Z`
+   - `packages/go/vX.Y.Z`
 7. Inspect the wheel/sdist or npm tarball before approving the protected release job.
 8. Run each release workflow manually in dry-run mode and retain its artifacts for review.
 
@@ -102,6 +105,11 @@ time and verify the registry before proceeding:
 1. `python-vX.Y.Z`
 2. `mcp-vX.Y.Z` after `neuraldefend==X.Y.Z` is installable from PyPI
 3. `ts-vX.Y.Z`
+4. `packages/go/vX.Y.Z` after the commit is on the default branch
+
+The Go tag uses the module path prefix so `go get` resolves the version from the public
+module proxy. No registry approval step is required; verify `go get` in a clean module
+after the tag is pushed.
 
 Stable tags must exactly match package metadata. Do not publish a prerelease to npm without
 an explicit non-`latest` dist-tag.
@@ -114,8 +122,9 @@ an explicit non-`latest` dist-tag.
    `neuraldefend-mcp` and `python -m neuraldefend_mcp`.
 3. Install the exact npm package into clean ESM, CommonJS, TypeScript, and browser-bundle
    consumers.
-4. Run approved staging smoke tests against the published artifacts.
-5. Publish release notes, checksums, SBOMs, and provenance links.
+4. Install the exact Go module version with `go get` in a clean module.
+5. Run approved staging smoke tests against the published artifacts.
+6. Publish release notes, checksums, SBOMs, and provenance links.
 
 Registry releases are immutable. If a defect is found, stop rollout and publish a patched
 version; yank/deprecate the affected version only when necessary and document the reason.

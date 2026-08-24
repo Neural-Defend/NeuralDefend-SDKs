@@ -1,11 +1,12 @@
 # Changelog
 
-Repository-level changes. Each package also keeps its own changelog, because the three
-version lines are independent and an SDK version is not the API version:
+Repository-level changes. Each package also keeps its own changelog, because the version
+lines are independent and an SDK version is not the API version:
 
 - `packages/python/CHANGELOG.md` — tagged `python-v*`
 - `packages/typescript/CHANGELOG.md` — tagged `ts-v*`
 - `packages/mcp/CHANGELOG.md` — tagged `mcp-v*`
+- `packages/go/CHANGELOG.md` — tagged `packages/go/v*`
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), judged from the facade's public
@@ -30,7 +31,13 @@ surface.
 
 ### Added
 
+- Public Go SDK (`packages/go`) v1.0.0 with streaming multipart uploads, typed results,
+  bounded retries, and private generated core under `internal/core/` (ADR-0007).
+- OpenAPI Generator Go output integrated into `scripts/generate.py` and
+  `scripts/check_generated.py`.
+- `release-go.yml` CI workflow and Go test job in `test.yml`.
 - `docs/RELEASE_CHECKLIST.md` for publish prerequisites (trusted publishers, protected
   environments, spec-sync secrets, SBOM retention).
-- ADR-0005 (MCP Python SDK v2) and ADR-0006 (generator post-processing).
+- ADR-0005 (MCP Python SDK v2), ADR-0006 (generator post-processing), and ADR-0007
+  (Go SDK).
 - Spec-sync credential requirements documented in `docs/releasing.md`.

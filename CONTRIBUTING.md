@@ -7,8 +7,9 @@ data disclosure are higher risks than implementation convenience.
 
 1. Read the API behaviours and response scenarios in `docs/client/`.
 2. Treat `spec/public.yaml` as generated input. Never edit either spec file by hand.
-3. Never edit `packages/python/src/neuraldefend/_core/` or
-   `packages/typescript/src/core/`; regenerate them with `scripts/generate.py`.
+3. Never edit `packages/python/src/neuraldefend/_core/`,
+   `packages/typescript/src/core/`, or `packages/go/internal/core/`; regenerate them with
+   `scripts/generate.py`.
 4. Never commit API keys, customer media, biometric data, build outputs, or local
    environment files.
 
@@ -29,7 +30,7 @@ README. Contract changes require:
 - a refreshed spec with `spec/SPEC_SOURCE.json`;
 - regenerated private cores;
 - a language-neutral fixture under `tests/fixtures/`; and
-- equivalent Python and TypeScript tests.
+- equivalent Python, TypeScript, and Go tests.
 
 Generated-code, package-content, secret, and internal-term checks must pass before merge.
 

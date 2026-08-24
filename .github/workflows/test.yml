@@ -120,6 +120,27 @@ jobs:
           npm run validate:package
           npm run pack:dry-run
 
+  go:
+    name: Go 1.22
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Go
+        uses: actions/setup-go@40a34667e17db6e8fbe8d8eaca2a746f067be55 # v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: packages/go/go.mod
+      - name: Vet Go SDK
+        working-directory: packages/go
+        run: go vet ./...
+      - name: Test Go SDK
+        working-directory: packages/go
+        run: go test ./...
+
   python-platforms:
     name: Python 3.14 ${{ matrix.os }}
     runs-on: ${{ matrix.os }}

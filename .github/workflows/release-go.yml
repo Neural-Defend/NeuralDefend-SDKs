@@ -1,0 +1,115 @@
+name: Release Go SDK
+
+on:
+  push:
+    tags:
+      - "packages/go/v*"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build and validate only; manual runs never publish
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-go-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Enforce manual dry-run
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run != true
+        run: |
+          echo "::error::workflow_dispatch is restricted to an explicit dry run."
+          exit 1
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Go
+        uses: actions/setup-go@40a34667e17db6e8fbe8d8eaca2a746f067be55 # v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: packages/go/go.mod
+      - name: Verify tag matches package version
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          expected="${GITHUB_REF_NAME#packages/go/v}"
+          actual="$(python - <<'PY'
+          from pathlib import Path
+
+          for line in Path("packages/go/version.go").read_text(encoding="utf-8").splitlines():
+              if "Version" in line and "=" in line:
+                  print(line.split("=")[1].strip().strip('"'))
+                  break
+          PY
+          )"
+          if [[ "$expected" != "$actual" ]]; then
+            echo "::error::Tag version '$expected' does not match Go package version '$actual'."
+            exit 1
+          fi
+      - name: Validate package version consistency
+        run: python scripts/validate_versions.py
+      - name: Require release tag on the default branch
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          git fetch --no-tags origin "${{ github.event.repository.default_branch }}"
+          git merge-base --is-ancestor "$GITHUB_SHA" "origin/${{ github.event.repository.default_branch }}" || {
+            echo "::error::Release tags must point to a commit on the default branch."
+            exit 1
+          }
+      - name: Test Go SDK
+        working-directory: packages/go
+        run: |
+          go vet ./...
+          go test ./...
+      - name: Upload module tree
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: go-module
+          path: packages/go
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Resolve release version
+        id: version
+        shell: bash
+        run: |
+          tag="${GITHUB_REF_NAME#packages/go/v}"
+          echo "version=$tag" >> "$GITHUB_OUTPUT"
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@be6939fe1549c7a877c7a2b6a087f3b2d4a58b70 # v2
+        with:
+          name: Go SDK ${{ steps.version.outputs.version }}
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true
+          body: |
+            Install with:
+
+            ```bash
+            go get github.com/Neural-Defend/NeuralDefend-SDKs/packages/go@v${{ steps.version.outputs.version }}
+            ```
+
+            See [packages/go/README.md](https://github.com/Neural-Defend/NeuralDefend-SDKs/tree/main/packages/go/README.md).

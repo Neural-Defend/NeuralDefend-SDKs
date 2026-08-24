@@ -75,12 +75,21 @@ def validate() -> None:
     )
     user_agent = re.search(r'@neuraldefend/sdk/([^"]+)"', client_source)
 
+    go_version = ""
+    for line in (ROOT / "packages/go/version.go").read_text(encoding="utf-8").splitlines():
+        if "Version" in line and "=" in line:
+            go_version = line.split("=")[1].strip().strip('"')
+            break
+    if not go_version:
+        raise ValueError("packages/go/version.go: missing Version constant")
+
     versions = {
         "Python manifest": python_version,
         "Python runtime": python_runtime,
         "MCP manifest": mcp_version,
         "MCP runtime": mcp_runtime,
         "TypeScript manifest": typescript_version,
+        "Go runtime": go_version,
     }
     invalid = {
         name: value for name, value in versions.items() if not SEMVER.fullmatch(value)
