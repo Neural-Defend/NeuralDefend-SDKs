@@ -1,7 +1,7 @@
 # Release checklist
 
-Concise pre-flight list for `python-v*`, `ts-v*`, and `mcp-v*` patch releases. Full
-context lives in [releasing.md](releasing.md).
+Concise pre-flight list for `python-v*`, `ts-v*`, `mcp-v*`, and `packages/go/v*` patch
+releases. Full context lives in [releasing.md](releasing.md).
 
 ## One-time registry and environment setup
 
@@ -14,8 +14,8 @@ context lives in [releasing.md](releasing.md).
 - [ ] **Protected environments** — `pypi`, `npm`, `mcp-pypi`, and `staging` require
   company reviewers, self-review prevention, and no administrator bypass.
 - [ ] **Tag protection** — restrict creation, update, and deletion of `python-v*`,
-  `ts-v*`, and `mcp-v*` tags to release managers; protect `main` with required reviews
-  and CI checks.
+  `ts-v*`, `mcp-v*`, and `packages/go/v*` tags to release managers; protect `main` with
+  required reviews and CI checks.
 - [ ] **Spec-sync secrets** — set repository variables `SPEC_SOURCE_REPOSITORY` and
   `SPEC_SOURCE_REF`, plus secret `SDK_SPEC_SYNC_TOKEN`, so the scheduled spec-sync
   workflow can read the private API repository.
@@ -24,7 +24,8 @@ context lives in [releasing.md](releasing.md).
 
 ## Before tagging
 
-- [ ] Package versions match intended tags (`python-vX.Y.Z`, `ts-vX.Y.Z`, `mcp-vX.Y.Z`).
+- [ ] Package versions match intended tags (`python-vX.Y.Z`, `ts-vX.Y.Z`, `mcp-vX.Y.Z`,
+  `packages/go/vX.Y.Z`).
 - [ ] Changelogs updated; `scripts/validate_versions.py` passes.
 - [ ] `scripts/check_generated.py` reports no drift; staging smoke tests pass.
 - [ ] Run each release workflow manually in **dry-run** mode and inspect artifacts.
@@ -34,10 +35,12 @@ context lives in [releasing.md](releasing.md).
 1. `python-vX.Y.Z`
 2. `mcp-vX.Y.Z` after `neuraldefend==X.Y.Z` is installable from PyPI
 3. `ts-vX.Y.Z`
+4. `packages/go/vX.Y.Z`
 
 ## Post-publication verification
 
-- [ ] Install exact PyPI wheels/sdists and the npm tarball in clean consumers.
+- [ ] Install exact PyPI wheels/sdists, the npm tarball, and the Go module in clean
+  consumers.
 - [ ] Run staging smoke tests against published artifacts.
 - [ ] Attach release notes, checksums, SBOMs, and provenance links to GitHub Releases.
 
