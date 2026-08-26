@@ -1,21 +1,30 @@
 # NeuralDefend SDKs
 
-[![Python SDK on PyPI](https://img.shields.io/pypi/v/neuraldefend?label=Python%20SDK%20on%20PyPI)](https://pypi.org/project/neuraldefend/)
-[![TypeScript SDK on npm](https://img.shields.io/npm/v/%40neuraldefend%2Fsdk?label=TypeScript%20SDK%20on%20npm)](https://www.npmjs.com/package/@neuraldefend/sdk)
-[![MCP server on PyPI](https://img.shields.io/pypi/v/neuraldefend-mcp?label=MCP%20server%20on%20PyPI)](https://pypi.org/project/neuraldefend-mcp/)
-[![Go SDK module](https://img.shields.io/github/v/tag/Neural-Defend/NeuralDefend-SDKs/packages/go/v1.0.0?label=Go%20SDK)](https://github.com/Neural-Defend/NeuralDefend-SDKs/tags)
+<p align="left">
+  <a href="https://pypi.org/project/neuraldefend/"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" width="36" height="36" alt="Python" title="Python SDK" /></a>
+  <a href="https://www.npmjs.com/package/@neuraldefend/sdk"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" width="36" height="36" alt="TypeScript" title="TypeScript SDK" /></a>
+  <a href="https://github.com/Neural-Defend/NeuralDefend-SDKs/tree/main/packages/go"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original-wordmark.svg" width="36" height="36" alt="Go" title="Go SDK" /></a>
+  <a href="https://pypi.org/project/neuraldefend-mcp/"><img src="https://cdn.simpleicons.org/modelcontextprotocol/000000" width="36" height="36" alt="MCP" title="MCP server" /></a>
+</p>
+
+[![Python SDK on PyPI](https://img.shields.io/pypi/v/neuraldefend?style=flat-square&logo=python&logoColor=white&label=Python%201.0.3)](https://pypi.org/project/neuraldefend/)
+[![TypeScript SDK on npm](https://img.shields.io/npm/v/@neuraldefend/sdk?style=flat-square&logo=npm&logoColor=white&label=TypeScript%201.0.4)](https://www.npmjs.com/package/@neuraldefend/sdk)
+[![Go SDK module](https://img.shields.io/github/v/tag/Neural-Defend/NeuralDefend-SDKs/packages/go/v1.0.0?style=flat-square&logo=go&logoColor=white&label=Go%201.0.0)](https://github.com/Neural-Defend/NeuralDefend-SDKs/tags)
+[![MCP server on PyPI](https://img.shields.io/pypi/v/neuraldefend-mcp?style=flat-square&logo=pypi&logoColor=white&label=MCP%202.0.0)](https://pypi.org/project/neuraldefend-mcp/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+[![CI](https://github.com/Neural-Defend/NeuralDefend-SDKs/actions/workflows/test.yml/badge.svg)](https://github.com/Neural-Defend/NeuralDefend-SDKs/actions/workflows/test.yml)
 
 Official clients for the **NeuroVerify Detection API**, which evaluates images and videos
 for signs of AI generation, manipulation, spoofing, and related authenticity risks.
 
 ## Choose an integration
 
-| Integration | Best for | Install | Guide |
-|---|---|---|---|
-| [Python `neuraldefend` 1.0.3](https://pypi.org/project/neuraldefend/1.0.3/) | Python services and scripts (Python 3.9+) | `pip install neuraldefend` | [Python SDK](packages/python/README.md) |
-| [TypeScript `@neuraldefend/sdk` 1.0.4](https://www.npmjs.com/package/@neuraldefend/sdk/v/1.0.4) | Node.js 22+ and evergreen browsers | `npm install @neuraldefend/sdk` | [TypeScript SDK](packages/typescript/README.md) |
-| [MCP `neuraldefend-mcp` 2.0.0](https://pypi.org/project/neuraldefend-mcp/2.0.0/) | MCP-compatible agents and tools (Python 3.10+) | `pip install neuraldefend-mcp` | [MCP server](packages/mcp/README.md) |
-| [Go `neuraldefend` 1.0.0](https://github.com/Neural-Defend/NeuralDefend-SDKs/tree/main/packages/go) | Go services and CLIs (Go 1.22+) | `go get github.com/Neural-Defend/NeuralDefend-SDKs/packages/go@v1.0.0` | [Go SDK](packages/go/README.md) |
+| | Integration | Best for | Install | Guide |
+|:-:|---|---|---|---|
+| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" width="22" height="22" alt="Python" /> | [Python `neuraldefend` 1.0.3](https://pypi.org/project/neuraldefend/1.0.3/) | Python services and scripts (Python 3.9+) | `pip install neuraldefend` | [Python SDK](packages/python/README.md) |
+| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" width="22" height="22" alt="Node.js" /> | [TypeScript `@neuraldefend/sdk` 1.0.4](https://www.npmjs.com/package/@neuraldefend/sdk/v/1.0.4) | Node.js 22+ and evergreen browsers | `npm install @neuraldefend/sdk` | [TypeScript SDK](packages/typescript/README.md) |
+| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original-wordmark.svg" width="22" height="22" alt="Go" /> | [Go `neuraldefend` 1.0.0](https://github.com/Neural-Defend/NeuralDefend-SDKs/tree/main/packages/go) | Go services and CLIs (Go 1.22+) | `go get github.com/Neural-Defend/NeuralDefend-SDKs/packages/go@v1.0.0` | [Go SDK](packages/go/README.md) |
+| <img src="https://cdn.simpleicons.org/modelcontextprotocol/000000" width="22" height="22" alt="MCP" /> | [MCP `neuraldefend-mcp` 2.0.0](https://pypi.org/project/neuraldefend-mcp/2.0.0/) | MCP-compatible agents and tools (Python 3.10+) | `pip install neuraldefend-mcp` | [MCP server](packages/mcp/README.md) |
 
 Use the Python, TypeScript, or Go SDK for application code. Use the MCP server when an agent
 needs controlled access to authorized local media; it requires an explicit directory
@@ -38,7 +47,7 @@ Obtain an API key through Neural Defend onboarding (see [Get an API key](#get-an
 store it in `NEURALDEFEND_API_KEY`, and install the client you need. Each snippet creates
 a client and runs image plus video detection.
 
-### Python
+### <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" width="22" height="22" valign="middle" alt="Python" /> Python
 
 ```bash
 pip install neuraldefend
@@ -52,7 +61,7 @@ with NeuroVerifyClient() as client:
     video = client.detect_video("clip.mp4")
 ```
 
-### Node.js
+### <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" width="22" height="22" valign="middle" alt="Node.js" /> Node.js
 
 ```bash
 npm install @neuraldefend/sdk
@@ -66,7 +75,7 @@ const image = await client.detectImage("selfie.jpg");
 const video = await client.detectVideo("clip.mp4");
 ```
 
-### Go
+### <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original-wordmark.svg" width="22" height="22" valign="middle" alt="Go" /> Go
 
 ```bash
 go get github.com/Neural-Defend/NeuralDefend-SDKs/packages/go@v1.0.0
@@ -83,7 +92,7 @@ image, err := client.DetectImage(context.Background(), neuraldefend.FileMedia("s
 video, err := client.DetectVideo(context.Background(), neuraldefend.FileMedia("clip.mp4"), neuraldefend.VideoOptions{})
 ```
 
-### Browser
+### <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/chrome/chrome-original.svg" width="22" height="22" valign="middle" alt="Browser" /> Browser
 
 The same `@neuraldefend/sdk` package is used; bundlers select the browser build. Pass a
 short-lived credential from your backend — never a long-lived production key.
@@ -95,7 +104,7 @@ const client = new NeuroVerifyClient({ apiKey });
 const image = await client.detectImage(file);
 ```
 
-### MCP
+### <img src="https://cdn.simpleicons.org/modelcontextprotocol/000000" width="22" height="22" valign="middle" alt="MCP" /> MCP
 
 ```bash
 pip install neuraldefend-mcp
