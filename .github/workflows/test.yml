@@ -141,6 +141,32 @@ jobs:
         working-directory: packages/go
         run: go test ./...
 
+  java:
+    name: Java 17
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Java
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+          cache-dependency-path: packages/java/build.gradle.kts
+      - name: Test Java SDK
+        working-directory: packages/java
+        run: |
+          for attempt in 1 2 3; do
+            ./gradlew test && exit 0
+            echo "Gradle attempt ${attempt} failed; retrying in 15s..."
+            sleep 15
+          done
+          exit 1
+
   python-platforms:
     name: Python 3.14 ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
