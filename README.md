@@ -1,4 +1,4 @@
-# NeuralDefend SDKs
+# Neural Defend - NeuroVerify SDKs
 
 <p align="left">
   <a href="https://pypi.org/project/neuraldefend/"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" width="36" height="36" alt="Python" title="Python SDK" /></a>
