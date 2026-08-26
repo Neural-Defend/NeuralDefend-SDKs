@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "fixtures": [
+    {
+      "id": "ai-generated-image",
+      "path": "ai-generated.png",
+      "kind": "image",
+      "ground_truth": "ai_generated"
+    },
+    {
+      "id": "fake-video",
+      "path": "fake-video.mp4",
+      "kind": "video",
+      "ground_truth": "fake"
+    }
+  ]
+}
