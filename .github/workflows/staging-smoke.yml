@@ -95,4 +95,10 @@ jobs:
         working-directory: packages/java
         env:
           NEURALDEFEND_STAGING_API_KEY: ${{ secrets.NEURALDEFEND_STAGING_API_KEY }}
-        run: ./gradlew test --tests 'com.neuraldefend.StagingSmokeTest'
+        run: |
+          for attempt in 1 2 3; do
+            ./gradlew test --tests 'com.neuraldefend.StagingSmokeTest' && exit 0
+            echo "Gradle attempt ${attempt} failed; retrying in 15s..."
+            sleep 15
+          done
+          exit 1

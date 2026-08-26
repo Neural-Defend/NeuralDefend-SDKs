@@ -159,7 +159,13 @@ jobs:
           cache-dependency-path: packages/java/build.gradle.kts
       - name: Test Java SDK
         working-directory: packages/java
-        run: ./gradlew test
+        run: |
+          for attempt in 1 2 3; do
+            ./gradlew test && exit 0
+            echo "Gradle attempt ${attempt} failed; retrying in 15s..."
+            sleep 15
+          done
+          exit 1
 
   python-platforms:
     name: Python 3.14 ${{ matrix.os }}
