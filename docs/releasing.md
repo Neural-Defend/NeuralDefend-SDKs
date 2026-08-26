@@ -1,10 +1,10 @@
 # Release runbook
 
-The Python, TypeScript, and Go SDKs release independently. The MCP package depends on the
+The Python, TypeScript, Go, and Java SDKs release independently. The MCP package depends on the
 published Python SDK and must be released after a compatible Python version is available
 on PyPI. Publishing requires an explicit protected-environment approval for PyPI and npm;
-the Go SDK publishes through GitHub tags and the public Go module proxy. Building this
-repository does not publish anything.
+the Go and Java SDKs publish through GitHub tags; Go is indexed by the public module proxy.
+Building this repository does not publish anything.
 
 ## One-time setup
 
@@ -33,8 +33,8 @@ repository does not publish anything.
    these are missing; it does not skip sync silently.
 7. Add `NEURALDEFEND_STAGING_API_KEY` to the protected `staging` environment.
 8. Protect `main` with pull-request reviews and required checks. Restrict creation,
-   update, and deletion of `python-v*`, `ts-v*`, `mcp-v*`, and `packages/go/v*` tags to
-   release managers.
+   update, and deletion of `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`, and `java-v*`
+   tags to release managers.
 9. Enable secret scanning, push protection, Dependabot security updates, and required CI
    checks.
 
@@ -91,6 +91,7 @@ test -n "${SPEC_SOURCE_REF:-}" && echo "SPEC_SOURCE_REF is set" \
    - `ts-vX.Y.Z`
    - `mcp-vX.Y.Z`
    - `packages/go/vX.Y.Z`
+   - `java-vX.Y.Z`
 7. Inspect the wheel/sdist or npm tarball before approving the protected release job.
 8. Run each release workflow manually in dry-run mode and retain its artifacts for review.
 
@@ -106,10 +107,12 @@ time and verify the registry before proceeding:
 2. `mcp-vX.Y.Z` after `neuraldefend==X.Y.Z` is installable from PyPI
 3. `ts-vX.Y.Z`
 4. `packages/go/vX.Y.Z` after the commit is on the default branch
+5. `java-vX.Y.Z` after the commit is on the default branch
 
 The Go tag uses the module path prefix so `go get` resolves the version from the public
-module proxy. No registry approval step is required; verify `go get` in a clean module
-after the tag is pushed.
+module proxy. The Java tag triggers a GitHub Release with the Gradle module tree; Maven
+Central publication is a separate step when configured. No registry approval step is
+required for Go; verify `go get` in a clean module after the tag is pushed.
 
 Stable tags must exactly match package metadata. Do not publish a prerelease to npm without
 an explicit non-`latest` dist-tag.
@@ -123,8 +126,9 @@ an explicit non-`latest` dist-tag.
 3. Install the exact npm package into clean ESM, CommonJS, TypeScript, and browser-bundle
    consumers.
 4. Install the exact Go module version with `go get` in a clean module.
-5. Run approved staging smoke tests against the published artifacts.
-6. Publish release notes, checksums, SBOMs, and provenance links.
+5. Build and test the Java SDK from the `java-v*` release tag.
+6. Run approved staging smoke tests against the published artifacts.
+7. Publish release notes, checksums, SBOMs, and provenance links.
 
 Registry releases are immutable. If a defect is found, stop rollout and publish a patched
 version; yank/deprecate the affected version only when necessary and document the reason.

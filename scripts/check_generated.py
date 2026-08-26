@@ -10,6 +10,7 @@ from pathlib import Path
 
 from generate import (
     GO_DESTINATION,
+    JAVA_DESTINATION,
     PYTHON_DESTINATION,
     TYPESCRIPT_DESTINATION,
     generate_snapshot,
@@ -63,6 +64,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=GO_DESTINATION,
         help="committed Go generated-source directory",
     )
+    parser.add_argument(
+        "--java-dir",
+        type=Path,
+        default=JAVA_DESTINATION,
+        help="committed Java generated-source directory",
+    )
     return parser
 
 
@@ -87,10 +94,19 @@ def main(argv: list[str] | None = None) -> int:
                 snapshot / "go",
                 args.go_dir.resolve(),
             )
+            java_current = _compare(
+                "java",
+                snapshot / "java",
+                args.java_dir.resolve(),
+            )
     except (OSError, SpecError) as exc:
         print(f"generated-source check failed: {exc}", file=sys.stderr)
         return 1
-    return 0 if python_current and typescript_current and go_current else 1
+    return (
+        0
+        if python_current and typescript_current and go_current and java_current
+        else 1
+    )
 
 
 if __name__ == "__main__":
