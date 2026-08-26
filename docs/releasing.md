@@ -81,8 +81,8 @@ test -n "${SPEC_SOURCE_REF:-}" && echo "SPEC_SOURCE_REF is set" \
    build without isolation. When `constraints/release.in` changes, regenerate the
    platform-specific lock under Python 3.13 on Linux with pip-tools 7.6.0 using the command
    recorded in the lock header, then review the dependency diff.
-4. Run staging smoke tests with synthetic, approved media. Assert response shape, never an
-   exact score or message.
+4. Run staging smoke tests with the checked-in media under `tests/fixtures/media/`. Assert
+   response shape, never an exact score or message.
 5. Update the package changelog with the source-spec commit.
 6. Confirm the package version matches the intended tag:
    - `python-vX.Y.Z`

@@ -17,6 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: staging
+    env:
+      NEURALDEFEND_STAGING_IMAGE: ${{ github.workspace }}/tests/fixtures/media/ai-generated.png
+      NEURALDEFEND_STAGING_VIDEO: ${{ github.workspace }}/tests/fixtures/media/fake-video.mp4
+      NEURALDEFEND_MCP_ALLOWED_DIRS: ${{ github.workspace }}/tests/fixtures/media
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -40,56 +44,21 @@ jobs:
         run: |
           python -m pip install --require-hashes -r constraints/release.txt
           python -m pip install --no-deps --no-build-isolation ./packages/python ./packages/mcp
-      - name: Generate approved synthetic no-face fixtures
-        shell: bash
+      - name: Verify checked-in smoke fixtures
         run: |
-          python - <<'PY'
-          import struct
-          import zlib
-          from pathlib import Path
-
-          path = Path("${{ runner.temp }}") / "neuraldefend-smoke.png"
-          width = height = 256
-          rows = b"".join(b"\x00" + b"\x00\x00\x00" * width for _ in range(height))
-
-          def chunk(kind: bytes, data: bytes) -> bytes:
-              return (
-                  struct.pack(">I", len(data))
-                  + kind
-                  + data
-                  + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
-              )
-
-          path.write_bytes(
-              b"\x89PNG\r\n\x1a\n"
-              + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0))
-              + chunk(b"IDAT", zlib.compress(rows))
-              + chunk(b"IEND", b"")
-          )
-          PY
-          docker run --rm --network none \
-            --user "$(id -u):$(id -g)" \
-            --mount "type=bind,source=${{ runner.temp }},target=/fixtures" \
-            jrottenberg/ffmpeg@sha256:8ec1ee1f6a0fcd37c97725827b6b7832795c9596e3439b8da56d7700d61ae778 \
-            -hide_banner -loglevel error \
-            -f lavfi -i color=c=black:s=320x240:d=1 \
-            -c:v libx264 -pix_fmt yuv420p -an -y \
-            /fixtures/neuraldefend-smoke.mp4
+          test -f tests/fixtures/media/ai-generated.png
+          test -f tests/fixtures/media/fake-video.mp4
+          test -f tests/fixtures/media/manifest.json
       - name: Run Python SDK smoke tests
         working-directory: packages/python
         env:
           NEURALDEFEND_STAGING_API_KEY: ${{ secrets.NEURALDEFEND_STAGING_API_KEY }}
-          NEURALDEFEND_STAGING_IMAGE: ${{ runner.temp }}/neuraldefend-smoke.png
-          NEURALDEFEND_STAGING_VIDEO: ${{ runner.temp }}/neuraldefend-smoke.mp4
         run: python -m pytest -m staging
       - name: Run MCP smoke tests
         working-directory: packages/mcp
         env:
           NEURALDEFEND_STAGING_API_KEY: ${{ secrets.NEURALDEFEND_STAGING_API_KEY }}
-          NEURALDEFEND_MCP_ALLOWED_DIRS: ${{ runner.temp }}
           NEURALDEFEND_MCP_ENVIRONMENT: staging
-          NEURALDEFEND_STAGING_IMAGE: ${{ runner.temp }}/neuraldefend-smoke.png
-          NEURALDEFEND_STAGING_VIDEO: ${{ runner.temp }}/neuraldefend-smoke.mp4
         run: python -m pytest -m staging
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -104,6 +73,4 @@ jobs:
         working-directory: packages/typescript
         env:
           NEURALDEFEND_STAGING_API_KEY: ${{ secrets.NEURALDEFEND_STAGING_API_KEY }}
-          NEURALDEFEND_STAGING_IMAGE: ${{ runner.temp }}/neuraldefend-smoke.png
-          NEURALDEFEND_STAGING_VIDEO: ${{ runner.temp }}/neuraldefend-smoke.mp4
         run: npm run test:smoke
