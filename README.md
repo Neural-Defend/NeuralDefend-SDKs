@@ -9,7 +9,7 @@
 
 [![Python SDK on PyPI](https://img.shields.io/pypi/v/neuraldefend?style=flat-square&logo=python&logoColor=white&label=Python%201.0.3)](https://pypi.org/project/neuraldefend/)
 [![TypeScript SDK on npm](https://img.shields.io/npm/v/@neuraldefend/sdk?style=flat-square&logo=npm&logoColor=white&label=TypeScript%201.0.4)](https://www.npmjs.com/package/@neuraldefend/sdk)
-[![Go SDK module](https://img.shields.io/github/v/tag/Neural-Defend/NeuralDefend-SDKs/packages/go/v1.0.0?style=flat-square&logo=go&logoColor=white&label=Go%201.0.0)](https://github.com/Neural-Defend/NeuralDefend-SDKs/tags)
+[![Go 1.0.0](https://img.shields.io/badge/Go-1.0.0-00ADD8?style=flat-square&logo=go&logoColor=white)](https://github.com/Neural-Defend/NeuralDefend-SDKs/releases/tag/packages/go/v1.0.0)
 [![MCP server on PyPI](https://img.shields.io/pypi/v/neuraldefend-mcp?style=flat-square&logo=pypi&logoColor=white&label=MCP%202.0.0)](https://pypi.org/project/neuraldefend-mcp/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 [![CI](https://github.com/Neural-Defend/NeuralDefend-SDKs/actions/workflows/test.yml/badge.svg)](https://github.com/Neural-Defend/NeuralDefend-SDKs/actions/workflows/test.yml)
