@@ -74,3 +74,25 @@ jobs:
         env:
           NEURALDEFEND_STAGING_API_KEY: ${{ secrets.NEURALDEFEND_STAGING_API_KEY }}
         run: npm run test:smoke
+      - name: Set up Go
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
+        with:
+          go-version: "1.22"
+          cache-dependency-path: packages/go/go.mod
+      - name: Run Go SDK smoke tests
+        working-directory: packages/go
+        env:
+          NEURALDEFEND_STAGING_API_KEY: ${{ secrets.NEURALDEFEND_STAGING_API_KEY }}
+        run: go test -run 'TestStaging' ./...
+      - name: Set up Java
+        uses: actions/setup-java@5a1d4880be5123bb1759d575b062b24da689abab # v5.0.0
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+          cache-dependency-path: packages/java/build.gradle.kts
+      - name: Run Java SDK smoke tests
+        working-directory: packages/java
+        env:
+          NEURALDEFEND_STAGING_API_KEY: ${{ secrets.NEURALDEFEND_STAGING_API_KEY }}
+        run: ./gradlew test --tests 'com.neuraldefend.StagingSmokeTest'
