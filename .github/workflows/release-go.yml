@@ -100,7 +100,7 @@ jobs:
           tag="${GITHUB_REF_NAME#packages/go/v}"
           echo "version=$tag" >> "$GITHUB_OUTPUT"
       - name: Create GitHub release
-        uses: softprops/action-gh-release@be6939fe1549c7a877c7a2b6a087f3b2d4a58b70 # v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           name: Go SDK ${{ steps.version.outputs.version }}
           tag_name: ${{ github.ref_name }}
