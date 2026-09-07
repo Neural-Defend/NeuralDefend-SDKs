@@ -83,6 +83,24 @@ def validate() -> None:
     if not go_version:
         raise ValueError("packages/go/version.go: missing Version constant")
 
+    java_manifest = ""
+    for line in (ROOT / "packages/java/build.gradle.kts").read_text(encoding="utf-8").splitlines():
+        if line.strip().startswith('version = "'):
+            java_manifest = line.split('"')[1]
+            break
+    if not java_manifest:
+        raise ValueError("packages/java/build.gradle.kts: missing version")
+    java_runtime = ""
+    java_runtime_match = re.search(
+        r'VERSION\s*=\s*"([^"]+)"',
+        (ROOT / "packages/java/src/main/java/com/neuraldefend/SdkVersion.java").read_text(
+            encoding="utf-8"
+        ),
+    )
+    if java_runtime_match is None:
+        raise ValueError("packages/java/.../SdkVersion.java: missing VERSION constant")
+    java_runtime = java_runtime_match.group(1)
+
     versions = {
         "Python manifest": python_version,
         "Python runtime": python_runtime,
@@ -90,6 +108,8 @@ def validate() -> None:
         "MCP runtime": mcp_runtime,
         "TypeScript manifest": typescript_version,
         "Go runtime": go_version,
+        "Java manifest": java_manifest,
+        "Java runtime": java_runtime,
     }
     invalid = {
         name: value for name, value in versions.items() if not SEMVER.fullmatch(value)
@@ -104,6 +124,8 @@ def validate() -> None:
         raise ValueError("TypeScript package-lock versions do not match package.json")
     if user_agent is None or user_agent.group(1) != typescript_version:
         raise ValueError("TypeScript user-agent version does not match package.json")
+    if java_runtime != java_manifest:
+        raise ValueError("Java SdkVersion.VERSION does not match build.gradle.kts")
 
 
 def main() -> int:
