@@ -27,11 +27,12 @@ Add `packages/java` as a public Gradle module:
 - Enforce contract drift with `scripts/check_generated.py` and shared fixtures under
   `tests/fixtures/`.
 - Release with GitHub tag `java-vX.Y.Z`; CI validates tests and version alignment, then
-  creates a GitHub Release.
+  publishes signed artifacts to Maven Central and creates a GitHub Release.
 
 ## Consequences
 
-Java consumers integrate from the monorepo path or a future Maven publication. Large uploads
+Java consumers install from Maven Central with
+`com.neuraldefend:neuraldefend-sdk`. Large uploads
 avoid buffering entire files in SDK memory. The generated core remains useful for detecting
 contract changes but runtime behavior must be tested in the facade. Generation now covers
 four languages; spec or generator changes must regenerate all private cores before merge.

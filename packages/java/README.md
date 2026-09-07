@@ -20,12 +20,30 @@ manipulation:
 
 ## Installation
 
-Add the dependency from this repository path (until published to Maven Central):
+### Gradle (Kotlin DSL)
 
 ```kotlin
 dependencies {
     implementation("com.neuraldefend:neuraldefend-sdk:1.0.0")
 }
+```
+
+### Gradle (Groovy)
+
+```groovy
+dependencies {
+    implementation 'com.neuraldefend:neuraldefend-sdk:1.0.0'
+}
+```
+
+### Maven
+
+```xml
+<dependency>
+  <groupId>com.neuraldefend</groupId>
+  <artifactId>neuraldefend-sdk</artifactId>
+  <version>1.0.0</version>
+</dependency>
 ```
 
 ## Quick start

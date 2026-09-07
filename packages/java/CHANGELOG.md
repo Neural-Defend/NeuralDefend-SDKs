@@ -4,6 +4,11 @@ All notable changes to this package follow Keep a Changelog and Semantic Version
 
 ## [Unreleased]
 
+### Added
+
+- Maven Central publishing via `com.vanniktech.maven.publish` and the protected
+  `maven-central` release environment.
+
 ## [1.0.0] - 2026-08-26
 
 ### Added

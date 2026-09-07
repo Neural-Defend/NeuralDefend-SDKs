@@ -79,15 +79,60 @@ jobs:
             sleep 15
           done
           exit 1
-      - name: Upload module tree
+      - name: Build release artifacts
+        working-directory: packages/java
+        run: |
+          for attempt in 1 2 3; do
+            ./gradlew build && exit 0
+            echo "Gradle build attempt ${attempt} failed; retrying in 15s..."
+            sleep 15
+          done
+          exit 1
+      - name: Upload release artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: java-module
-          path: packages/java
+          name: java-publications
+          path: |
+            packages/java/build/libs
+            packages/java/build/publications
           if-no-files-found: error
           retention-days: 14
 
-  publish:
+  publish-maven-central:
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: maven-central
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Java
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: gradle
+          cache-dependency-path: packages/java/build.gradle.kts
+      - name: Publish to Maven Central
+        working-directory: packages/java
+        env:
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.MAVEN_CENTRAL_SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.MAVEN_CENTRAL_SIGNING_PASSWORD }}
+        run: |
+          for attempt in 1 2 3; do
+            ./gradlew publishAndReleaseToMavenCentral && exit 0
+            echo "Maven Central publish attempt ${attempt} failed; retrying in 15s..."
+            sleep 15
+          done
+          exit 1
+
+  publish-github-release:
     if: github.event_name == 'push'
     needs: build
     runs-on: ubuntu-latest
@@ -112,6 +157,12 @@ jobs:
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true
           body: |
-            Build from `packages/java` at version `${{ steps.version.outputs.version }}`.
+            Published to Maven Central as `com.neuraldefend:neuraldefend-sdk:${{ steps.version.outputs.version }}`.
+
+            ```kotlin
+            dependencies {
+                implementation("com.neuraldefend:neuraldefend-sdk:${{ steps.version.outputs.version }}")
+            }
+            ```
 
             See [packages/java/README.md](https://github.com/Neural-Defend/NeuralDefend-SDKs/tree/main/packages/java/README.md).
