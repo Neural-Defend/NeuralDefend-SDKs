@@ -7,7 +7,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 RETRY_CMD = ROOT / "scripts" / "retry_cmd.sh"
 
@@ -42,10 +41,10 @@ class RetryCmdTests(unittest.TestCase):
                 "#!/usr/bin/env bash\n"
                 "set -euo pipefail\n"
                 "count_file=$1\n"
-                "count=$(cat \"$count_file\" 2>/dev/null || echo 0)\n"
+                'count=$(cat "$count_file" 2>/dev/null || echo 0)\n'
                 "count=$((count + 1))\n"
-                "echo \"$count\" > \"$count_file\"\n"
-                "test \"$count\" -ge 2\n",
+                'echo "$count" > "$count_file"\n'
+                'test "$count" -ge 2\n',
                 encoding="utf-8",
             )
             script.chmod(script.stat().st_mode | stat.S_IEXEC)
