@@ -16,10 +16,8 @@ func TestStagingImageContract(t *testing.T) {
 	}
 	path := stagingFixture(t, "NEURALDEFEND_STAGING_IMAGE")
 
-	maxRetries := 0
 	client, err := neuraldefend.NewStagingClient(neuraldefend.ClientOptions{
-		APIKey:     apiKey,
-		MaxRetries: &maxRetries,
+		APIKey: apiKey,
 	})
 	if err != nil {
 		t.Fatalf("new staging client: %v", err)
@@ -39,10 +37,8 @@ func TestStagingVideoContract(t *testing.T) {
 	}
 	path := stagingFixture(t, "NEURALDEFEND_STAGING_VIDEO")
 
-	maxRetries := 0
 	client, err := neuraldefend.NewStagingClient(neuraldefend.ClientOptions{
-		APIKey:     apiKey,
-		MaxRetries: &maxRetries,
+		APIKey: apiKey,
 	})
 	if err != nil {
 		t.Fatalf("new staging client: %v", err)

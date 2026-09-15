@@ -25,6 +25,10 @@ $env:NEURALDEFEND_STAGING_VIDEO = "tests/fixtures/media/fake-video.mp4"
 
 Then run the SDK staging smoke suites (for example `pytest -m staging` in `packages/python`).
 
+The scheduled GitHub workflow retries transient staging outages using the SDK default HTTP
+retries and `scripts/ci/retry_staging_smoke.sh`. Persistent `503` responses from staging
+still fail the job and need a backend fix.
+
 ### Local production API checks (optional)
 
 If you intentionally test against production, set the API key in the environment only:

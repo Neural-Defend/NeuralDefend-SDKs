@@ -32,7 +32,7 @@ def test_staging_image_contract() -> None:
     if not api_key:
         pytest.skip("NEURALDEFEND_STAGING_API_KEY is not configured")
 
-    with NeuroVerifyClient.staging(api_key=api_key, max_retries=0) as client:
+    with NeuroVerifyClient.staging(api_key=api_key) as client:
         result = client.detect_image(_fixture_path("NEURALDEFEND_STAGING_IMAGE"))
 
     _assert_consistent_result(result)
@@ -44,7 +44,7 @@ def test_staging_video_contract() -> None:
     if not api_key:
         pytest.skip("NEURALDEFEND_STAGING_API_KEY is not configured")
 
-    with NeuroVerifyClient.staging(api_key=api_key, max_retries=0) as client:
+    with NeuroVerifyClient.staging(api_key=api_key) as client:
         result = client.detect_video(
             _fixture_path("NEURALDEFEND_STAGING_VIDEO"),
             max_frames=2,
