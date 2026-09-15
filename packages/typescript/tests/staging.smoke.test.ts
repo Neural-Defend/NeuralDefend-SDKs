@@ -8,9 +8,10 @@ const enabled = Boolean(apiKey && imagePath && videoPath);
 
 describe.skipIf(!enabled)("staging contract", () => {
   it("returns a consistent image result", async () => {
+    // Use the SDK retry policy for HTTP 429/500/503. Staging smoke previously
+    // set maxRetries: 0, so a single transient 503 failed the weekly job.
     const client = NeuroVerifyClient.staging({
       apiKey: apiKey!,
-      maxRetries: 0,
     });
     const result = await client.detectImage(imagePath!);
 
@@ -24,7 +25,6 @@ describe.skipIf(!enabled)("staging contract", () => {
   it("returns a consistent video result", async () => {
     const client = NeuroVerifyClient.staging({
       apiKey: apiKey!,
-      maxRetries: 0,
     });
     const result = await client.detectVideo(videoPath!, { maxFrames: 2 });
 
