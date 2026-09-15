@@ -10,7 +10,6 @@ describe.skipIf(!enabled)("staging contract", () => {
   it("returns a consistent image result", async () => {
     const client = NeuroVerifyClient.staging({
       apiKey: apiKey!,
-      maxRetries: 0,
     });
     const result = await client.detectImage(imagePath!);
 
@@ -24,7 +23,6 @@ describe.skipIf(!enabled)("staging contract", () => {
   it("returns a consistent video result", async () => {
     const client = NeuroVerifyClient.staging({
       apiKey: apiKey!,
-      maxRetries: 0,
     });
     const result = await client.detectVideo(videoPath!, { maxFrames: 2 });
 

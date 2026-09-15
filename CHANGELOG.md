@@ -14,6 +14,12 @@ surface.
 
 ## [Unreleased]
 
+### Fixed
+
+- Staging smoke tests now use the SDK retry policy for HTTP 500/503 and retry the
+  live suite twice more after a 30s delay so a transient staging outage does not fail
+  the weekly job on the first attempt.
+
 ### Changed
 
 - Pinned GitHub Actions to current major releases (`actions/checkout` v7,
