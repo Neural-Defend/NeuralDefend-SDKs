@@ -49,6 +49,19 @@ jobs:
           test -f tests/fixtures/media/ai-generated.png
           test -f tests/fixtures/media/fake-video.mp4
           test -f tests/fixtures/media/manifest.json
+      - name: Verify staging API health
+        run: |
+          curl --fail --silent --show-error https://stage.deepscan.neuraldefend.com/health | tee /tmp/staging-health.json
+          python - <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          payload = json.loads(Path("/tmp/staging-health.json").read_text(encoding="utf-8"))
+          if payload.get("status") != "healthy":
+              print(f"::error::Staging health check returned {payload!r}")
+              sys.exit(1)
+          PY
       - name: Run Python SDK smoke tests
         working-directory: packages/python
         env:
