@@ -7,13 +7,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
-
 SCRIPTS = Path(__file__).resolve().parents[1]
 RETRY_SMOKE = SCRIPTS / "retry-smoke.sh"
 
 
 class RetrySmokeTests(unittest.TestCase):
-    def _run(self, *args: str, env: dict[str, str] | None = None) -> subprocess.CompletedProcess[str]:
+    def _run(
+        self, *args: str, env: dict[str, str] | None = None
+    ) -> subprocess.CompletedProcess[str]:
         merged = os.environ.copy()
         if env:
             merged.update(env)
