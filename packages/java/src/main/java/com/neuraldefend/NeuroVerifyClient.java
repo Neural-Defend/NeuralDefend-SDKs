@@ -106,7 +106,10 @@ public final class NeuroVerifyClient {
             baseUrl = PRODUCTION_URL;
         }
 
-        boolean allowHttp = options.allowHttpForTesting || options.httpClient != null;
+        // A caller-supplied HTTP client is a production transport, like a custom fetch
+        // implementation. It must not bypass HTTPS or the host allowlist. HTTP test
+        // origins opt in explicitly with allowHttpForTesting.
+        boolean allowHttp = options.allowHttpForTesting;
         baseUrl = validateBaseUrl(baseUrl, allowHttp, options.allowCustomBaseUrl);
 
         String userAgent = options.userAgent;
@@ -114,15 +117,17 @@ public final class NeuroVerifyClient {
             userAgent = "neuraldefend-java/" + SdkVersion.VERSION;
         }
 
-        OkHttpClient httpClient = options.httpClient;
-        if (httpClient == null) {
-            httpClient =
-                    new OkHttpClient.Builder()
-                            .followRedirects(false)
-                            .followSslRedirects(false)
-                            .callTimeout(timeout)
-                            .build();
-        }
+        OkHttpClient.Builder httpClientBuilder =
+                options.httpClient == null
+                        ? new OkHttpClient.Builder()
+                        : options.httpClient.newBuilder();
+        OkHttpClient httpClient =
+                httpClientBuilder
+                        .followRedirects(false)
+                        .followSslRedirects(false)
+                        .retryOnConnectionFailure(false)
+                        .callTimeout(timeout)
+                        .build();
 
         ClientOptions.Sleeper sleeper = options.sleeper;
         if (sleeper == null) {
@@ -151,11 +156,28 @@ public final class NeuroVerifyClient {
                 baseUrl, apiKey, maxRetries, userAgent, httpClient, sleeper, random, clock);
     }
 
-    /** Constructs a client pinned to {@link #STAGING_URL}. */
+    /** Constructs a client pinned to {@link #STAGING_URL} without mutating {@code options}. */
     public static NeuroVerifyClient staging(ClientOptions options) {
         Objects.requireNonNull(options, "options");
-        options.baseUrl = STAGING_URL;
-        return newClient(options);
+        ClientOptions copy = copyOptions(options);
+        copy.baseUrl = STAGING_URL;
+        return newClient(copy);
+    }
+
+    private static ClientOptions copyOptions(ClientOptions options) {
+        ClientOptions copy = new ClientOptions();
+        copy.apiKey = options.apiKey;
+        copy.baseUrl = options.baseUrl;
+        copy.allowCustomBaseUrl = options.allowCustomBaseUrl;
+        copy.allowHttpForTesting = options.allowHttpForTesting;
+        copy.timeout = options.timeout;
+        copy.maxRetries = options.maxRetries;
+        copy.httpClient = options.httpClient;
+        copy.userAgent = options.userAgent;
+        copy.sleeper = options.sleeper;
+        copy.random = options.random;
+        copy.clock = options.clock;
+        return copy;
     }
 
     public String getBaseUrl() {
@@ -241,7 +263,7 @@ public final class NeuroVerifyClient {
             throw new ValidationException(
                     "base_url must be an origin URL without credentials, path, query, or fragment");
         }
-        String path = parsed.getPath();
+        String path = parsed.normalize().getPath();
         if (path != null && !path.isEmpty() && !"/".equals(path)) {
             throw new ValidationException(
                     "base_url must be an origin URL without credentials, path, query, or fragment");
@@ -250,9 +272,14 @@ public final class NeuroVerifyClient {
         if (!"https".equals(scheme) && !(allowHttp && "http".equals(scheme))) {
             throw new ValidationException("base_url must use HTTPS");
         }
-        String origin = scheme + "://" + parsed.getHost();
-        if (parsed.getPort() > 0) {
-            origin += ":" + parsed.getPort();
+        String host = parsed.getHost().toLowerCase(Locale.ROOT);
+        int port = parsed.getPort();
+        if (("https".equals(scheme) && port == 443) || ("http".equals(scheme) && port == 80)) {
+            port = -1;
+        }
+        String origin = scheme + "://" + host;
+        if (port > 0) {
+            origin += ":" + port;
         }
         if (!PRODUCTION_URL.equals(origin)
                 && !STAGING_URL.equals(origin)
@@ -300,6 +327,10 @@ public final class NeuroVerifyClient {
                 response.close();
                 sleeper.sleep(delay);
             } catch (IOException ex) {
+                ValidationException validation = validationCause(ex);
+                if (validation != null) {
+                    throw validation;
+                }
                 if (isTimeout(ex)) {
                     throw new TimeoutException(redact(ex.getMessage()));
                 }
@@ -808,12 +839,40 @@ public final class NeuroVerifyClient {
         return !Double.isInfinite(value) && !Double.isNaN(value);
     }
 
-    private static boolean isTimeout(IOException ex) {
-        String message = ex.getMessage();
-        if (message != null && message.toLowerCase(Locale.ROOT).contains("timeout")) {
-            return true;
+    private static ValidationException validationCause(Throwable error) {
+        Throwable current = error;
+        while (current != null) {
+            if (current instanceof ValidationException validation) {
+                return validation;
+            }
+            Throwable next = current.getCause();
+            if (next == current) {
+                return null;
+            }
+            current = next;
         }
-        Throwable cause = ex.getCause();
-        return cause instanceof IOException && isTimeout((IOException) cause);
+        return null;
+    }
+
+    private static boolean isTimeout(Throwable error) {
+        Throwable current = error;
+        while (current != null) {
+            if (current instanceof java.net.SocketTimeoutException) {
+                return true;
+            }
+            String message = current.getMessage();
+            if (message != null) {
+                String lower = message.toLowerCase(Locale.ROOT);
+                if (lower.contains("timeout") || lower.contains("timed out")) {
+                    return true;
+                }
+            }
+            Throwable next = current.getCause();
+            if (next == current) {
+                return false;
+            }
+            current = next;
+        }
+        return false;
     }
 }
