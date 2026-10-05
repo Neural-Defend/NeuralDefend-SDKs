@@ -74,3 +74,13 @@ jobs:
         env:
           NEURALDEFEND_STAGING_API_KEY: ${{ secrets.NEURALDEFEND_STAGING_API_KEY }}
         run: npm run test:smoke
+      - name: Set up Dart
+        run: python scripts/setup_dart_toolchain.py --dart stable
+      - name: Install Dart smoke dependencies
+        working-directory: packages/dart
+        run: dart pub get
+      - name: Run Dart smoke tests
+        working-directory: packages/dart
+        env:
+          NEURALDEFEND_STAGING_API_KEY: ${{ secrets.NEURALDEFEND_STAGING_API_KEY }}
+        run: dart test --tags staging

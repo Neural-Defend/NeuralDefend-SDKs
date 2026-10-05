@@ -1,9 +1,9 @@
 # Release runbook
 
-The Python, TypeScript, and Go SDKs release independently. The MCP package depends on the
+The Python, TypeScript, Go, and Dart SDKs release independently. The MCP package depends on the
 published Python SDK and must be released after a compatible Python version is available
-on PyPI. Publishing requires an explicit protected-environment approval for PyPI and npm;
-the Go SDK publishes through GitHub tags and the public Go module proxy. Building this
+on PyPI. Publishing requires an explicit protected-environment approval for PyPI, npm, and
+pub.dev; the Go SDK publishes through GitHub tags and the public Go module proxy. Building this
 repository does not publish anything.
 
 ## One-time setup
@@ -20,22 +20,28 @@ repository does not publish anything.
    Configure the trusted publisher for repository `Neural-Defend/NeuralDefend-SDKs`,
    workflow `release-npm.yml`, and environment `npm`, then revoke the bootstrap
    credential immediately.
-3. Configure GitHub environments `pypi`, `npm`, `mcp-pypi`, and `staging` with required
+3. Create a pub.dev verified publisher for the Neural Defend domain and publish the first
+   `neuraldefend` version manually from a release manager's machine with `dart pub publish`
+   (pub.dev cannot enable automated publishing before a package exists). Transfer the
+   package to the verified publisher, then under **Admin → Automated publishing** enable
+   GitHub Actions for repository `Neural-Defend/NeuralDefend-SDKs`, tag pattern
+   `dart-v{{version}}`, and required environment `pub-dev`.
+4. Configure GitHub environments `pypi`, `npm`, `mcp-pypi`, `pub-dev`, and `staging` with required
    company reviewers, self-review prevention, and no administrator bypass.
-4. Make the repository public only after the full-history security review. npm provenance
+5. Make the repository public only after the full-history security review. npm provenance
    publishing requires public source; do not run the npm release while the repository is
    private.
-5. Configure PyPI and npm trusted publishing for the corresponding workflows. Do not
+6. Configure PyPI and npm trusted publishing for the corresponding workflows. Do not
    retain registry publication tokens.
-6. Set repository variables `SPEC_SOURCE_REPOSITORY` and `SPEC_SOURCE_REF` (the production
+7. Set repository variables `SPEC_SOURCE_REPOSITORY` and `SPEC_SOURCE_REF` (the production
    API branch), plus secret `SDK_SPEC_SYNC_TOKEN`, so the scheduled workflow can read the
    private API repository. The scheduled `spec-sync` workflow fails loudly when any of
    these are missing; it does not skip sync silently.
-7. Add `NEURALDEFEND_STAGING_API_KEY` to the protected `staging` environment.
-8. Protect `main` with pull-request reviews and required checks. Restrict creation,
-   update, and deletion of `python-v*`, `ts-v*`, `mcp-v*`, and `packages/go/v*` tags to
-   release managers.
-9. Enable secret scanning, push protection, Dependabot security updates, and required CI
+8. Add `NEURALDEFEND_STAGING_API_KEY` to the protected `staging` environment.
+9. Protect `main` with pull-request reviews and required checks. Restrict creation,
+   update, and deletion of `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`, and `dart-v*`
+   tags to release managers.
+10. Enable secret scanning, push protection, Dependabot security updates, and required CI
    checks.
 
 Before making the repository public, scan the complete Git history—not only the current
@@ -91,7 +97,8 @@ test -n "${SPEC_SOURCE_REF:-}" && echo "SPEC_SOURCE_REF is set" \
    - `ts-vX.Y.Z`
    - `mcp-vX.Y.Z`
    - `packages/go/vX.Y.Z`
-7. Inspect the wheel/sdist or npm tarball before approving the protected release job.
+   - `dart-vX.Y.Z`
+7. Inspect the wheel/sdist, npm tarball, or `dart pub publish --dry-run` file list before approving the protected release job.
 8. Run each release workflow manually in dry-run mode and retain its artifacts for review.
 
 The workflows use OIDC and provenance attestations. A release tag starts publishing only
@@ -106,10 +113,16 @@ time and verify the registry before proceeding:
 2. `mcp-vX.Y.Z` after `neuraldefend==X.Y.Z` is installable from PyPI
 3. `ts-vX.Y.Z`
 4. `packages/go/vX.Y.Z` after the commit is on the default branch
+5. `dart-vX.Y.Z` after the commit is on the default branch
 
 The Go tag uses the module path prefix so `go get` resolves the version from the public
 module proxy. No registry approval step is required; verify `go get` in a clean module
 after the tag is pushed.
+
+The Dart tag starts `release-dart.yml`, which tests the package, checks the tag against
+`pubspec.yaml`, and publishes to pub.dev with a GitHub OIDC token after the `pub-dev`
+environment reviewer approves. pub.dev versions cannot be deleted; a defective version can
+only be retracted within seven days or superseded.
 
 Stable tags must exactly match package metadata. Do not publish a prerelease to npm without
 an explicit non-`latest` dist-tag.
@@ -123,8 +136,10 @@ an explicit non-`latest` dist-tag.
 3. Install the exact npm package into clean ESM, CommonJS, TypeScript, and browser-bundle
    consumers.
 4. Install the exact Go module version with `go get` in a clean module.
-5. Run approved staging smoke tests against the published artifacts.
-6. Publish release notes, checksums, SBOMs, and provenance links.
+5. Add the exact `neuraldefend` version to clean Dart and Flutter projects and confirm the
+   pub.dev score page shows all expected platforms.
+6. Run approved staging smoke tests against the published artifacts.
+7. Publish release notes, checksums, SBOMs, and provenance links.
 
 Registry releases are immutable. If a defect is found, stop rollout and publish a patched
 version; yank/deprecate the affected version only when necessary and document the reason.

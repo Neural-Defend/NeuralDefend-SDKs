@@ -23,6 +23,12 @@ node_modules/
 *.cdx.json
 .npm/
 
+# Dart and Flutter. Library packages do not commit pubspec.lock.
+.dart_tool/
+pubspec.lock
+.flutter-plugins
+.flutter-plugins-dependencies
+
 # Secrets. API keys belong in the environment, never in the repo.
 .env
 .env.*

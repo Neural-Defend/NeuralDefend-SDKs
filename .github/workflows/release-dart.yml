@@ -1,0 +1,133 @@
+name: Release Dart SDK
+
+on:
+  push:
+    tags:
+      - "dart-v*"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build and validate only; manual runs never publish
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-dart-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Enforce manual dry-run
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run != true
+        run: |
+          echo "::error::workflow_dispatch is restricted to an explicit dry run."
+          exit 1
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Set up Dart
+        run: python scripts/setup_dart_toolchain.py --dart stable
+      - name: Verify tag matches package version
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          expected="${GITHUB_REF_NAME#dart-v}"
+          actual="$(sed -n 's/^version:[[:space:]]*//p' packages/dart/pubspec.yaml)"
+          if [[ "$expected" != "$actual" ]]; then
+            echo "::error::Tag version '$expected' does not match Dart package version '$actual'."
+            exit 1
+          fi
+      - name: Validate package version consistency
+        run: python scripts/validate_versions.py
+      - name: Require release tag on the default branch
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          git fetch --no-tags origin "${{ github.event.repository.default_branch }}"
+          git merge-base --is-ancestor "$GITHUB_SHA" "origin/${{ github.event.repository.default_branch }}" || {
+            echo "::error::Release tags must point to a commit on the default branch."
+            exit 1
+          }
+      - name: Test Dart SDK
+        working-directory: packages/dart
+        run: |
+          dart pub get
+          dart analyze --fatal-infos
+          dart test
+          dart test -p chrome
+      - name: Validate and list published files
+        working-directory: packages/dart
+        run: dart pub publish --dry-run
+      - name: Upload package tree
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dart-package
+          path: |
+            packages/dart
+            !packages/dart/.dart_tool
+            !packages/dart/generated
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: pub-dev
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Dart
+        run: python scripts/setup_dart_toolchain.py --dart stable
+      - name: Publish to pub.dev with a GitHub OIDC token
+        working-directory: packages/dart
+        shell: bash
+        run: |
+          PUB_TOKEN="$(curl --fail --silent --show-error \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://pub.dev" \
+            | python -c 'import json, sys; print(json.load(sys.stdin)["value"])')"
+          echo "::add-mask::$PUB_TOKEN"
+          export PUB_TOKEN
+          dart pub token add https://pub.dev --env-var PUB_TOKEN
+          dart pub get
+          dart pub publish --force
+      - name: Create GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#dart-v}"
+          notes="$(cat <<EOF
+          Install with:
+
+          \`\`\`bash
+          dart pub add neuraldefend:${version}
+          # or
+          flutter pub add neuraldefend:${version}
+          \`\`\`
+
+          See https://pub.dev/packages/neuraldefend and [packages/dart/README.md](https://github.com/${GITHUB_REPOSITORY}/tree/main/packages/dart/README.md).
+          EOF
+          )"
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Dart SDK ${version}" \
+            --notes "$notes" \
+            --generate-notes \
+            --verify-tag

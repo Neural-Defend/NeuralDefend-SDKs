@@ -1,0 +1,3 @@
+tags:
+  staging:
+    timeout: 3x
