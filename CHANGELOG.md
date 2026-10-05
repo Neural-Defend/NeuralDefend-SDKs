@@ -7,6 +7,7 @@ lines are independent and an SDK version is not the API version:
 - `packages/typescript/CHANGELOG.md` — tagged `ts-v*`
 - `packages/mcp/CHANGELOG.md` — tagged `mcp-v*`
 - `packages/go/CHANGELOG.md` — tagged `packages/go/v*`
+- `packages/dart/CHANGELOG.md` — tagged `dart-v*`
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), judged from the facade's public
@@ -31,6 +32,14 @@ surface.
 
 ### Added
 
+- Public Dart and Flutter SDK (`packages/dart`, pub.dev package `neuraldefend`) v1.0.0 for
+  Android, iOS, desktop, web, and the Dart VM, with streaming uploads, `XFile`-compatible
+  media input, normalized results, bounded retries, cancellation, and a Flutter example
+  app (ADR-0008).
+- OpenAPI Generator Dart output integrated into `scripts/generate.py` and
+  `scripts/check_generated.py`; Dart version alignment in `scripts/validate_versions.py`.
+- `release-dart.yml` pub.dev workflow, Dart and Flutter jobs in `test.yml`, Dart staging
+  smoke tests, and Dependabot updates for `pub`.
 - Public Go SDK (`packages/go`) v1.0.0 with streaming multipart uploads, typed results,
   bounded retries, and private generated core under `internal/core/` (ADR-0007).
 - OpenAPI Generator Go output integrated into `scripts/generate.py` and
