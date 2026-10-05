@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate private Python and TypeScript cores with pinned Docker tooling."""
+"""Generate private Python, TypeScript, Go, and Dart cores with pinned Docker tooling."""
 
 from __future__ import annotations
 
@@ -35,6 +35,8 @@ _GO_GENERATED_SKIP = frozenset(
         ".openapi-generator-ignore",
     }
 )
+DART_CONFIG = REPO_ROOT / "generator" / "dart.json"
+DART_DESTINATION = REPO_ROOT / "packages" / "dart" / "generated" / "core"
 DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
 _TO_JSON_LEGACY = (
     "        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead\n"
@@ -215,14 +217,34 @@ def _copy_go_generated(source_root: Path, destination: Path) -> None:
         raise SpecError("Go generator produced no contract .go files")
 
 
+def _copy_dart_generated(library_root: Path, destination: Path) -> None:
+    """Copy only the generated Dart library sources; the pubspec and docs are not kept."""
+
+    if not library_root.is_dir():
+        raise SpecError(f"Dart generator output is missing: {library_root}")
+    if destination.exists():
+        shutil.rmtree(destination)
+    destination.mkdir(parents=True)
+    copied = 0
+    for path in sorted(library_root.rglob("*.dart")):
+        target = destination / path.relative_to(library_root)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, target)
+        copied += 1
+    if copied == 0:
+        raise SpecError("Dart generator produced no contract .dart files")
+
+
 def _assert_generated_contract(
     python_source: Path,
     typescript_source: Path,
     go_source: Path,
+    dart_source: Path,
 ) -> None:
     python_text = _combined_text(python_source)
     typescript_text = _combined_text(typescript_source)
     go_text = _combined_text(go_source)
+    dart_text = _combined_text(dart_source)
     checks = {
         "Python detect_image operation": "detect_image" in python_text,
         "Python detect_video operation": "detect_video" in python_text,
@@ -230,12 +252,16 @@ def _assert_generated_contract(
         "TypeScript detectVideo operation": "detectVideo" in typescript_text,
         "Go DetectImage operation": "DetectImage" in go_text,
         "Go DetectVideo operation": "DetectVideo" in go_text,
+        "Dart detectImage operation": "detectImage" in dart_text,
+        "Dart detectVideo operation": "detectVideo" in dart_text,
         "Python x-api-key authentication": "x-api-key" in python_text,
         "TypeScript x-api-key authentication": "x-api-key" in typescript_text,
         "Go x-api-key authentication": "x-api-key" in go_text,
+        "Dart API-key authentication support": "ApiKeyAuth" in dart_text,
         "Python multipart file field": "file" in python_text,
         "TypeScript multipart file field": "file" in typescript_text,
         "Go multipart file field": "FormFile" in go_text or "formFile" in go_text,
+        "Dart multipart file field": "MultipartFile" in dart_text,
     }
     missing = [name for name, present in checks.items() if not present]
     if missing:
@@ -247,7 +273,7 @@ def _assert_generated_contract(
         "UnifiedVideoAuthenticityScore",
         "ApiError",
     ):
-        if model not in python_text or model not in typescript_text:
+        if model not in python_text or model not in typescript_text or model not in dart_text:
             raise SpecError(f"generated model is missing: {model}")
     for model in (
         "DetectImageResponse",
@@ -271,6 +297,7 @@ def generate_snapshot(snapshot: Path) -> None:
         python_build = build / "python"
         typescript_build = build / "typescript"
         go_build = build / "go"
+        dart_build = build / "dart"
         _docker_generate(
             image=image,
             generator="python",
@@ -289,16 +316,25 @@ def generate_snapshot(snapshot: Path) -> None:
             config_path="generator/go.json",
             output=go_build,
         )
+        _docker_generate(
+            image=image,
+            generator="dart",
+            config_path="generator/dart.json",
+            output=dart_build,
+        )
         python_source = python_build / "neuraldefend" / "_core"
         typescript_source = typescript_build / "src"
         go_source = go_build
+        dart_source = dart_build / "lib"
         if not python_source.is_dir():
             raise SpecError(f"Python generator output is missing: {python_source}")
         if not typescript_source.is_dir():
             raise SpecError(f"TypeScript generator output is missing: {typescript_source}")
         if not go_source.is_dir():
             raise SpecError(f"Go generator output is missing: {go_source}")
-        _assert_generated_contract(python_source, typescript_source, go_source)
+        if not dart_source.is_dir():
+            raise SpecError(f"Dart generator output is missing: {dart_source}")
+        _assert_generated_contract(python_source, typescript_source, go_source, dart_source)
         _postprocess_python_generated(python_source)
         leaked_generated_artifacts = [
             path
@@ -319,6 +355,7 @@ def generate_snapshot(snapshot: Path) -> None:
         shutil.copytree(typescript_source, snapshot / "typescript")
         go_snapshot = snapshot / "go"
         _copy_go_generated(go_source, go_snapshot)
+        _copy_dart_generated(dart_source, snapshot / "dart")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -344,7 +381,8 @@ def main(argv: list[str] | None = None) -> int:
             replace_directory(snapshot / "python", PYTHON_DESTINATION)
             replace_directory(snapshot / "typescript", TYPESCRIPT_DESTINATION)
             replace_directory(snapshot / "go", GO_DESTINATION)
-        print("generated Python, TypeScript, and Go private cores")
+            replace_directory(snapshot / "dart", DART_DESTINATION)
+        print("generated Python, TypeScript, Go, and Dart private cores")
         return 0
     except (OSError, SpecError) as exc:
         print(f"generation failed: {exc}", file=sys.stderr)

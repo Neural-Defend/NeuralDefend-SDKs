@@ -5,5 +5,6 @@
 
 packages/python/src/neuraldefend/_core/** linguist-generated=true
 packages/typescript/src/core/**           linguist-generated=true
+packages/dart/generated/core/**           linguist-generated=true
 spec/public.yaml                          linguist-generated=true
 spec/public.json                          linguist-generated=true

@@ -26,6 +26,7 @@ DEFAULT_PATHS = (
     REPO_ROOT / "spec",
 )
 SKIPPED_DIRECTORIES = {
+    ".dart_tool",
     ".git",
     ".mypy_cache",
     ".pytest_cache",
@@ -41,6 +42,7 @@ TEXT_SUFFIXES = {
     "",
     ".cjs",
     ".cts",
+    ".dart",
     ".html",
     ".js",
     ".json",
