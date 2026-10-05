@@ -23,7 +23,9 @@ List<String> allFixturePaths() {
     final directory = Directory('${fixturesRoot.path}/$kind');
     for (final entity in directory.listSync(recursive: true)) {
       if (entity is File && entity.path.endsWith('.json')) {
-        paths.add(entity.path.substring(fixturesRoot.path.length + 1).replaceAll(r'\', '/'));
+        paths.add(entity.path
+            .substring(fixturesRoot.path.length + 1)
+            .replaceAll(r'\', '/'));
       }
     }
   }
@@ -72,11 +74,13 @@ class RecordedRequest {
 class RecordingClient extends http.BaseClient {
   RecordingClient(this.respond);
 
-  final Future<http.StreamedResponse> Function(int call, RecordedRequest request) respond;
+  final Future<http.StreamedResponse> Function(
+      int call, RecordedRequest request) respond;
   final List<RecordedRequest> requests = [];
   bool closed = false;
 
-  late final MockClient _mock = MockClient.streaming((request, bodyStream) async {
+  late final MockClient _mock =
+      MockClient.streaming((request, bodyStream) async {
     final body = await bodyStream.toBytes();
     final recorded = RecordedRequest(
       request.method,
@@ -89,7 +93,8 @@ class RecordingClient extends http.BaseClient {
   });
 
   @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) => _mock.send(request);
+  Future<http.StreamedResponse> send(http.BaseRequest request) =>
+      _mock.send(request);
 
   @override
   void close() {

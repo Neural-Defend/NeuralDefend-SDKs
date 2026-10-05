@@ -17,7 +17,8 @@ String _fixture(String variable, String fallback) {
   return path;
 }
 
-void _expectConsistent(String originalStatus, String trxId, bool scored, bool rejected) {
+void _expectConsistent(
+    String originalStatus, String trxId, bool scored, bool rejected) {
   expect(originalStatus, anyOf('success', 'rejected'));
   expect(trxId, isNotEmpty);
   expect(scored, originalStatus == 'success');
@@ -33,9 +34,11 @@ void main() {
     final client = NeuroVerifyClient.staging(apiKey: _apiKey, maxRetries: 0);
     try {
       final result = await client.detectImage(MediaInput.file(
-        _fixture('NEURALDEFEND_STAGING_IMAGE', '../../tests/fixtures/media/ai-generated.png'),
+        _fixture('NEURALDEFEND_STAGING_IMAGE',
+            '../../tests/fixtures/media/ai-generated.png'),
       ));
-      _expectConsistent(result.originalStatus, result.uniqueTrxId, result.scored, result.rejected);
+      _expectConsistent(result.originalStatus, result.uniqueTrxId,
+          result.scored, result.rejected);
       if (result.scored) {
         expect(result.riskScore, inInclusiveRange(0.1, 10.0));
         expect(result.riskLevel, isNotNull);
@@ -50,11 +53,13 @@ void main() {
     try {
       final result = await client.detectVideo(
         MediaInput.file(
-          _fixture('NEURALDEFEND_STAGING_VIDEO', '../../tests/fixtures/media/fake-video.mp4'),
+          _fixture('NEURALDEFEND_STAGING_VIDEO',
+              '../../tests/fixtures/media/fake-video.mp4'),
         ),
         maxFrames: 2,
       );
-      _expectConsistent(result.originalStatus, result.uniqueTrxId, result.scored, result.rejected);
+      _expectConsistent(result.originalStatus, result.uniqueTrxId,
+          result.scored, result.rejected);
       if (result.scored) {
         expect(result.videoRiskScore, inInclusiveRange(0.1, 10.0));
         expect(result.videoRiskLevel, isNotNull);

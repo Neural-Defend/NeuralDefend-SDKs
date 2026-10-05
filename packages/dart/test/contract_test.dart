@@ -16,9 +16,11 @@ Future<Object> _detect(String fixture) async {
   final client = testClient(fixtureTransport([fixture]));
   try {
     if (fixture.startsWith('image/')) {
-      return await client.detectImage(MediaInput.bytes(_image, filename: 'sample.jpg'));
+      return await client
+          .detectImage(MediaInput.bytes(_image, filename: 'sample.jpg'));
     }
-    return await client.detectVideo(MediaInput.bytes(_video, filename: 'sample.mp4'));
+    return await client
+        .detectVideo(MediaInput.bytes(_video, filename: 'sample.mp4'));
   } catch (error) {
     return error;
   } finally {
@@ -124,7 +126,8 @@ void main() {
         expect(result.riskScore, (wire['risk_score'] as num?)?.toDouble());
         expect(result.riskLevel?.name, wire['risk_level']);
         expect(result.message, wire['message']);
-        expect(result.aiThreatSignals, wire['ai_threat_signals'] ?? const <String>[]);
+        expect(result.aiThreatSignals,
+            wire['ai_threat_signals'] ?? const <String>[]);
         expect(result.scored, wire['status'] == 'success');
         expect(result.rejected, wire['status'] == 'rejected');
         expect(result.highRisk, wire['risk_level'] == 'high');
@@ -143,10 +146,12 @@ void main() {
         expect(result.status, _expectedStatus(wire['status']! as String));
         expect(result.statusCode, wire['status_code']);
         expect(result.billable, wire['billable'] == 'Y');
-        expect(result.videoRiskScore, (wire['video_risk_score'] as num?)?.toDouble());
+        expect(result.videoRiskScore,
+            (wire['video_risk_score'] as num?)?.toDouble());
         expect(result.videoRiskLevel?.name, wire['video_risk_level']);
         expect(result.videoMessage, wire['video_message']);
-        expect(result.audioRiskScore, (wire['audio_risk_score'] as num?)?.toDouble());
+        expect(result.audioRiskScore,
+            (wire['audio_risk_score'] as num?)?.toDouble());
         expect(result.audioRiskLevel?.name, wire['audio_risk_level']);
         expect(result.audioMessage, wire['audio_message']);
         expect(result.hasAudio, wire['audio_risk_score'] != null);
@@ -220,7 +225,8 @@ void main() {
       test(fixture, () async {
         final error = await _detect(fixture);
         expect(error, isA<ProtocolError>());
-        expect((error as ProtocolError).statusCode, loadCase(fixture)['http_status']);
+        expect((error as ProtocolError).statusCode,
+            loadCase(fixture)['http_status']);
       });
     }
   });
@@ -237,8 +243,10 @@ void main() {
           expect(result.originalStatus, wire['status']);
           expect(result.statusCode, wire['status_code']);
           expect(result.originalRiskLevel, wire['risk_level']);
-          final known = wire['status'] == 'success' && wire['risk_level'] != 'critical';
-          expect(result.status, known ? ResultStatus.success : ResultStatus.unknown);
+          final known =
+              wire['status'] == 'success' && wire['risk_level'] != 'critical';
+          expect(result.status,
+              known ? ResultStatus.success : ResultStatus.unknown);
           expect(result.scored, known);
           if (!known) {
             expect(result.toJson()['originalStatus'], wire['status']);
@@ -250,7 +258,8 @@ void main() {
           expect(video.originalVideoRiskLevel, wire['video_risk_level']);
           final known = wire['status'] == 'success' &&
               RiskLevel.tryParse(wire['video_risk_level'] as String?) != null;
-          expect(video.status, known ? ResultStatus.success : ResultStatus.unknown);
+          expect(video.status,
+              known ? ResultStatus.success : ResultStatus.unknown);
           expect(video.scored, known);
         }
       });
@@ -260,7 +269,8 @@ void main() {
   group('unknown extra fields stay in raw and out of toJson', () {
     for (final kind in ['image', 'video']) {
       test(kind, () async {
-        final result = await _detect('$kind/robustness/unknown-extra-field.json');
+        final result =
+            await _detect('$kind/robustness/unknown-extra-field.json');
         final raw = switch (result) {
           ImageResult(:final raw) => raw,
           VideoResult(:final raw) => raw,
@@ -282,7 +292,8 @@ void main() {
   });
 
   test('normalized image JSON matches the documented shape', () async {
-    final result = await _detect('image/documented/low-risk.json') as ImageResult;
+    final result =
+        await _detect('image/documented/low-risk.json') as ImageResult;
     expect(result.toJson(), {
       'status': 'success',
       'scored': true,
@@ -301,7 +312,8 @@ void main() {
   });
 
   test('normalized video JSON keeps modalities independent', () async {
-    final result = await _detect('video/documented/silent-no-audio.json') as VideoResult;
+    final result =
+        await _detect('video/documented/silent-no-audio.json') as VideoResult;
     final json = result.toJson();
     expect(json['hasAudio'], isFalse);
     expect(json['audioRiskScore'], isNull);

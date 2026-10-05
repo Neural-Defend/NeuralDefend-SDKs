@@ -81,7 +81,9 @@ class NeuroVerifyClient {
   }) =>
       NeuroVerifyClient._(
         apiKey: apiKey,
-        baseUrl: baseUrl ?? environmentValue('NEURALDEFEND_BASE_URL') ?? productionUrl,
+        baseUrl: baseUrl ??
+            environmentValue('NEURALDEFEND_BASE_URL') ??
+            productionUrl,
         allowCustomBaseUrl: allowCustomBaseUrl,
         timeout: timeout,
         maxRetries: maxRetries,
@@ -138,7 +140,8 @@ class NeuroVerifyClient {
           allowInsecure: allowInsecureForTesting,
           allowCustom: allowCustomBaseUrl,
         ),
-        retryAfterCap = retryAfterCap.isNegative ? Duration.zero : retryAfterCap,
+        retryAfterCap =
+            retryAfterCap.isNegative ? Duration.zero : retryAfterCap,
         _userAgent = canSetUserAgent
             ? (userAgent == null || userAgent.trim().isEmpty
                 ? 'neuraldefend-dart/$sdkVersion'
@@ -414,8 +417,8 @@ class NeuroVerifyClient {
     T Function(Map<String, Object?> envelope, String? requestId) parse,
   ) {
     final status = response.statusCode;
-    final headerRequestId =
-        response.headers['x-request-id'] ?? response.headers['x-correlation-id'];
+    final headerRequestId = response.headers['x-request-id'] ??
+        response.headers['x-correlation-id'];
     final json = _decodeObject(response);
 
     String detailOr(String fallback) {
@@ -425,7 +428,8 @@ class NeuroVerifyClient {
 
     switch (status) {
       case 401:
-        throw AuthenticationError(detailOr('HTTP 401'), requestId: headerRequestId);
+        throw AuthenticationError(detailOr('HTTP 401'),
+            requestId: headerRequestId);
       case 403:
         throw ScopeError(detailOr('HTTP 403'), requestId: headerRequestId);
       case 429:
@@ -447,11 +451,13 @@ class NeuroVerifyClient {
         );
     }
 
-    final envelopeKey = kind == DetectionKind.image ? imageEnvelope : videoEnvelope;
+    final envelopeKey =
+        kind == DetectionKind.image ? imageEnvelope : videoEnvelope;
     final envelope = json?[envelopeKey];
     if (status == 500 || status == 503) {
       if (envelope is! Map<String, Object?>) {
-        throw ServerError('HTTP $status', statusCode: status, requestId: headerRequestId);
+        throw ServerError('HTTP $status',
+            statusCode: status, requestId: headerRequestId);
       }
       final requestId = headerRequestId ?? _transactionId(envelope);
       final message =
@@ -557,7 +563,8 @@ int _checkRetries(int maxRetries) {
 }
 
 String _resolveApiKey(String? explicit) {
-  final value = (explicit ?? environmentValue('NEURALDEFEND_API_KEY'))?.trim() ?? '';
+  final value =
+      (explicit ?? environmentValue('NEURALDEFEND_API_KEY'))?.trim() ?? '';
   if (value.isEmpty) {
     throw ValidationError(
       ValidationErrorCode.apiKeyRequired,
@@ -615,8 +622,9 @@ Duration _seconds(double seconds) =>
 
 Duration _min(Duration a, Duration b) => a < b ? a : b;
 
-String _describe(Object error) =>
-    error is http.ClientException ? error.message : error.runtimeType.toString();
+String _describe(Object error) => error is http.ClientException
+    ? error.message
+    : error.runtimeType.toString();
 
 /// Completes [work] unless [cancel] completes first, in which case the
 /// returned future fails and any later outcome of [work] is ignored.

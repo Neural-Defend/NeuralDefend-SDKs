@@ -21,7 +21,8 @@ Object? freezeJson(Object? value, String secret) => switch (value) {
       _ => value,
     };
 
-Map<String, Object?> freezeEnvelope(Map<String, Object?> value, String secret) =>
+Map<String, Object?> freezeEnvelope(
+        Map<String, Object?> value, String secret) =>
     freezeJson(value, secret)! as Map<String, Object?>;
 
 class _Context {
@@ -29,7 +30,8 @@ class _Context {
   final int httpStatus;
   final String? requestId;
 
-  ProtocolError invalid(String field, [String expectation = 'was missing or invalid']) =>
+  ProtocolError invalid(String field,
+          [String expectation = 'was missing or invalid']) =>
       ProtocolError(
         'The response field "$field" $expectation.',
         statusCode: httpStatus,
@@ -37,7 +39,8 @@ class _Context {
       );
 }
 
-String _requiredString(Map<String, Object?> value, String field, _Context context) {
+String _requiredString(
+    Map<String, Object?> value, String field, _Context context) {
   final candidate = value[field];
   if (candidate is! String) throw context.invalid(field);
   return candidate;
@@ -46,30 +49,38 @@ String _requiredString(Map<String, Object?> value, String field, _Context contex
 int _requiredInt(Map<String, Object?> value, String field, _Context context) {
   final candidate = value[field];
   if (candidate is int) return candidate;
-  if (candidate is double && candidate.isFinite && candidate == candidate.truncateToDouble()) {
+  if (candidate is double &&
+      candidate.isFinite &&
+      candidate == candidate.truncateToDouble()) {
     return candidate.toInt();
   }
   throw context.invalid(field, 'must be an integer');
 }
 
-double? _nullableScore(Map<String, Object?> value, String field, _Context context) {
+double? _nullableScore(
+    Map<String, Object?> value, String field, _Context context) {
   if (!value.containsKey(field)) throw context.invalid(field, 'was missing');
   final candidate = value[field];
   if (candidate == null) return null;
-  if (candidate is! num || !candidate.isFinite || candidate < 0.1 || candidate > 10.0) {
+  if (candidate is! num ||
+      !candidate.isFinite ||
+      candidate < 0.1 ||
+      candidate > 10.0) {
     throw context.invalid(field, 'must be from 0.1 through 10.0 or null');
   }
   return candidate.toDouble();
 }
 
-String? _nullableString(Map<String, Object?> value, String field, _Context context) {
+String? _nullableString(
+    Map<String, Object?> value, String field, _Context context) {
   if (!value.containsKey(field)) throw context.invalid(field, 'was missing');
   final candidate = value[field];
   if (candidate == null || candidate is String) return candidate as String?;
   throw context.invalid(field, 'must be a string or null');
 }
 
-bool _billable(Map<String, Object?> value, _Context context) => switch (value['billable']) {
+bool _billable(Map<String, Object?> value, _Context context) =>
+    switch (value['billable']) {
       'Y' => true,
       'N' => false,
       _ => throw context.invalid('billable', 'must be exactly "Y" or "N"'),
@@ -167,10 +178,12 @@ VideoResult parseVideo(
   final videoMessage = _requiredString(envelope, 'video_message', context);
   final audioMessage = _nullableString(envelope, 'audio_message', context);
   final videoScore = _nullableScore(envelope, 'video_risk_score', context);
-  final originalVideoLevel = _nullableString(envelope, 'video_risk_level', context);
+  final originalVideoLevel =
+      _nullableString(envelope, 'video_risk_level', context);
   final videoLevel = RiskLevel.tryParse(originalVideoLevel);
   final audioScore = _nullableScore(envelope, 'audio_risk_score', context);
-  final originalAudioLevel = _nullableString(envelope, 'audio_risk_level', context);
+  final originalAudioLevel =
+      _nullableString(envelope, 'audio_risk_level', context);
   final audioLevel = RiskLevel.tryParse(originalAudioLevel);
 
   if (originalStatus == 'error') {
@@ -179,8 +192,9 @@ VideoResult parseVideo(
   var status = _status(originalStatus);
   if (status == ResultStatus.success) {
     final videoScored = videoScore != null && videoLevel != null;
-    final audioConsistent = (audioScore == null && originalAudioLevel == null) ||
-        (audioScore != null && audioLevel != null);
+    final audioConsistent =
+        (audioScore == null && originalAudioLevel == null) ||
+            (audioScore != null && audioLevel != null);
     if (!videoScored || !audioConsistent) status = ResultStatus.unknown;
   }
   return VideoResult(

@@ -221,7 +221,8 @@ Future<PreparedMedia> prepareMedia(
   }
 
   if (prepared.length <= 0) {
-    throw ValidationError(ValidationErrorCode.emptyFile, 'The upload is empty.');
+    throw ValidationError(
+        ValidationErrorCode.emptyFile, 'The upload is empty.');
   }
   if (prepared.length > kind.maxBytes) {
     throw ValidationError(

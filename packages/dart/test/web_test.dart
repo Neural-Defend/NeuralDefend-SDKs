@@ -39,7 +39,8 @@ void main() {
     final client = NeuroVerifyClient(apiKey: 'key');
     await expectLater(
       client.detectImage(MediaInput.file('selfie.jpg')),
-      throwsA(isA<ValidationError>().having((e) => e.code, 'code', ValidationErrorCode.unsupportedInput)),
+      throwsA(isA<ValidationError>()
+          .having((e) => e.code, 'code', ValidationErrorCode.unsupportedInput)),
     );
     client.close();
   });
@@ -50,7 +51,8 @@ void main() {
     final transport = MockClient.streaming((request, stream) async {
       seen = request;
       body = await stream.toBytes();
-      return http.StreamedResponse(Stream.value(utf8.encode(jsonEncode(_lowRisk))), 200);
+      return http.StreamedResponse(
+          Stream.value(utf8.encode(jsonEncode(_lowRisk))), 200);
     });
     final client = createTestClient(
       apiKey: 'web-key',
@@ -60,7 +62,8 @@ void main() {
     );
 
     final result = await client.detectImage(
-      MediaInput.bytes(Uint8List.fromList(utf8.encode('pixels')), filename: 'selfie.jpg'),
+      MediaInput.bytes(Uint8List.fromList(utf8.encode('pixels')),
+          filename: 'selfie.jpg'),
     );
 
     expect(result.scored, isTrue);

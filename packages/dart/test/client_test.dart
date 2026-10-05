@@ -8,7 +8,8 @@ import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:neuraldefend/neuraldefend.dart';
-import 'package:neuraldefend/src/client.dart' show ClientRuntime, createTestClient;
+import 'package:neuraldefend/src/client.dart'
+    show ClientRuntime, createTestClient;
 import 'package:test/test.dart';
 
 import 'support.dart';
@@ -31,7 +32,8 @@ void main() {
         'image/documented/internal-error-500.json',
         'image/documented/low-risk.json',
       ]);
-      final client = testClient(transport, maxRetries: 3, runtime: fake.runtime);
+      final client =
+          testClient(transport, maxRetries: 3, runtime: fake.runtime);
 
       final result = await client.detectImage(MediaInput.openRead(
         () {
@@ -62,7 +64,8 @@ void main() {
         'video/documented/service-unavailable-503.json',
         'video/documented/both-low.json',
       ]);
-      final client = testClient(transport, maxRetries: 3, runtime: fake.runtime);
+      final client =
+          testClient(transport, maxRetries: 3, runtime: fake.runtime);
       await client.detectVideo(_mp4());
       expect(fake.sleeps, const [
         Duration(milliseconds: 1250),
@@ -70,11 +73,15 @@ void main() {
       ]);
     });
 
-    test('exhausted HTTP 503 retries throw ServerError after four attempts', () async {
+    test('exhausted HTTP 503 retries throw ServerError after four attempts',
+        () async {
       final fake = FakeRuntime();
-      final transport = fixtureTransport(['image/documented/service-unavailable-503.json']);
-      final client = testClient(transport, maxRetries: 3, runtime: fake.runtime);
-      await expectLater(client.detectImage(_jpeg()), throwsA(isA<ServerError>()));
+      final transport =
+          fixtureTransport(['image/documented/service-unavailable-503.json']);
+      final client =
+          testClient(transport, maxRetries: 3, runtime: fake.runtime);
+      await expectLater(
+          client.detectImage(_jpeg()), throwsA(isA<ServerError>()));
       expect(transport.requests, hasLength(4));
       expect(fake.sleeps, hasLength(3));
     });
@@ -85,7 +92,8 @@ void main() {
         'image/synthetic/rate-limited-429.json',
         'image/documented/low-risk.json',
       ]);
-      final client = testClient(transport, maxRetries: 1, runtime: fake.runtime);
+      final client =
+          testClient(transport, maxRetries: 1, runtime: fake.runtime);
       final result = await client.detectImage(_jpeg());
       expect(result.scored, isTrue);
       expect(transport.requests, hasLength(2));
@@ -119,10 +127,13 @@ void main() {
       final transport = RecordingClient((call, _) async {
         calls = call;
         return responseFromCase(
-          call == 1 ? {...limited, 'headers': headers} : loadCase('image/documented/low-risk.json'),
+          call == 1
+              ? {...limited, 'headers': headers}
+              : loadCase('image/documented/low-risk.json'),
         );
       });
-      final client = testClient(transport, maxRetries: 1, runtime: fake.runtime);
+      final client =
+          testClient(transport, maxRetries: 1, runtime: fake.runtime);
       await client.detectImage(_jpeg());
       expect(calls, 2);
       expect(fake.sleeps, const [Duration(seconds: 15)]);
@@ -132,18 +143,24 @@ void main() {
       final fake = FakeRuntime();
       final limited = loadCase('image/synthetic/rate-limited-429.json');
       final transport = RecordingClient((call, _) async => responseFromCase(
-            call < 3 ? {...limited, 'headers': <String, Object?>{}} : loadCase('image/documented/low-risk.json'),
+            call < 3
+                ? {...limited, 'headers': <String, Object?>{}}
+                : loadCase('image/documented/low-risk.json'),
           ));
-      final client = testClient(transport, maxRetries: 3, runtime: fake.runtime);
+      final client =
+          testClient(transport, maxRetries: 3, runtime: fake.runtime);
       await client.detectImage(_jpeg());
       expect(fake.sleeps, const [Duration(seconds: 1), Duration(seconds: 2)]);
     });
 
     test('exhausted HTTP 429 throws RateLimitError', () async {
       final fake = FakeRuntime();
-      final transport = fixtureTransport(['video/synthetic/rate-limited-429.json']);
-      final client = testClient(transport, maxRetries: 2, runtime: fake.runtime);
-      await expectLater(client.detectVideo(_mp4()), throwsA(isA<RateLimitError>()));
+      final transport =
+          fixtureTransport(['video/synthetic/rate-limited-429.json']);
+      final client =
+          testClient(transport, maxRetries: 2, runtime: fake.runtime);
+      await expectLater(
+          client.detectVideo(_mp4()), throwsA(isA<RateLimitError>()));
       expect(transport.requests, hasLength(3));
     });
 
@@ -157,7 +174,8 @@ void main() {
       test('never retries $fixture', () async {
         final fake = FakeRuntime();
         final transport = fixtureTransport([fixture]);
-        final client = testClient(transport, maxRetries: 3, runtime: fake.runtime);
+        final client =
+            testClient(transport, maxRetries: 3, runtime: fake.runtime);
         try {
           await client.detectImage(_jpeg());
         } on NeuroVerifyError {
@@ -169,9 +187,11 @@ void main() {
     }
 
     test('maxRetries 0 disables retries', () async {
-      final transport = fixtureTransport(['image/documented/internal-error-500.json']);
+      final transport =
+          fixtureTransport(['image/documented/internal-error-500.json']);
       final client = testClient(transport, maxRetries: 0);
-      await expectLater(client.detectImage(_jpeg()), throwsA(isA<ServerError>()));
+      await expectLater(
+          client.detectImage(_jpeg()), throwsA(isA<ServerError>()));
       expect(transport.requests, hasLength(1));
     });
   });
@@ -188,7 +208,8 @@ void main() {
       expect(request.headers['x-api-key'], testApiKey);
       expect(request.headers['user-agent'], 'neuraldefend-dart/$sdkVersion');
       expect(request.headers['accept'], 'application/json');
-      expect(request.headers['content-type'], startsWith('multipart/form-data; boundary='));
+      expect(request.headers['content-type'],
+          startsWith('multipart/form-data; boundary='));
       expect(request.bodyText, contains('name="file"; filename="Photo.JPG"'));
       expect(request.bodyText, contains('content-type: image/jpeg'));
       expect(request.bodyText, contains('image-bytes'));
@@ -204,7 +225,8 @@ void main() {
     test('video options are sent as query parameters', () async {
       final transport = fixtureTransport(['video/documented/both-low.json']);
       final client = testClient(transport);
-      final result = await client.detectVideo(_mp4(), maxFrames: 100, sampleRate: 1);
+      final result =
+          await client.detectVideo(_mp4(), maxFrames: 100, sampleRate: 1);
       expect(result.scored, isTrue);
       expect(transport.requests.single.url.queryParameters, {
         'max_frames': '100',
@@ -223,10 +245,12 @@ void main() {
       (101, null, ValidationErrorCode.invalidMaxFrames),
       (null, 0, ValidationErrorCode.invalidSampleRate),
     ]) {
-      test('rejects maxFrames=$maxFrames sampleRate=$sampleRate locally', () async {
+      test('rejects maxFrames=$maxFrames sampleRate=$sampleRate locally',
+          () async {
         final transport = fixtureTransport(['video/documented/both-low.json']);
         await expectLater(
-          testClient(transport).detectVideo(_mp4(), maxFrames: maxFrames, sampleRate: sampleRate),
+          testClient(transport).detectVideo(_mp4(),
+              maxFrames: maxFrames, sampleRate: sampleRate),
           throwsA(isA<ValidationError>().having((e) => e.code, 'code', code)),
         );
         expect(transport.requests, isEmpty);
@@ -250,9 +274,12 @@ void main() {
 
   group('response classification', () {
     test('HTTP 200 error envelope throws a redacted ServerError', () async {
-      final caseData = _withStatus('image/documented/internal-error-500.json', 200);
-      final body = jsonDecode(jsonEncode(caseData['body'])) as Map<String, Object?>;
-      final envelope = body['unified_face_authenticity_score']! as Map<String, Object?>;
+      final caseData =
+          _withStatus('image/documented/internal-error-500.json', 200);
+      final body =
+          jsonDecode(jsonEncode(caseData['body'])) as Map<String, Object?>;
+      final envelope =
+          body['unified_face_authenticity_score']! as Map<String, Object?>;
       envelope['message'] = 'failed for $testApiKey';
       envelope['future'] = {
         'echo': ['nested $testApiKey'],
@@ -272,10 +299,13 @@ void main() {
       expect(serverError.toString(), isNot(contains(testApiKey)));
     });
 
-    test('API keys echoed in successful results are redacted from raw', () async {
+    test('API keys echoed in successful results are redacted from raw',
+        () async {
       final caseData = loadCase('image/documented/low-risk.json');
-      final body = jsonDecode(jsonEncode(caseData['body'])) as Map<String, Object?>;
-      (body['unified_face_authenticity_score']! as Map<String, Object?>)['echo'] = testApiKey;
+      final body =
+          jsonDecode(jsonEncode(caseData['body'])) as Map<String, Object?>;
+      (body['unified_face_authenticity_score']!
+          as Map<String, Object?>)['echo'] = testApiKey;
       final transport = RecordingClient(
         (_, __) async => responseFromCase({...caseData, 'body': body}),
       );
@@ -288,11 +318,13 @@ void main() {
           responseFromCase(_withStatus('image/documented/low-risk.json', 400)));
       await expectLater(
         testClient(transport).detectImage(_jpeg()),
-        throwsA(isA<HttpError>().having((e) => e.statusCode, 'statusCode', 400)),
+        throwsA(
+            isA<HttpError>().having((e) => e.statusCode, 'statusCode', 400)),
       );
     });
 
-    test('unexpected HTTP status throws HttpError with the server detail', () async {
+    test('unexpected HTTP status throws HttpError with the server detail',
+        () async {
       final transport = RecordingClient((_, __) async => http.StreamedResponse(
             Stream.value(utf8.encode('{"detail": "Not Found"}')),
             404,
@@ -309,11 +341,13 @@ void main() {
 
     test('non-JSON 401 still throws AuthenticationError', () async {
       final transport = RecordingClient(
-        (_, __) async => http.StreamedResponse(Stream.value(utf8.encode('<html>')), 401),
+        (_, __) async =>
+            http.StreamedResponse(Stream.value(utf8.encode('<html>')), 401),
       );
       await expectLater(
         testClient(transport).detectImage(_jpeg()),
-        throwsA(isA<AuthenticationError>().having((e) => e.detail, 'detail', 'HTTP 401')),
+        throwsA(isA<AuthenticationError>()
+            .having((e) => e.detail, 'detail', 'HTTP 401')),
       );
     });
 
@@ -325,7 +359,8 @@ void main() {
           }));
       await expectLater(
         testClient(transport).detectImage(_jpeg()),
-        throwsA(isA<ServerError>().having((e) => e.requestId, 'requestId', 'req-123')),
+        throwsA(isA<ServerError>()
+            .having((e) => e.requestId, 'requestId', 'req-123')),
       );
     });
 
@@ -338,8 +373,10 @@ void main() {
     ]) {
       test('invalid $field=$value throws ProtocolError', () async {
         final caseData = loadCase('image/documented/low-risk.json');
-        final body = jsonDecode(jsonEncode(caseData['body'])) as Map<String, Object?>;
-        (body['unified_face_authenticity_score']! as Map<String, Object?>)[field] = value;
+        final body =
+            jsonDecode(jsonEncode(caseData['body'])) as Map<String, Object?>;
+        (body['unified_face_authenticity_score']!
+            as Map<String, Object?>)[field] = value;
         final transport = RecordingClient(
           (_, __) async => responseFromCase({...caseData, 'body': body}),
         );
@@ -352,41 +389,52 @@ void main() {
 
     test('a missing required nullable field throws ProtocolError', () async {
       final caseData = loadCase('video/documented/both-low.json');
-      final body = jsonDecode(jsonEncode(caseData['body'])) as Map<String, Object?>;
-      (body['unified_video_authenticity_score']! as Map<String, Object?>).remove('audio_risk_score');
+      final body =
+          jsonDecode(jsonEncode(caseData['body'])) as Map<String, Object?>;
+      (body['unified_video_authenticity_score']! as Map<String, Object?>)
+          .remove('audio_risk_score');
       final transport = RecordingClient(
         (_, __) async => responseFromCase({...caseData, 'body': body}),
       );
-      await expectLater(testClient(transport).detectVideo(_mp4()), throwsA(isA<ProtocolError>()));
+      await expectLater(testClient(transport).detectVideo(_mp4()),
+          throwsA(isA<ProtocolError>()));
     });
   });
 
   group('media validation', () {
     late Directory directory;
-    setUp(() => directory = Directory.systemTemp.createTempSync('neuraldefend-test-'));
+    setUp(() =>
+        directory = Directory.systemTemp.createTempSync('neuraldefend-test-'));
     tearDown(() => directory.deleteSync(recursive: true));
 
     test('streams a file path and infers the filename', () async {
-      final file = File('${directory.path}/valid.jpg')..writeAsStringSync('path-content');
+      final file = File('${directory.path}/valid.jpg')
+        ..writeAsStringSync('path-content');
       final transport = fixtureTransport(['image/documented/low-risk.json']);
-      final result = await testClient(transport).detectImage(MediaInput.file(file.path));
+      final result =
+          await testClient(transport).detectImage(MediaInput.file(file.path));
       expect(result.scored, isTrue);
-      expect(transport.requests.single.bodyText, contains('filename="valid.jpg"'));
+      expect(
+          transport.requests.single.bodyText, contains('filename="valid.jpg"'));
       expect(transport.requests.single.bodyText, contains('path-content'));
     });
 
     test('an explicit filename overrides the path basename', () async {
       final file = File('${directory.path}/upload.bin')..writeAsStringSync('x');
       final transport = fixtureTransport(['image/documented/low-risk.json']);
-      await testClient(transport).detectImage(MediaInput.file(file.path, filename: 'selfie.png'));
-      expect(transport.requests.single.bodyText, contains('filename="selfie.png"'));
-      expect(transport.requests.single.bodyText, contains('content-type: image/png'));
+      await testClient(transport)
+          .detectImage(MediaInput.file(file.path, filename: 'selfie.png'));
+      expect(transport.requests.single.bodyText,
+          contains('filename="selfie.png"'));
+      expect(transport.requests.single.bodyText,
+          contains('content-type: image/png'));
     });
 
     test('rejects empty, missing, directory, and symlink paths', () async {
       final empty = File('${directory.path}/empty.jpg')..createSync();
       final folder = Directory('${directory.path}/folder.jpg')..createSync();
-      final target = File('${directory.path}/target.jpg')..writeAsStringSync('x');
+      final target = File('${directory.path}/target.jpg')
+        ..writeAsStringSync('x');
       final link = Link('${directory.path}/link.jpg')..createSync(target.path);
       final transport = fixtureTransport(['image/documented/low-risk.json']);
       final client = testClient(transport);
@@ -416,7 +464,8 @@ void main() {
           length: imageMaxBytes + 1,
           filename: 'big.jpg',
         )),
-        throwsA(isA<ValidationError>().having((e) => e.code, 'code', ValidationErrorCode.fileTooLarge)),
+        throwsA(isA<ValidationError>()
+            .having((e) => e.code, 'code', ValidationErrorCode.fileTooLarge)),
       );
       await expectLater(
         client.detectVideo(MediaInput.openRead(
@@ -424,7 +473,8 @@ void main() {
           length: videoMaxBytes + 1,
           filename: 'big.mp4',
         )),
-        throwsA(isA<ValidationError>().having((e) => e.code, 'code', ValidationErrorCode.fileTooLarge)),
+        throwsA(isA<ValidationError>()
+            .having((e) => e.code, 'code', ValidationErrorCode.fileTooLarge)),
       );
       expect(transport.requests, isEmpty);
     });
@@ -432,16 +482,19 @@ void main() {
     test('accepts media of exactly the maximum size', () async {
       final transport = fixtureTransport(['image/documented/low-risk.json']);
       final exact = Uint8List(imageMaxBytes);
-      final result = await testClient(transport).detectImage(MediaInput.bytes(exact, filename: 'max.jpg'));
+      final result = await testClient(transport)
+          .detectImage(MediaInput.bytes(exact, filename: 'max.jpg'));
       expect(result.scored, isTrue);
       expect(transport.requests.single.body.length, greaterThan(imageMaxBytes));
     });
 
     test('requires a filename for bytes and streams', () async {
-      final client = testClient(fixtureTransport(['image/documented/low-risk.json']));
+      final client =
+          testClient(fixtureTransport(['image/documented/low-risk.json']));
       await expectLater(
         client.detectImage(MediaInput.bytes(_bytes, filename: '  ')),
-        throwsA(isA<ValidationError>().having((e) => e.code, 'code', ValidationErrorCode.filenameRequired)),
+        throwsA(isA<ValidationError>().having(
+            (e) => e.code, 'code', ValidationErrorCode.filenameRequired)),
       );
     });
 
@@ -452,19 +505,23 @@ void main() {
           .detectImage(MediaInput.bytes(_bytes, filename: 'scan.gif'));
       expect(warnings.single.code, 'unsupported_extension');
       expect(warnings.single.filename, 'scan.gif');
-      expect(transport.requests.single.bodyText, contains('content-type: application/octet-stream'));
+      expect(transport.requests.single.bodyText,
+          contains('content-type: application/octet-stream'));
     });
 
     test('single-use streams require maxRetries 0', () async {
       final transport = fixtureTransport(['image/documented/low-risk.json']);
       await expectLater(
         testClient(transport, maxRetries: 1).detectImage(
-          MediaInput.stream(Stream.value([1, 2, 3]), length: 3, filename: 'x.jpg'),
+          MediaInput.stream(Stream.value([1, 2, 3]),
+              length: 3, filename: 'x.jpg'),
         ),
-        throwsA(isA<ValidationError>().having((e) => e.code, 'code', ValidationErrorCode.streamNotReplayable)),
+        throwsA(isA<ValidationError>().having(
+            (e) => e.code, 'code', ValidationErrorCode.streamNotReplayable)),
       );
       final result = await testClient(transport).detectImage(
-        MediaInput.stream(Stream.value([1, 2, 3]), length: 3, filename: 'x.jpg'),
+        MediaInput.stream(Stream.value([1, 2, 3]),
+            length: 3, filename: 'x.jpg'),
       );
       expect(result.scored, isTrue);
     });
@@ -516,9 +573,10 @@ void main() {
 
     test('custom origins require explicit opt-in', () {
       expect(
-        () => NeuroVerifyClient(apiKey: 'key', baseUrl: 'https://api.example.com'),
-        throwsA(isA<ValidationError>()
-            .having((e) => e.code, 'code', ValidationErrorCode.customBaseUrlRequiresOptIn)),
+        () => NeuroVerifyClient(
+            apiKey: 'key', baseUrl: 'https://api.example.com'),
+        throwsA(isA<ValidationError>().having((e) => e.code, 'code',
+            ValidationErrorCode.customBaseUrlRequiresOptIn)),
       );
       final client = NeuroVerifyClient(
         apiKey: 'key',
@@ -539,8 +597,10 @@ void main() {
     ]) {
       test('rejects base URL $url', () {
         expect(
-          () => NeuroVerifyClient(apiKey: 'key', baseUrl: url, allowCustomBaseUrl: true),
-          throwsA(isA<ValidationError>().having((e) => e.code, 'code', ValidationErrorCode.invalidBaseUrl)),
+          () => NeuroVerifyClient(
+              apiKey: 'key', baseUrl: url, allowCustomBaseUrl: true),
+          throwsA(isA<ValidationError>().having(
+              (e) => e.code, 'code', ValidationErrorCode.invalidBaseUrl)),
         );
       });
     }
@@ -548,14 +608,18 @@ void main() {
     test('validates the API key, timeout, and retries', () {
       Matcher code(ValidationErrorCode code) =>
           throwsA(isA<ValidationError>().having((e) => e.code, 'code', code));
-      expect(() => NeuroVerifyClient(apiKey: '   '), code(ValidationErrorCode.apiKeyRequired));
+      expect(() => NeuroVerifyClient(apiKey: '   '),
+          code(ValidationErrorCode.apiKeyRequired));
       expect(() => NeuroVerifyClient(apiKey: 'k', timeout: Duration.zero),
           code(ValidationErrorCode.invalidTimeout));
-      expect(() => NeuroVerifyClient(apiKey: 'k', maxRetries: -1), code(ValidationErrorCode.invalidRetries));
-      expect(() => NeuroVerifyClient(apiKey: 'k', maxRetries: 4), code(ValidationErrorCode.invalidRetries));
+      expect(() => NeuroVerifyClient(apiKey: 'k', maxRetries: -1),
+          code(ValidationErrorCode.invalidRetries));
+      expect(() => NeuroVerifyClient(apiKey: 'k', maxRetries: 4),
+          code(ValidationErrorCode.invalidRetries));
     });
 
-    test('the API key is trimmed and redacted from toString and toJson', () async {
+    test('the API key is trimmed and redacted from toString and toJson',
+        () async {
       final transport = fixtureTransport(['image/documented/low-risk.json']);
       final client = createTestClient(
         apiKey: '  $testApiKey  ',
@@ -568,7 +632,8 @@ void main() {
       expect(transport.requests.single.headers['x-api-key'], testApiKey);
     });
 
-    test('Dart VM reads NEURALDEFEND_API_KEY and NEURALDEFEND_BASE_URL', () async {
+    test('Dart VM reads NEURALDEFEND_API_KEY and NEURALDEFEND_BASE_URL',
+        () async {
       final result = await Process.run(
         Platform.resolvedExecutable,
         ['run', 'test/environment_probe.dart'],
@@ -579,7 +644,8 @@ void main() {
       );
       expect(result.exitCode, 0, reason: '${result.stdout}${result.stderr}');
       final lines = const LineSplitter().convert('${result.stdout}'.trim());
-      expect(lines.last, 'https://stage.deepscan.neuraldefend.com|staging-pinned=https://stage.deepscan.neuraldefend.com');
+      expect(lines.last,
+          'https://stage.deepscan.neuraldefend.com|staging-pinned=https://stage.deepscan.neuraldefend.com');
     });
 
     test('close() closes only an SDK-owned HTTP client', () async {
@@ -625,7 +691,8 @@ void main() {
     }
 
     test('streams a large file upload over a real connection', () async {
-      final directory = Directory.systemTemp.createTempSync('neuraldefend-socket-');
+      final directory =
+          Directory.systemTemp.createTempSync('neuraldefend-socket-');
       addTearDown(() => directory.deleteSync(recursive: true));
       final file = File('${directory.path}/clip.mp4')
         ..writeAsBytesSync(List.generate(5 * 1024 * 1024, (i) => i % 251));
@@ -637,7 +704,8 @@ void main() {
         await reply(request, 'video/documented/both-low.json');
       };
       final client = socketClient();
-      final result = await client.detectVideo(MediaInput.file(file.path), maxFrames: 2);
+      final result =
+          await client.detectVideo(MediaInput.file(file.path), maxFrames: 2);
       expect(result.scored, isTrue);
       expect(received, greaterThan(5 * 1024 * 1024));
       client.close();
@@ -658,7 +726,8 @@ void main() {
         runtime: fake.runtime,
       );
       final stopwatch = Stopwatch()..start();
-      await expectLater(client.detectImage(_jpeg()), throwsA(isA<TimeoutError>()));
+      await expectLater(
+          client.detectImage(_jpeg()), throwsA(isA<TimeoutError>()));
       expect(stopwatch.elapsed, lessThan(const Duration(seconds: 2)));
       expect(calls, 1);
       expect(fake.sleeps, isEmpty);
@@ -712,13 +781,15 @@ void main() {
       final client = socketClient();
       await expectLater(
         client.detectImage(_jpeg()),
-        throwsA(isA<HttpError>().having((e) => e.statusCode, 'statusCode', 302)),
+        throwsA(
+            isA<HttpError>().having((e) => e.statusCode, 'statusCode', 302)),
       );
       expect(calls, 1);
       client.close();
     });
 
-    test('a refused connection raises NetworkError without the API key', () async {
+    test('a refused connection raises NetworkError without the API key',
+        () async {
       final closed = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
       final port = closed.port;
       await closed.close();
