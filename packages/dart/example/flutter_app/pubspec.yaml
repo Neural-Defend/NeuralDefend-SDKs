@@ -1,0 +1,24 @@
+name: neuraldefend_flutter_example
+description: Flutter example app for the neuraldefend package.
+publish_to: none
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0
+  flutter: ">=3.24.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  image_picker: ^1.1.2
+  neuraldefend:
+    path: ../..
+
+dev_dependencies:
+  flutter_lints: ">=5.0.0 <7.0.0"
+  flutter_test:
+    sdk: flutter
+  http: ^1.5.0
+
+flutter:
+  uses-material-design: true
