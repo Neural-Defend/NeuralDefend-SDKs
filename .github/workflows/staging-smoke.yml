@@ -75,9 +75,7 @@ jobs:
           NEURALDEFEND_STAGING_API_KEY: ${{ secrets.NEURALDEFEND_STAGING_API_KEY }}
         run: npm run test:smoke
       - name: Set up Dart
-        uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
-        with:
-          sdk: stable
+        run: python scripts/setup_dart_toolchain.py --dart stable
       - name: Install Dart smoke dependencies
         working-directory: packages/dart
         run: dart pub get

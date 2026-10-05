@@ -52,6 +52,12 @@ Add `packages/dart` as the public pub.dev package `neuraldefend`:
   dart2wasm, and with a Flutter example app whose widget tests inject the HTTP client.
 - Release with tag `dart-vX.Y.Z` through `release-dart.yml`, publishing to pub.dev with
   GitHub OIDC automated publishing from the protected `pub-dev` environment.
+- The repository's Actions policy allows only approved third-party actions, so CI installs
+  Dart and Flutter with `scripts/setup_dart_toolchain.py`, which downloads Google's release
+  archives and verifies their published SHA-256 checksums. The release job exchanges the
+  GitHub OIDC token for pub.dev itself and creates the GitHub Release with `gh`.
+- Keep dependency lower bounds compatible with the oldest supported Flutter release, whose
+  SDK pins packages such as `collection`. CI runs the example app on Flutter 3.24.
 
 ## Consequences
 

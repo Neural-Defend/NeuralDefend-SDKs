@@ -148,16 +148,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        sdk: ["3.5", stable]
+        sdk: ["3.5.4", stable]
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Set up Dart
-        uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
-        with:
-          sdk: ${{ matrix.sdk }}
+        run: python scripts/setup_dart_toolchain.py --dart "${{ matrix.sdk }}"
       - name: Install dependencies
         working-directory: packages/dart
         run: dart pub get
@@ -193,17 +191,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        flutter: ["3.24.x", "3.x"]
+        flutter: ["3.24.x", stable]
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Set up Flutter
-        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
-        with:
-          channel: stable
-          flutter-version: ${{ matrix.flutter }}
+        run: python scripts/setup_dart_toolchain.py --flutter "${{ matrix.flutter }}"
+      - name: Prepare Flutter
+        run: |
+          flutter config --no-analytics
+          flutter --version
       - name: Install dependencies
         working-directory: packages/dart/example/flutter_app
         run: flutter pub get
@@ -233,9 +232,8 @@ jobs:
         with:
           persist-credentials: false
       - name: Set up Dart
-        uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
-        with:
-          sdk: stable
+        shell: bash
+        run: python scripts/setup_dart_toolchain.py --dart stable
       - name: Install and test Dart SDK
         working-directory: packages/dart
         shell: bash

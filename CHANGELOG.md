@@ -40,6 +40,7 @@ surface.
   `scripts/check_generated.py`; Dart version alignment in `scripts/validate_versions.py`.
 - `release-dart.yml` pub.dev workflow, Dart and Flutter jobs in `test.yml`, Dart staging
   smoke tests, and Dependabot updates for `pub`.
+- `scripts/setup_dart_toolchain.py`, a checksum-verifying Dart and Flutter installer for CI.
 - Public Go SDK (`packages/go`) v1.0.0 with streaming multipart uploads, typed results,
   bounded retries, and private generated core under `internal/core/` (ADR-0007).
 - OpenAPI Generator Go output integrated into `scripts/generate.py` and

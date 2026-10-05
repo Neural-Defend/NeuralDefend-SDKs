@@ -35,9 +35,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
       - name: Set up Dart
-        uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
-        with:
-          sdk: stable
+        run: python scripts/setup_dart_toolchain.py --dart stable
       - name: Verify tag matches package version
         if: github.event_name == 'push'
         shell: bash
@@ -94,32 +92,42 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Set up Dart with pub.dev OIDC credentials
-        uses: dart-lang/setup-dart@6afc89df92d6eb3834022f73cd65adc8cdfcb92d # v1.8.1
-        with:
-          sdk: stable
-      - name: Publish to pub.dev
+      - name: Set up Dart
+        run: python scripts/setup_dart_toolchain.py --dart stable
+      - name: Publish to pub.dev with a GitHub OIDC token
         working-directory: packages/dart
+        shell: bash
         run: |
+          PUB_TOKEN="$(curl --fail --silent --show-error \
+            -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://pub.dev" \
+            | python -c 'import json, sys; print(json.load(sys.stdin)["value"])')"
+          echo "::add-mask::$PUB_TOKEN"
+          export PUB_TOKEN
+          dart pub token add https://pub.dev --env-var PUB_TOKEN
           dart pub get
           dart pub publish --force
-      - name: Resolve release version
-        id: version
-        shell: bash
-        run: echo "version=${GITHUB_REF_NAME#dart-v}" >> "$GITHUB_OUTPUT"
       - name: Create GitHub release
-        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
-        with:
-          name: Dart SDK ${{ steps.version.outputs.version }}
-          tag_name: ${{ github.ref_name }}
-          generate_release_notes: true
-          body: |
-            Install with:
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#dart-v}"
+          notes="$(cat <<EOF
+          Install with:
 
-            ```bash
-            dart pub add neuraldefend:${{ steps.version.outputs.version }}
-            # or
-            flutter pub add neuraldefend:${{ steps.version.outputs.version }}
-            ```
+          \`\`\`bash
+          dart pub add neuraldefend:${version}
+          # or
+          flutter pub add neuraldefend:${version}
+          \`\`\`
 
-            See [packages/dart/README.md](https://github.com/Neural-Defend/NeuralDefend-SDKs/tree/main/packages/dart/README.md) and https://pub.dev/packages/neuraldefend.
+          See https://pub.dev/packages/neuraldefend and [packages/dart/README.md](https://github.com/${GITHUB_REPOSITORY}/tree/main/packages/dart/README.md).
+          EOF
+          )"
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Dart SDK ${version}" \
+            --notes "$notes" \
+            --generate-notes \
+            --verify-tag
