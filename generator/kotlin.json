@@ -1,0 +1,15 @@
+{
+  "globalProperties": {
+    "apiDocs": false,
+    "apiTests": false,
+    "modelDocs": false,
+    "modelTests": false
+  },
+  "packageName": "com.neuraldefend.core",
+  "groupId": "com.neuraldefend",
+  "artifactId": "neuraldefend-core",
+  "library": "jvm-okhttp4",
+  "serializationLibrary": "kotlinx_serialization",
+  "enumUnknownDefaultCase": true,
+  "hideGenerationTimestamp": true
+}

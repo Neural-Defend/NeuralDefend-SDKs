@@ -11,6 +11,7 @@ from pathlib import Path
 from generate import (
     DART_DESTINATION,
     GO_DESTINATION,
+    KOTLIN_DESTINATION,
     PYTHON_DESTINATION,
     TYPESCRIPT_DESTINATION,
     generate_snapshot,
@@ -70,6 +71,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=DART_DESTINATION,
         help="committed Dart generated-source directory",
     )
+    parser.add_argument(
+        "--kotlin-dir",
+        type=Path,
+        default=KOTLIN_DESTINATION,
+        help="committed Kotlin generated-source directory",
+    )
     return parser
 
 
@@ -99,14 +106,16 @@ def main(argv: list[str] | None = None) -> int:
                 snapshot / "dart",
                 args.dart_dir.resolve(),
             )
+            kotlin_current = _compare(
+                "kotlin",
+                snapshot / "kotlin",
+                args.kotlin_dir.resolve(),
+            )
     except (OSError, SpecError) as exc:
         print(f"generated-source check failed: {exc}", file=sys.stderr)
         return 1
-    return (
-        0
-        if python_current and typescript_current and go_current and dart_current
-        else 1
-    )
+    current = (python_current, typescript_current, go_current, dart_current, kotlin_current)
+    return 0 if all(current) else 1
 
 
 if __name__ == "__main__":
