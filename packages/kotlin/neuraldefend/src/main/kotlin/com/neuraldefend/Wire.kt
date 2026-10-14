@@ -24,8 +24,9 @@ internal fun decodeObject(text: String): Map<String, Any?>? {
     } catch (_: IllegalArgumentException) {
         return null
     }
+    if (element !is JsonObject) return null
     @Suppress("UNCHECKED_CAST")
-    return toValue(element, secret = "") as? Map<String, Any?>
+    return toValue(element, secret = "") as Map<String, Any?>
 }
 
 private fun toValue(element: JsonElement, secret: String): Any? = when (element) {
@@ -48,7 +49,7 @@ private fun parseNumber(content: String): Any {
     if (content.none { it == '.' || it == 'e' || it == 'E' }) {
         content.toLongOrNull()?.let { return it }
     }
-    return content.toDouble()
+    return content.toDoubleOrNull() ?: content
 }
 
 /** Deep, redacted, unmodifiable copy of a decoded JSON value. */

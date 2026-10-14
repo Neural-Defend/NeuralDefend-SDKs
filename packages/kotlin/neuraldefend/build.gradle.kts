@@ -52,9 +52,9 @@ dependencies {
     testRuntimeOnly(libs.junit5.launcher)
 
     if (latestDependencies) {
-        testImplementation("com.squareup.okhttp3:okhttp:latest.release")
-        testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:latest.release")
-        testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:latest.release")
+        testImplementation("com.squareup.okhttp3:okhttp:+")
+        testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:+")
+        testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:+")
     }
 }
 
@@ -70,10 +70,13 @@ if (latestDependencies) {
 
 val fixturesDirectory = rootProject.layout.projectDirectory.dir("../../tests/fixtures")
 
-tasks.withType<Test>().configureEach {
+tasks.test {
     useJUnitPlatform {
         excludeTags("staging")
     }
+}
+
+tasks.withType<Test>().configureEach {
     // A small heap proves that large uploads stream instead of being buffered.
     maxHeapSize = "256m"
     systemProperty("neuraldefend.fixtures", fixturesDirectory.asFile.absolutePath)
@@ -84,6 +87,7 @@ tasks.withType<Test>().configureEach {
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
     }
     if (testJavaVersion != null) {
+        systemProperty("neuraldefend.expectedJavaVersion", testJavaVersion)
         javaLauncher.set(
             javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(testJavaVersion)) },
         )

@@ -248,6 +248,9 @@ internal fun testClient(
     .onWarning(onWarning)
     .build()
 
+/** Test client for Java sources, which cannot call functions with Kotlin default arguments. */
+fun javaTestClient(server: TestServer): NeuroVerifyClient = testClient(server)
+
 fun jpeg(): MediaInput = MediaInput.bytes("image-bytes".toByteArray(), "selfie.jpg")
 
 fun mp4(): MediaInput = MediaInput.bytes("video-bytes".toByteArray(), "clip.mp4")

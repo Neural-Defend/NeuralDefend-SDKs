@@ -16,7 +16,7 @@ import java.io.InterruptedIOException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-/** Receives upload progress for the current attempt. [sentBytes] restarts at zero when a retry begins. */
+/** Receives upload progress for the current attempt. `sentBytes` restarts at zero when a retry begins. */
 public fun interface UploadProgressListener {
     public fun onProgress(sentBytes: Long, totalBytes: Long)
 }

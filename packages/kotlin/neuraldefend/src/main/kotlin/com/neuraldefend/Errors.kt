@@ -63,7 +63,7 @@ public class ValidationError(
  * An HTTP response that is not otherwise classified. The more specific HTTP errors extend
  * this class, so catch it last.
  */
-public open class HttpError(
+public open class HttpError @JvmOverloads constructor(
     detail: String,
     statusCode: Int,
     requestId: String? = null,
@@ -73,19 +73,19 @@ public open class HttpError(
  * HTTP 401: the API key is invalid, expired, or belongs to another environment. Never
  * retried automatically.
  */
-public class AuthenticationError(
+public class AuthenticationError @JvmOverloads constructor(
     detail: String,
     requestId: String? = null,
 ) : HttpError(detail, 401, requestId)
 
 /** HTTP 403: the API key lacks endpoint or plan access. Never retried automatically. */
-public class ScopeError(
+public class ScopeError @JvmOverloads constructor(
     detail: String,
     requestId: String? = null,
 ) : HttpError(detail, 403, requestId)
 
 /** HTTP 429 after the configured retries were exhausted. */
-public class RateLimitError(
+public class RateLimitError @JvmOverloads constructor(
     detail: String,
     requestId: String? = null,
     /** Parsed `Retry-After` value in milliseconds, capped by the client's `retryAfterCap`. */
@@ -102,7 +102,7 @@ public class RateLimitError(
  * HTTP 500/503 after retries were exhausted, or a response envelope whose `status` is
  * `"error"`.
  */
-public class ServerError(
+public class ServerError @JvmOverloads constructor(
     detail: String,
     statusCode: Int,
     requestId: String? = null,
@@ -117,7 +117,7 @@ public class ServerError(
  * The response was malformed or did not satisfy the required envelope. Retrying is not
  * known to be safe; record the request ID and contact support if it persists.
  */
-public class ProtocolError(
+public class ProtocolError @JvmOverloads constructor(
     detail: String,
     statusCode: Int? = null,
     requestId: String? = null,
@@ -136,4 +136,4 @@ public class TimeoutError(detail: String) : NeuroVerifyError(detail, null, null)
 public class NetworkError(detail: String) : NeuroVerifyError(detail, null, null)
 
 /** [NeuroVerifyCall.cancel] was called before the call completed. */
-public class AbortError(detail: String = "The request was aborted.") : NeuroVerifyError(detail, null, null)
+public class AbortError @JvmOverloads constructor(detail: String = "The request was aborted.") : NeuroVerifyError(detail, null, null)

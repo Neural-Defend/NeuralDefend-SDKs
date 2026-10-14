@@ -77,9 +77,11 @@ public sealed class DetectionResult(
     public val raw: Map<String, Any?>,
 ) {
     /** `true` only for a recognized, scored result. */
+    @get:JvmName("isScored")
     public val scored: Boolean get() = status == ResultStatus.SUCCESS
 
     /** `true` when the API rejected the media without an exception. */
+    @get:JvmName("isRejected")
     public val rejected: Boolean get() = status == ResultStatus.REJECTED
 
     /** Stable normalized fields as a JSON-compatible map. Excludes [raw]. */
@@ -122,6 +124,7 @@ public class ImageResult internal constructor(
     status, originalStatus, uniqueTrxId, filename, contentType, statusCode, billable, aiThreatSignals, raw,
 ) {
     /** `true` when the recognized risk band is [RiskLevel.HIGH]. */
+    @get:JvmName("isHighRisk")
     public val highRisk: Boolean get() = riskLevel == RiskLevel.HIGH
 
     override fun toJson(): Map<String, Any?> = baseJson().apply {
@@ -163,6 +166,7 @@ public class VideoResult internal constructor(
     status, originalStatus, uniqueTrxId, filename, contentType, statusCode, billable, aiThreatSignals, raw,
 ) {
     /** `true` when an audio risk score was returned. */
+    @get:JvmName("hasAudio")
     public val hasAudio: Boolean get() = audioRiskScore != null
 
     /**
