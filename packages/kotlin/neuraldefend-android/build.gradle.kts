@@ -11,7 +11,7 @@ description = "Android helpers for the Neural Defend NeuroVerify SDK: upload pho
 
 android {
     namespace = "com.neuraldefend.android"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 21
