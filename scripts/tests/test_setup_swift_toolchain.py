@@ -6,6 +6,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
 SCRIPTS = Path(__file__).resolve().parents[1]
@@ -82,6 +83,28 @@ class SwiftToolchainTests(unittest.TestCase):
             archive.write_bytes(b"tampered")
             with self.assertRaisesRegex(toolchain.ToolchainError, "invalid signature"):
                 toolchain.verify_signature(archive, signature, keys)
+
+            archive.write_bytes(b"not really a toolchain")
+            broken = b"\n-----BEGIN PGP PUBLIC KEY BLOCK-----\n\nAAAA\n-----END PGP PUBLIC KEY BLOCK-----\n"
+            with self.assertRaisesRegex(toolchain.ToolchainError, "untrusted key"):
+                toolchain.verify_signature(archive, signature, keys + broken)
+
+    def test_key_downloads_are_retried_until_they_return_a_key_block(self) -> None:
+        responses = [b"<html>busy</html>", b"-----BEGIN PGP PUBLIC KEY BLOCK-----\nkeys"]
+        sleeps: list[float] = []
+        with (
+            unittest.mock.patch.object(toolchain, "_fetch", side_effect=lambda _: responses.pop(0)),
+            unittest.mock.patch.object(toolchain.time, "sleep", sleeps.append),
+        ):
+            self.assertTrue(toolchain.fetch_keys().endswith(b"keys"))
+        self.assertEqual(sleeps, [4])
+
+        with (
+            unittest.mock.patch.object(toolchain, "_fetch", return_value=b"<html>busy</html>"),
+            unittest.mock.patch.object(toolchain.time, "sleep", sleeps.append),
+            self.assertRaisesRegex(toolchain.ToolchainError, "PGP public key block"),
+        ):
+            toolchain.fetch_keys()
 
 
 if __name__ == "__main__":

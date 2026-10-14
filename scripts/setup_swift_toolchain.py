@@ -19,6 +19,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+import time
 import urllib.request
 from pathlib import Path
 
@@ -29,6 +30,8 @@ KEYS_URL = "https://swift.org/keys/all-keys.asc"
 # only after checking it against https://www.swift.org/install/linux/#installation-via-tarball.
 TRUSTED_FINGERPRINTS = frozenset({"52BB7E3DE28A71BE22EC05FFEF80A866B47A981F"})
 EXACT_VERSION = re.compile(r"^\d+\.\d+(?:\.\d+)?$")
+KEY_BLOCK = b"-----BEGIN PGP PUBLIC KEY BLOCK-----"
+RETRY_DELAYS = (4, 8, 16, 32)
 
 
 class ToolchainError(RuntimeError):
@@ -36,8 +39,28 @@ class ToolchainError(RuntimeError):
 
 
 def _fetch(url: str) -> bytes:
-    with urllib.request.urlopen(url, timeout=600) as response:
-        return response.read()
+    for delay in (*RETRY_DELAYS, None):
+        try:
+            with urllib.request.urlopen(url, timeout=600) as response:
+                return response.read()
+        except OSError as error:
+            if delay is None:
+                raise
+            print(f"retrying {url} in {delay}s: {error}", file=sys.stderr, flush=True)
+            time.sleep(delay)
+    raise AssertionError("unreachable")
+
+
+def fetch_keys() -> bytes:
+    for delay in (*RETRY_DELAYS, None):
+        keys = _fetch(KEYS_URL)
+        if KEY_BLOCK in keys:
+            return keys
+        if delay is None:
+            break
+        print(f"retrying {KEYS_URL} in {delay}s: response is not a PGP key block", file=sys.stderr)
+        time.sleep(delay)
+    raise ToolchainError(f"{KEYS_URL} did not return a PGP public key block")
 
 
 def resolve_version(requested: str, releases: list[dict[str, object]] | None = None) -> str:
@@ -94,16 +117,26 @@ def signing_fingerprint(status: str) -> str | None:
     return None
 
 
+def split_key_blocks(keys: bytes) -> list[bytes]:
+    return [KEY_BLOCK + part for part in keys.split(KEY_BLOCK)[1:]]
+
+
 def verify_signature(archive: Path, signature: Path, keys: bytes) -> str:
     with tempfile.TemporaryDirectory() as home:
         env = {**os.environ, "GNUPGHOME": home}
-        subprocess.run(
-            ["gpg", "--batch", "--quiet", "--import"],
-            input=keys,
-            env=env,
-            check=True,
-            capture_output=True,
-        )
+        # One unusable key makes gpg reject the rest of its input, so import each block on
+        # its own. The fingerprint check below is what decides trust, so import failures are
+        # reported only if verification fails.
+        import_errors = []
+        for block in split_key_blocks(keys):
+            imported = subprocess.run(
+                ["gpg", "--batch", "--quiet", "--import"],
+                input=block,
+                env=env,
+                capture_output=True,
+            )
+            if imported.returncode != 0:
+                import_errors.append(imported.stderr.decode(errors="replace").strip())
         result = subprocess.run(
             ["gpg", "--batch", "--status-fd", "1", "--verify", str(signature), str(archive)],
             env=env,
@@ -112,7 +145,10 @@ def verify_signature(archive: Path, signature: Path, keys: bytes) -> str:
         )
     fingerprint = signing_fingerprint(result.stdout)
     if result.returncode != 0 or fingerprint is None:
-        raise ToolchainError(f"invalid signature for {archive.name}: {result.stderr.strip()}")
+        details = result.stderr.strip()
+        if import_errors:
+            details += f" (key import: {'; '.join(import_errors)})"
+        raise ToolchainError(f"invalid signature for {archive.name}: {details}")
     if fingerprint not in TRUSTED_FINGERPRINTS:
         raise ToolchainError(f"{archive.name} is signed by untrusted key {fingerprint}")
     return fingerprint
@@ -141,7 +177,7 @@ def install(requested: str, root: Path) -> Path:
         print(f"downloading {url}", flush=True)
         archive.write_bytes(_fetch(url))
         signature.write_bytes(_fetch(f"{url}.sig"))
-        fingerprint = verify_signature(archive, signature, _fetch(KEYS_URL))
+        fingerprint = verify_signature(archive, signature, fetch_keys())
         print(f"verified signature from {fingerprint}", flush=True)
         destination.mkdir(parents=True, exist_ok=True)
         _extract(archive, destination)
