@@ -31,8 +31,11 @@ struct TransportTests {
             #expect(request.bodyLength > size)
             #expect(request.bodyLength < size + 1024)
             #expect(request.header("content-length") == String(request.bodyLength))
+            // URLSession may coalesce loopback progress into a single callback.
+            let sent = recorder.events.map(\.0)
+            #expect(sent.first == 0)
+            #expect(sent == sent.sorted())
             #expect(recorder.events.last.map { $0.0 == $0.1 && Int($0.1) == request.bodyLength } == true)
-            #expect(recorder.events.count > 2)
         }
     }
 

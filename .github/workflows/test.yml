@@ -332,12 +332,6 @@ jobs:
         run: swift test -Xswiftc -warnings-as-errors
       # Xcode passes -suppress-warnings to package dependencies, which conflicts with
       # SWIFT_TREAT_WARNINGS_AS_ERRORS; the macOS step above already treats warnings as errors.
-      - name: Build SwiftUI example tests for the iOS Simulator
-        if: ${{ !matrix.simulator-tests }}
-        working-directory: packages/swift/Examples/NeuroVerifyDemo
-        run: |
-          xcodebuild build-for-testing -scheme NeuroVerifyDemo -destination "generic/platform=iOS Simulator" \
-            -skipPackagePluginValidation
       - name: Test SwiftUI example on the iOS Simulator
         if: matrix.simulator-tests
         working-directory: packages/swift/Examples/NeuroVerifyDemo
