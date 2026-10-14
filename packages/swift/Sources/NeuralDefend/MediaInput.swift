@@ -179,7 +179,9 @@ func prepareMedia(
 
 private func requireFilename(_ candidate: String?) throws(NeuroVerifyError) -> String {
     let trimmed = candidate?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-    let base = trimmed.split(whereSeparator: { $0 == "/" || $0 == "\\" }).last.map(String.init) ?? ""
+    let base =
+        trimmed.lastIndex(where: { $0 == "/" || $0 == "\\" })
+        .map { String(trimmed[trimmed.index(after: $0)...]) } ?? trimmed
     guard !base.isEmpty else {
         throw .validation(
             code: .filenameRequired,

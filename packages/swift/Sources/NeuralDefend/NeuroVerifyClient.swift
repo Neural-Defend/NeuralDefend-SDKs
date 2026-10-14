@@ -193,8 +193,11 @@ public final class NeuroVerifyClient: Sendable {
 
         // Copy, so later changes by the caller do not affect this client.
         let configuration = sessionConfiguration.copy() as! URLSessionConfiguration
-        configuration.timeoutIntervalForRequest = options.timeout
-        configuration.timeoutIntervalForResource = max(options.timeout, 7 * 24 * 60 * 60)
+        // The SDK's own per-attempt timer is authoritative. URLSession's idle timeout is only a
+        // backstop, kept above that deadline and in whole seconds because Linux Foundation
+        // truncates fractional values.
+        configuration.timeoutIntervalForRequest = options.timeout.rounded(.up) + 1
+        configuration.timeoutIntervalForResource = max(options.timeout.rounded(.up) + 1, 7 * 24 * 60 * 60)
         configuration.httpShouldSetCookies = false
         configuration.urlCache = nil
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
