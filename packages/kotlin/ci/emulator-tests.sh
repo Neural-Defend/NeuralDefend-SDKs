@@ -92,6 +92,9 @@ for setting in window_animation_scale transition_animation_scale animator_durati
 done
 "$adb" shell input keyevent 82 || true
 
+# Build first so the three-minute recording covers the tests rather than compilation.
+./gradlew :example:assembleDebug :example:assembleDebugAndroidTest --console=plain
+
 # The software H.264 encoder on older images cannot encode the full Pixel 5 resolution.
 # screenrecord stops by itself after three minutes; the tests take far less.
 if [[ "${EMULATOR_RECORD_SCREEN:-0}" == "1" ]]; then
