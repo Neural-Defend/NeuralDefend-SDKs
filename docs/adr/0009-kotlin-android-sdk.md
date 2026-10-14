@@ -72,7 +72,7 @@ The design follows the other SDKs where the platform allows:
 - Test the facade against the shared fixtures with a loopback HTTP server (not a mock
   library), so the real OkHttp 4.12 transport is exercised, on Java 8, 11, 17, 21, and 25.
   The Android helper runs under Robolectric. A Compose example app shares its screen tests
-  between Robolectric and API 23 and API 37 emulators, and its minified release build
+  between Robolectric and API 23 and API 36 emulators, and its minified release build
   checks that the SDK needs no R8 rules.
 - Release with tag `kotlin-vX.Y.Z` through `release-kotlin.yml`. A build job tests and
   verifies an unsigned bundle; the publish job, in the protected `maven-central`

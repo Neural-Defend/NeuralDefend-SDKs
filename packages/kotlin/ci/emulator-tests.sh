@@ -92,10 +92,10 @@ for setting in window_animation_scale transition_animation_scale animator_durati
 done
 "$adb" shell input keyevent 82 || true
 
-# Opt-in because screenrecord's virtual display aborts SurfaceFlinger (and with it
-# system_server) on the API 37 google_apis image. It stops by itself after three minutes.
+# The software H.264 encoder on older images cannot encode the full Pixel 5 resolution.
+# screenrecord stops by itself after three minutes; the tests take far less.
 if [[ "${EMULATOR_RECORD_SCREEN:-0}" == "1" ]]; then
-  "$adb" shell screenrecord --time-limit 180 /sdcard/instrumented-tests.mp4 &
+  "$adb" shell screenrecord --size 720x1280 --time-limit 180 /sdcard/instrumented-tests.mp4 &
   recorder_pid=$!
 fi
 

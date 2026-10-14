@@ -435,21 +435,15 @@ jobs:
           retention-days: 14
 
   kotlin-emulator:
-    name: Android emulator API ${{ matrix.api }} (${{ matrix.gpu }})
+    name: Android emulator API ${{ matrix.api }}
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - api: "23"
-            gpu: swiftshader_indirect
-          - api: "37.0"
-            gpu: swangle_indirect
-          - api: "37.0"
-            gpu: lavapipe
-          - api: "36"
-            gpu: swiftshader_indirect
+        # API 36 is the newest emulator image that boots reliably on hosted runners; the
+        # API 37 google_apis image crash-loops SurfaceFlinger under every software renderer.
+        api: ["23", "36"]
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -477,14 +471,13 @@ jobs:
         working-directory: packages/kotlin
         env:
           API_LEVEL: ${{ matrix.api }}
-          EMULATOR_GPU: ${{ matrix.gpu }}
-          EMULATOR_RECORD_SCREEN: ${{ matrix.api == '23' && '1' || '0' }}
+          EMULATOR_RECORD_SCREEN: "1"
         run: ci/emulator-tests.sh "$API_LEVEL" build/emulator
       - name: Upload emulator results
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: kotlin-emulator-api-${{ matrix.api }}-${{ matrix.gpu }}
+          name: kotlin-emulator-api-${{ matrix.api }}
           path: packages/kotlin/build/emulator
           if-no-files-found: ignore
           retention-days: 14
