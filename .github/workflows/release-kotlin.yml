@@ -1,0 +1,164 @@
+name: Release Kotlin SDK
+
+on:
+  push:
+    tags:
+      - "kotlin-v*"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build and validate only; manual runs never publish
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-kotlin-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Enforce manual dry-run
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run != true
+        run: |
+          echo "::error::workflow_dispatch is restricted to an explicit dry run."
+          exit 1
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify tag matches package version
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          expected="${GITHUB_REF_NAME#kotlin-v}"
+          actual="$(sed -n 's/^VERSION_NAME=//p' packages/kotlin/gradle.properties)"
+          if [[ "$expected" != "$actual" ]]; then
+            echo "::error::Tag version '$expected' does not match Kotlin VERSION_NAME '$actual'."
+            exit 1
+          fi
+      - name: Validate package version consistency
+        run: python scripts/validate_versions.py
+      - name: Require release tag on the default branch
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          git fetch --no-tags origin "${{ github.event.repository.default_branch }}"
+          git merge-base --is-ancestor "$GITHUB_SHA" "origin/${{ github.event.repository.default_branch }}" || {
+            echo "::error::Release tags must point to a commit on the default branch."
+            exit 1
+          }
+      - name: Set up Java
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Verify Gradle wrapper
+        working-directory: packages/kotlin
+        run: ci/verify-gradle-wrapper.sh
+      - name: Install Android SDK platform
+        run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "platforms;android-37.0" "build-tools;37.0.0" > /dev/null'
+      - name: Test Kotlin SDK
+        working-directory: packages/kotlin
+        run: ./gradlew --console=plain --no-build-cache check :example:assembleRelease
+      - name: Build unsigned bundle
+        working-directory: packages/kotlin
+        run: ./gradlew --console=plain --no-build-cache centralBundle
+      - name: Verify and scan the bundle
+        shell: bash
+        run: |
+          version="$(sed -n 's/^VERSION_NAME=//p' packages/kotlin/gradle.properties)"
+          python scripts/publish_maven_central.py "packages/kotlin/build/central/central-bundle-${version}.zip" \
+            --version "$version" --unsigned
+          python scripts/scan_public_artifacts.py packages/kotlin/build/central
+          unzip -l "packages/kotlin/build/central/central-bundle-${version}.zip"
+      - name: Upload unsigned bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: kotlin-unsigned-bundle
+          path: packages/kotlin/build/central/*.zip
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment: maven-central
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Java
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Install Android SDK platform
+        run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "platforms;android-37.0" "build-tools;37.0.0" > /dev/null'
+      - name: Build signed bundle
+        working-directory: packages/kotlin
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+        run: ./gradlew --console=plain --no-build-cache -Pneuraldefend.requireSigning=true centralBundle
+      - name: Verify and scan the signed bundle
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#kotlin-v}"
+          python scripts/publish_maven_central.py "packages/kotlin/build/central/central-bundle-${version}.zip" \
+            --version "$version"
+          python scripts/scan_public_artifacts.py packages/kotlin/build/central
+      - name: Attest bundle
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-path: packages/kotlin/build/central/*.zip
+      - name: Publish to Maven Central
+        shell: bash
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+        run: |
+          version="${GITHUB_REF_NAME#kotlin-v}"
+          python scripts/publish_maven_central.py "packages/kotlin/build/central/central-bundle-${version}.zip" \
+            --version "$version" --upload --name "neuraldefend-kotlin ${version}" --timeout 3600
+      - name: Create GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#kotlin-v}"
+          notes="$(cat <<EOF
+          Add to \`build.gradle.kts\`:
+
+          \`\`\`kotlin
+          dependencies {
+              implementation("com.neuraldefend:neuraldefend:${version}")
+              // Android apps that upload content Uris (photo picker, camera):
+              implementation("com.neuraldefend:neuraldefend-android:${version}")
+          }
+          \`\`\`
+
+          Maven Central can take up to 30 minutes to show a new release. See https://central.sonatype.com/artifact/com.neuraldefend/neuraldefend and [packages/kotlin/README.md](https://github.com/${GITHUB_REPOSITORY}/tree/main/packages/kotlin/README.md).
+          EOF
+          )"
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Kotlin SDK ${version}" \
+            --notes "$notes" \
+            --generate-notes \
+            --verify-tag \
+            packages/kotlin/build/central/*.zip

@@ -318,3 +318,163 @@ jobs:
           npm run typecheck
           npm run build
           npm test
+
+  kotlin-jvm:
+    name: Kotlin JVM Java ${{ matrix.java }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [8, 11, 17, 21, 25]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up test Java ${{ matrix.java }}
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+      - name: Set up Gradle Java 21
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+          cache-dependency-path: |
+            packages/kotlin/**/*.gradle.kts
+            packages/kotlin/gradle/libs.versions.toml
+            packages/kotlin/gradle/wrapper/gradle-wrapper.properties
+      - name: Build and test on Java ${{ matrix.java }}
+        working-directory: packages/kotlin
+        shell: bash
+        env:
+          TEST_JAVA: ${{ matrix.java }}
+        run: |
+          home_variable="JAVA_HOME_${TEST_JAVA}_X64"
+          ./gradlew --console=plain \
+            -Pneuraldefend.jvmOnly=true \
+            -Pneuraldefend.testJavaVersion="$TEST_JAVA" \
+            -Porg.gradle.java.installations.paths="${!home_variable}" \
+            :neuraldefend:check
+
+  kotlin-latest-dependencies:
+    name: Kotlin JVM newest OkHttp, coroutines, and serialization
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Java
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+          cache-dependency-path: |
+            packages/kotlin/**/*.gradle.kts
+            packages/kotlin/gradle/libs.versions.toml
+            packages/kotlin/gradle/wrapper/gradle-wrapper.properties
+      - name: Test against the newest stable runtime dependencies
+        working-directory: packages/kotlin
+        run: |
+          ./gradlew --console=plain -Pneuraldefend.jvmOnly=true -Pneuraldefend.latestDependencies=true \
+            :neuraldefend:dependencyInsight --configuration testRuntimeClasspath --dependency okhttp
+          ./gradlew --console=plain -Pneuraldefend.jvmOnly=true -Pneuraldefend.latestDependencies=true \
+            :neuraldefend:test
+
+  kotlin-android:
+    name: Kotlin Android library and example app
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Java
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+          cache-dependency-path: |
+            packages/kotlin/**/*.gradle.kts
+            packages/kotlin/gradle/libs.versions.toml
+            packages/kotlin/gradle/wrapper/gradle-wrapper.properties
+      - name: Verify Gradle wrapper
+        working-directory: packages/kotlin
+        run: ci/verify-gradle-wrapper.sh
+      - name: Install Android SDK platform
+        run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "platforms;android-37.0" "build-tools;37.0.0" > /dev/null'
+      - name: Lint, test, and build every module
+        working-directory: packages/kotlin
+        run: |
+          ./gradlew --console=plain check :example:assembleRelease :example:assembleDebugAndroidTest
+          ./gradlew --console=plain centralBundle
+      - name: Verify and scan the Maven Central bundle
+        shell: bash
+        run: |
+          version="$(sed -n 's/^VERSION_NAME=//p' packages/kotlin/gradle.properties)"
+          python scripts/publish_maven_central.py "packages/kotlin/build/central/central-bundle-${version}.zip" \
+            --version "$version" --unsigned
+          python scripts/scan_public_artifacts.py packages/kotlin/build/central
+      - name: Upload reports and screenshots
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: kotlin-android-reports
+          path: |
+            packages/kotlin/*/build/reports
+            packages/kotlin/example/build/screenshots
+          if-no-files-found: ignore
+          retention-days: 14
+
+  kotlin-emulator:
+    name: Android emulator API ${{ matrix.api }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        api: ["23", "37.0"]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Java
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+          cache-dependency-path: |
+            packages/kotlin/**/*.gradle.kts
+            packages/kotlin/gradle/libs.versions.toml
+            packages/kotlin/gradle/wrapper/gradle-wrapper.properties
+      - name: Allow the runner user to use KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Install Android SDK platform
+        run: '"$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "platforms;android-37.0" "build-tools;37.0.0" > /dev/null'
+      - name: Run instrumented tests
+        working-directory: packages/kotlin
+        env:
+          API_LEVEL: ${{ matrix.api }}
+        run: ci/emulator-tests.sh "$API_LEVEL" build/emulator
+      - name: Upload emulator results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: kotlin-emulator-api-${{ matrix.api }}
+          path: packages/kotlin/build/emulator
+          if-no-files-found: ignore
+          retention-days: 14

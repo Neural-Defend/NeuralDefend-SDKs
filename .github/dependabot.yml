@@ -53,6 +53,25 @@ updates:
         patterns:
           - "*"
 
+  - package-ecosystem: gradle
+    directory: /packages/kotlin
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:40"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    ignore:
+      # Published runtime dependencies are deliberate lower bounds (see
+      # gradle/libs.versions.toml); CI already tests the newest releases.
+      - dependency-name: "com.squareup.okhttp3:okhttp"
+      - dependency-name: "org.jetbrains.kotlinx:kotlinx-coroutines-core"
+      - dependency-name: "org.jetbrains.kotlinx:kotlinx-serialization-json"
+    groups:
+      kotlin-dependencies:
+        patterns:
+          - "*"
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
