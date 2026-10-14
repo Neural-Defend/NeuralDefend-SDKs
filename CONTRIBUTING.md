@@ -9,8 +9,9 @@ data disclosure are higher risks than implementation convenience.
 2. Treat `spec/public.yaml` as generated input. Never edit either spec file by hand.
 3. Never edit `packages/python/src/neuraldefend/_core/`,
    `packages/typescript/src/core/`, the Go generated contract tree under
-   `packages/go/` (see ADR-0007), or `packages/dart/generated/core/` (see ADR-0008);
-   regenerate them with `scripts/generate.py`.
+   `packages/go/` (see ADR-0007), `packages/dart/generated/core/` (see ADR-0008), or
+   `packages/swift/generated/core/` (see ADR-0010); regenerate them with
+   `scripts/generate.py`.
 4. Never commit API keys, customer media, biometric data, build outputs, or local
    environment files.
 
@@ -31,7 +32,7 @@ README. Contract changes require:
 - a refreshed spec with `spec/SPEC_SOURCE.json`;
 - regenerated private cores;
 - a language-neutral fixture under `tests/fixtures/`; and
-- equivalent Python, TypeScript, Go, and Dart tests.
+- equivalent Python, TypeScript, Go, Dart, and Swift tests.
 
 Generated-code, package-content, secret, and internal-term checks must pass before merge.
 
