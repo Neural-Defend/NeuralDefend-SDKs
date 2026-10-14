@@ -301,7 +301,13 @@ jobs:
         run: swift test -Xswiftc -warnings-as-errors
       - name: Build Swift SDK tests for the iOS Simulator
         if: ${{ !matrix.simulator-tests }}
+        shell: bash
         run: |
+          if ! xcodebuild -showdestinations -scheme NeuralDefend 2>/dev/null \
+            | grep 'platform:iOS Simulator' | grep -vq 'error:'; then
+            echo "::warning::This runner has no iOS Simulator platform for Xcode ${{ matrix.xcode }}; skipping."
+            exit 0
+          fi
           xcodebuild build-for-testing -scheme NeuralDefend -destination "generic/platform=iOS Simulator" \
             -skipPackagePluginValidation SWIFT_TREAT_WARNINGS_AS_ERRORS=YES
       - name: Pick an iOS Simulator
