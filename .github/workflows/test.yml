@@ -469,6 +469,7 @@ jobs:
         working-directory: packages/kotlin
         env:
           API_LEVEL: ${{ matrix.api }}
+          EMULATOR_RECORD_SCREEN: ${{ matrix.api == '23' && '1' || '0' }}
         run: ci/emulator-tests.sh "$API_LEVEL" build/emulator
       - name: Upload emulator results
         if: always()

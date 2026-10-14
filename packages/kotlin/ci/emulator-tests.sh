@@ -2,6 +2,7 @@
 # Boots a headless Android emulator and runs the example app's instrumented tests on it.
 #
 # Usage: ci/emulator-tests.sh <api-level> [output-dir]
+# Set EMULATOR_RECORD_SCREEN=1 to save a screen recording of the run in the output directory.
 # Requires ANDROID_HOME (or ANDROID_SDK_ROOT), Java 21, and a KVM-capable Linux host.
 set -euo pipefail
 
@@ -34,10 +35,14 @@ if ! "$emulator" -list-avds | grep -qx "$avd"; then
   exit 1
 fi
 
-# The default 2 GB of RAM lets the low-memory killer restart system_server on recent images,
-# and the default data partition is too small to install the app and test APKs on them.
-"$emulator" -avd "$avd" -no-window -no-audio -no-boot-anim -no-snapshot -no-metrics \
-  -memory 4096 -partition-size 6144 \
+# Recent images need more than the default 2 GB of RAM and data partition to install and run
+# the APKs. Older images encrypt the whole data partition on first boot, so a larger one
+# there only slows the boot down.
+sizing=()
+if ((${api%%.*} >= 30)); then
+  sizing=(-memory 4096 -partition-size 6144)
+fi
+"$emulator" -avd "$avd" -no-window -no-audio -no-boot-anim -no-snapshot -no-metrics "${sizing[@]}" \
   -gpu swiftshader_indirect -camera-back none -camera-front none >"$output/emulator.log" 2>&1 &
 emulator_pid=$!
 
@@ -86,9 +91,12 @@ for setting in window_animation_scale transition_animation_scale animator_durati
 done
 "$adb" shell input keyevent 82 || true
 
-# screenrecord stops by itself after three minutes; the tests take far less.
-"$adb" shell screenrecord --time-limit 180 /sdcard/instrumented-tests.mp4 &
-recorder_pid=$!
+# Opt-in because screenrecord's virtual display aborts SurfaceFlinger (and with it
+# system_server) on the API 37 google_apis image. It stops by itself after three minutes.
+if [[ "${EMULATOR_RECORD_SCREEN:-0}" == "1" ]]; then
+  "$adb" shell screenrecord --time-limit 180 /sdcard/instrumented-tests.mp4 &
+  recorder_pid=$!
+fi
 
 ./gradlew :example:connectedDebugAndroidTest --console=plain
 report=example/build/reports/androidTests/connected/debug/index.html
