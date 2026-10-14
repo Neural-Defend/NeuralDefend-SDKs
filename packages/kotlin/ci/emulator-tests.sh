@@ -2,6 +2,7 @@
 # Boots a headless Android emulator and runs the example app's instrumented tests on it.
 #
 # Usage: ci/emulator-tests.sh <api-level> [output-dir]
+# Set EMULATOR_GPU to choose the emulator renderer (default swiftshader_indirect).
 # Set EMULATOR_RECORD_SCREEN=1 to save a screen recording of the run in the output directory.
 # Requires ANDROID_HOME (or ANDROID_SDK_ROOT), Java 21, and a KVM-capable Linux host.
 set -euo pipefail
@@ -43,7 +44,7 @@ if ((${api%%.*} >= 30)); then
   sizing=(-memory 4096 -partition-size 6144)
 fi
 "$emulator" -avd "$avd" -no-window -no-audio -no-boot-anim -no-snapshot -no-metrics "${sizing[@]}" \
-  -gpu swiftshader_indirect -camera-back none -camera-front none >"$output/emulator.log" 2>&1 &
+  -gpu "${EMULATOR_GPU:-swiftshader_indirect}" -camera-back none -camera-front none >"$output/emulator.log" 2>&1 &
 emulator_pid=$!
 
 recorder_pid=""
