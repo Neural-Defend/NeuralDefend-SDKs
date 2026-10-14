@@ -63,8 +63,9 @@ Add the Swift package `NeuralDefend` with sources in `packages/swift/`:
   is tested with a mocked `URLProtocol`.
 - The repository's Actions policy allows only approved third-party actions, so Linux CI
   installs Swift with `scripts/setup_swift_toolchain.py`, which downloads swift.org
-  archives and verifies their GPG signatures against pinned Swift release-key
-  fingerprints. macOS CI uses the Xcode installed on the runner.
+  archives and verifies their GPG signatures with the Swift release key checked in under
+  `scripts/keys/`, accepting only pinned primary-key fingerprints. macOS CI uses the Xcode
+  installed on the runner.
 - Do not publish to CocoaPods; its trunk is read-only. Swift Package Index is the
   discovery channel, configured by `.spi.yml`.
 
