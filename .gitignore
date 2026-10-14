@@ -29,6 +29,20 @@ pubspec.lock
 .flutter-plugins
 .flutter-plugins-dependencies
 
+# Gradle, Kotlin, and Android. The Gradle wrapper jar under gradle/wrapper/ is committed.
+.gradle/
+.kotlin/
+local.properties
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.keystore
+*.jks
+*.hprof
+
 # Secrets. API keys belong in the environment, never in the repo.
 .env
 .env.*
