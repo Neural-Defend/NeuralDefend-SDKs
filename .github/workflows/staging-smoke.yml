@@ -84,3 +84,9 @@ jobs:
         env:
           NEURALDEFEND_STAGING_API_KEY: ${{ secrets.NEURALDEFEND_STAGING_API_KEY }}
         run: dart test --tags staging
+      - name: Set up Swift
+        run: python3 scripts/setup_swift_toolchain.py latest
+      - name: Run Swift smoke tests
+        env:
+          NEURALDEFEND_STAGING_API_KEY: ${{ secrets.NEURALDEFEND_STAGING_API_KEY }}
+        run: swift test --filter Staging

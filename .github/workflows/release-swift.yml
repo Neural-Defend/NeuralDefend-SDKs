@@ -1,0 +1,124 @@
+name: Release Swift SDK
+
+# Swift Package Manager installs straight from git tags, so a plain X.Y.Z tag is the release
+# the moment it is pushed. Tag protection is the real control; this workflow verifies the tag
+# and then publishes the GitHub Release page after approval in the swift-release environment.
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Build and validate only; manual runs never publish
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-swift-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: macos-latest
+    timeout-minutes: 40
+    steps:
+      - name: Enforce manual dry-run
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run != true
+        run: |
+          echo "::error::workflow_dispatch is restricted to an explicit dry run."
+          exit 1
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify tag matches the SDK version
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          expected="$GITHUB_REF_NAME"
+          actual="$(sed -n 's/.*static let sdkVersion = "\([^"]*\)".*/\1/p' packages/swift/Sources/NeuralDefend/Version.swift)"
+          if [[ "$expected" != "$actual" ]]; then
+            echo "::error::Tag '$expected' does not match the Swift sdkVersion '$actual'."
+            exit 1
+          fi
+      - name: Validate package version consistency
+        run: python3 scripts/validate_versions.py
+      - name: Require release tag on the default branch
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          git fetch --no-tags origin "${{ github.event.repository.default_branch }}"
+          git merge-base --is-ancestor "$GITHUB_SHA" "origin/${{ github.event.repository.default_branch }}" || {
+            echo "::error::Release tags must point to a commit on the default branch."
+            exit 1
+          }
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+      - name: Test Swift SDK
+        run: swift test -Xswiftc -warnings-as-errors
+      - name: Build the release configuration
+        run: swift build -c release -Xswiftc -warnings-as-errors
+      - name: Test SwiftUI example
+        working-directory: packages/swift/Examples/NeuroVerifyDemo
+        run: swift test -Xswiftc -warnings-as-errors
+      - name: Resolve the package as a consumer would
+        shell: bash
+        run: |
+          consumer="$RUNNER_TEMP/consumer"
+          mkdir -p "$consumer/Sources/Consumer"
+          cat > "$consumer/Package.swift" <<EOF
+          // swift-tools-version: 6.0
+          import PackageDescription
+          let package = Package(
+              name: "Consumer",
+              platforms: [.macOS(.v12)],
+              dependencies: [.package(path: "$GITHUB_WORKSPACE")],
+              targets: [.executableTarget(name: "Consumer", dependencies: [
+                  .product(name: "NeuralDefend", package: "$(basename "$GITHUB_WORKSPACE")")
+              ])]
+          )
+          EOF
+          cat > "$consumer/Sources/Consumer/main.swift" <<'EOF'
+          import NeuralDefend
+          print(NeuroVerifyClient.sdkVersion)
+          EOF
+          swift run --package-path "$consumer" Consumer
+
+  release:
+    if: github.event_name == 'push'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: swift-release
+    permissions:
+      contents: write
+    steps:
+      - name: Create GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="$GITHUB_REF_NAME"
+          notes="$(cat <<EOF
+          Add the package in Xcode (**File > Add Package Dependencies…**) or in \`Package.swift\`:
+
+          \`\`\`swift
+          .package(url: "https://github.com/${GITHUB_REPOSITORY}", from: "${version}")
+          \`\`\`
+
+          Then depend on the \`NeuralDefend\` product. See [packages/swift/README.md](https://github.com/${GITHUB_REPOSITORY}/tree/${version}/packages/swift/README.md) and [packages/swift/CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/tree/${version}/packages/swift/CHANGELOG.md).
+          EOF
+          )"
+          gh release create "$GITHUB_REF_NAME" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Swift SDK ${version}" \
+            --notes "$notes" \
+            --verify-tag
