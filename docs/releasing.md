@@ -1,9 +1,9 @@
 # Release runbook
 
-The Python, TypeScript, Go, and Dart SDKs release independently. The MCP package depends on the
+The Python, TypeScript, Go, Dart, and Kotlin SDKs release independently. The MCP package depends on the
 published Python SDK and must be released after a compatible Python version is available
-on PyPI. Publishing requires an explicit protected-environment approval for PyPI, npm, and
-pub.dev; the Go SDK publishes through GitHub tags and the public Go module proxy. Building this
+on PyPI. Publishing requires an explicit protected-environment approval for PyPI, npm,
+pub.dev, and Maven Central; the Go SDK publishes through GitHub tags and the public Go module proxy. Building this
 repository does not publish anything.
 
 ## One-time setup
@@ -26,28 +26,76 @@ repository does not publish anything.
    package to the verified publisher, then under **Admin → Automated publishing** enable
    GitHub Actions for repository `Neural-Defend/NeuralDefend-SDKs`, tag pattern
    `dart-v{{version}}`, and required environment `pub-dev`.
-4. Configure GitHub environments `pypi`, `npm`, `mcp-pypi`, `pub-dev`, and `staging` with required
+4. Set up Maven Central for the Kotlin SDK (see [Maven Central setup](#maven-central-setup)
+   for the details of each step):
+   - create a Central Portal account at <https://central.sonatype.com> under a shared
+     company identity;
+   - register and verify the `com.neuraldefend` namespace with the DNS TXT record the
+     portal shows for the `neuraldefend.com` domain;
+   - generate a portal user token (username and password pair);
+   - generate a dedicated GPG signing key and publish its public key to
+     `keyserver.ubuntu.com`;
+   - create the `maven-central` GitHub environment, limited to tags matching `kotlin-v*`,
+     and store secrets `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`, `SIGNING_KEY`,
+     and `SIGNING_PASSWORD` in it.
+5. Configure GitHub environments `pypi`, `npm`, `mcp-pypi`, `pub-dev`, `maven-central`, and `staging` with required
    company reviewers, self-review prevention, and no administrator bypass.
-5. Make the repository public only after the full-history security review. npm provenance
+6. Make the repository public only after the full-history security review. npm provenance
    publishing requires public source; do not run the npm release while the repository is
    private.
-6. Configure PyPI and npm trusted publishing for the corresponding workflows. Do not
+7. Configure PyPI and npm trusted publishing for the corresponding workflows. Do not
    retain registry publication tokens.
-7. Set repository variables `SPEC_SOURCE_REPOSITORY` and `SPEC_SOURCE_REF` (the production
+8. Set repository variables `SPEC_SOURCE_REPOSITORY` and `SPEC_SOURCE_REF` (the production
    API branch), plus secret `SDK_SPEC_SYNC_TOKEN`, so the scheduled workflow can read the
    private API repository. The scheduled `spec-sync` workflow fails loudly when any of
    these are missing; it does not skip sync silently.
-8. Add `NEURALDEFEND_STAGING_API_KEY` to the protected `staging` environment.
-9. Protect `main` with pull-request reviews and required checks. Restrict creation,
-   update, and deletion of `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`, and `dart-v*`
-   tags to release managers.
-10. Enable secret scanning, push protection, Dependabot security updates, and required CI
+9. Add `NEURALDEFEND_STAGING_API_KEY` to the protected `staging` environment.
+10. Protect `main` with pull-request reviews and required checks. Restrict creation,
+   update, and deletion of `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`, `dart-v*`,
+   and `kotlin-v*` tags to release managers.
+11. Enable secret scanning, push protection, Dependabot security updates, and required CI
    checks.
 
 Before making the repository public, scan the complete Git history—not only the current
 tree—for credentials, customer media, biometric data, internal model details, and private
 infrastructure identifiers. Rewriting or squashing history is a separate destructive
 operation and requires explicit approval.
+
+## Maven Central setup
+
+The Kotlin SDK publishes `com.neuraldefend:neuraldefend` (JVM) and
+`com.neuraldefend:neuraldefend-android` (Android AAR) through the Central Portal. Maven
+Central has no OIDC trusted publishing, so the release job uses a portal user token and a
+GPG key stored only in the protected `maven-central` environment.
+
+1. **Account.** Sign in to <https://central.sonatype.com> with a shared company account,
+   not a personal one, and enable two-factor authentication.
+2. **Namespace.** Under **Namespaces**, add `com.neuraldefend`. The portal shows a
+   verification key; publish it as a DNS TXT record on `neuraldefend.com` and press
+   **Verify**. Leave the record in place until the namespace shows as verified.
+3. **User token.** Under **Account → Generate User Token**, create a token. Its username
+   becomes `MAVEN_CENTRAL_USERNAME` and its password becomes `MAVEN_CENTRAL_PASSWORD`.
+   Do not use the account login password.
+4. **Signing key.** On a trusted machine, create a dedicated RSA 4096 key for releases,
+   protect it with a passphrase, and publish the public key so Maven Central can check
+   signatures:
+
+   ```bash
+   gpg --quick-generate-key "Neural Defend Releases <security@neuraldefend.com>" rsa4096 sign 2y
+   gpg --keyserver keyserver.ubuntu.com --send-keys <KEY_ID>
+   gpg --armor --export-secret-keys <KEY_ID> > signing-key.asc
+   ```
+
+   Store the full contents of `signing-key.asc` (including the `BEGIN`/`END` lines) as
+   `SIGNING_KEY` and the passphrase as `SIGNING_PASSWORD`, then delete the exported file.
+   Keep an offline backup of the key and a revocation certificate.
+5. **Environment.** Create the GitHub environment `maven-central` with required company
+   reviewers, self-review prevention, no administrator bypass, and a deployment-branch
+   rule that allows only tags matching `kotlin-v*`. Add the four secrets above to this
+   environment, not to the repository.
+
+Rotate the user token and signing key if a release manager leaves or a secret may have
+leaked. Publish the new public key before the next release.
 
 ## Spec synchronization credentials
 
@@ -98,7 +146,9 @@ test -n "${SPEC_SOURCE_REF:-}" && echo "SPEC_SOURCE_REF is set" \
    - `mcp-vX.Y.Z`
    - `packages/go/vX.Y.Z`
    - `dart-vX.Y.Z`
-7. Inspect the wheel/sdist, npm tarball, or `dart pub publish --dry-run` file list before approving the protected release job.
+   - `kotlin-vX.Y.Z` (matches `VERSION_NAME` in `packages/kotlin/gradle.properties`)
+7. Inspect the wheel/sdist, npm tarball, `dart pub publish --dry-run` file list, or the Kotlin
+   `central-bundle` artifact before approving the protected release job.
 8. Run each release workflow manually in dry-run mode and retain its artifacts for review.
 
 The workflows use OIDC and provenance attestations. A release tag starts publishing only
@@ -114,6 +164,7 @@ time and verify the registry before proceeding:
 3. `ts-vX.Y.Z`
 4. `packages/go/vX.Y.Z` after the commit is on the default branch
 5. `dart-vX.Y.Z` after the commit is on the default branch
+6. `kotlin-vX.Y.Z` after the commit is on the default branch
 
 The Go tag uses the module path prefix so `go get` resolves the version from the public
 module proxy. No registry approval step is required; verify `go get` in a clean module
@@ -123,6 +174,16 @@ The Dart tag starts `release-dart.yml`, which tests the package, checks the tag 
 `pubspec.yaml`, and publishes to pub.dev with a GitHub OIDC token after the `pub-dev`
 environment reviewer approves. pub.dev versions cannot be deleted; a defective version can
 only be retracted within seven days or superseded.
+
+The Kotlin tag starts `release-kotlin.yml`. The build job checks that the tag matches
+`VERSION_NAME`, that the tagged commit is on the default branch, and that the Gradle
+wrapper is genuine, then runs every check and builds an unsigned bundle. After the
+`maven-central` environment reviewer approves, the publish job signs the bundle with GPG,
+verifies and scans it, attests provenance, uploads it to the Central Portal with automatic
+publishing, waits until the deployment reaches `PUBLISHED`, and creates a GitHub release
+with the bundle attached. A manual run of the workflow only performs the build job (dry
+run). Maven Central versions cannot be deleted or replaced; a defective version can only
+be superseded.
 
 Stable tags must exactly match package metadata. Do not publish a prerelease to npm without
 an explicit non-`latest` dist-tag.
@@ -138,8 +199,11 @@ an explicit non-`latest` dist-tag.
 4. Install the exact Go module version with `go get` in a clean module.
 5. Add the exact `neuraldefend` version to clean Dart and Flutter projects and confirm the
    pub.dev score page shows all expected platforms.
-6. Run approved staging smoke tests against the published artifacts.
-7. Publish release notes, checksums, SBOMs, and provenance links.
+6. Add `com.neuraldefend:neuraldefend:X.Y.Z` to a clean JVM Gradle project and
+   `com.neuraldefend:neuraldefend-android:X.Y.Z` to a clean Android app, and confirm both
+   resolve from Maven Central (new versions can take up to 30 minutes to appear).
+7. Run approved staging smoke tests against the published artifacts.
+8. Publish release notes, checksums, SBOMs, and provenance links.
 
 Registry releases are immutable. If a defect is found, stop rollout and publish a patched
 version; yank/deprecate the affected version only when necessary and document the reason.

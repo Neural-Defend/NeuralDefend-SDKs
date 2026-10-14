@@ -1,7 +1,7 @@
 # Release checklist
 
-Concise pre-flight list for `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`, and
-`dart-v*` patch releases. Full context lives in [releasing.md](releasing.md).
+Concise pre-flight list for `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`,
+`dart-v*`, and `kotlin-v*` patch releases. Full context lives in [releasing.md](releasing.md).
 
 ## One-time registry and environment setup
 
@@ -14,10 +14,17 @@ Concise pre-flight list for `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`, an
 - [ ] **pub.dev automated publishing** — `neuraldefend` belongs to the Neural Defend
   verified publisher and allows GitHub Actions from `Neural-Defend/NeuralDefend-SDKs`
   with tag pattern `dart-v{{version}}` and required environment `pub-dev`.
-- [ ] **Protected environments** — `pypi`, `npm`, `mcp-pypi`, `pub-dev`, and `staging` require
+- [ ] **Maven Central** — the Central Portal account exists under a shared company
+  identity; namespace `com.neuraldefend` is verified by DNS TXT record; a portal user
+  token is generated; a dedicated GPG key is created and its public key is published to
+  `keyserver.ubuntu.com`. See [Maven Central setup](releasing.md#maven-central-setup).
+- [ ] **Maven Central secrets** — environment `maven-central` holds
+  `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`, `SIGNING_KEY` (ASCII-armoured
+  private key), and `SIGNING_PASSWORD`, and only allows tags matching `kotlin-v*`.
+- [ ] **Protected environments** — `pypi`, `npm`, `mcp-pypi`, `pub-dev`, `maven-central`, and `staging` require
   company reviewers, self-review prevention, and no administrator bypass.
 - [ ] **Tag protection** — restrict creation, update, and deletion of `python-v*`,
-  `ts-v*`, `mcp-v*`, `packages/go/v*`, and `dart-v*` tags to release managers; protect `main` with
+  `ts-v*`, `mcp-v*`, `packages/go/v*`, `dart-v*`, and `kotlin-v*` tags to release managers; protect `main` with
   required reviews and CI checks.
 - [ ] **Spec-sync secrets** — set repository variables `SPEC_SOURCE_REPOSITORY` and
   `SPEC_SOURCE_REF`, plus secret `SDK_SPEC_SYNC_TOKEN`, so the scheduled spec-sync
@@ -28,7 +35,7 @@ Concise pre-flight list for `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`, an
 ## Before tagging
 
 - [ ] Package versions match intended tags (`python-vX.Y.Z`, `ts-vX.Y.Z`, `mcp-vX.Y.Z`,
-  `packages/go/vX.Y.Z`, `dart-vX.Y.Z`).
+  `packages/go/vX.Y.Z`, `dart-vX.Y.Z`, `kotlin-vX.Y.Z`).
 - [ ] Changelogs updated; `scripts/validate_versions.py` passes.
 - [ ] `scripts/check_generated.py` reports no drift; staging smoke tests pass.
 - [ ] Run each release workflow manually in **dry-run** mode and inspect artifacts.
@@ -40,11 +47,12 @@ Concise pre-flight list for `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`, an
 3. `ts-vX.Y.Z`
 4. `packages/go/vX.Y.Z`
 5. `dart-vX.Y.Z`
+6. `kotlin-vX.Y.Z`
 
 ## Post-publication verification
 
-- [ ] Install exact PyPI wheels/sdists, the npm tarball, the Go module, and the pub.dev
-  package in clean consumers.
+- [ ] Install exact PyPI wheels/sdists, the npm tarball, the Go module, the pub.dev
+  package, and both Maven Central artifacts in clean consumers.
 - [ ] Run staging smoke tests against published artifacts.
 - [ ] Attach release notes, checksums, SBOMs, and provenance links to GitHub Releases.
 
