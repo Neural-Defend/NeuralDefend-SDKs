@@ -34,8 +34,10 @@ if ! "$emulator" -list-avds | grep -qx "$avd"; then
   exit 1
 fi
 
-# The default 2 GB lets the low-memory killer restart system_server on recent images.
-"$emulator" -avd "$avd" -no-window -no-audio -no-boot-anim -no-snapshot -no-metrics -memory 4096 \
+# The default 2 GB of RAM lets the low-memory killer restart system_server on recent images,
+# and the default data partition is too small to install the app and test APKs on them.
+"$emulator" -avd "$avd" -no-window -no-audio -no-boot-anim -no-snapshot -no-metrics \
+  -memory 4096 -partition-size 6144 \
   -gpu swiftshader_indirect -camera-back none -camera-front none >"$output/emulator.log" 2>&1 &
 emulator_pid=$!
 
