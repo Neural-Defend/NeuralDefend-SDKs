@@ -34,7 +34,8 @@ if ! "$emulator" -list-avds | grep -qx "$avd"; then
   exit 1
 fi
 
-"$emulator" -avd "$avd" -no-window -no-audio -no-boot-anim -no-snapshot -no-metrics \
+# The default 2 GB lets the low-memory killer restart system_server on recent images.
+"$emulator" -avd "$avd" -no-window -no-audio -no-boot-anim -no-snapshot -no-metrics -memory 4096 \
   -gpu swiftshader_indirect -camera-back none -camera-front none >"$output/emulator.log" 2>&1 &
 emulator_pid=$!
 
@@ -42,9 +43,11 @@ recorder_pid=""
 # adb blocks while no device is online, so every cleanup call is bounded.
 cleanup() {
   if [[ -n "$recorder_pid" ]]; then
-    kill -INT "$recorder_pid" 2>/dev/null || true
-    wait "$recorder_pid" 2>/dev/null || true
-    sleep 2
+    # Signalling the local adb process does not reach screenrecord on older images, and an
+    # unsignalled recording is never finalised.
+    timeout 10 "$adb" shell 'pkill -INT screenrecord || killall -INT screenrecord' >/dev/null 2>&1 || true
+    sleep 3
+    kill "$recorder_pid" 2>/dev/null || true
     timeout 60 "$adb" pull /sdcard/instrumented-tests.mp4 "$output/instrumented-tests-api-${api}.mp4" >/dev/null 2>&1 || true
   fi
   timeout 60 "$adb" logcat -d >"$output/logcat.txt" 2>/dev/null || true
@@ -54,9 +57,14 @@ cleanup() {
 }
 trap cleanup EXIT
 
+device_ready() {
+  [[ "$(timeout 10 "$adb" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == "1" ]] &&
+    timeout 10 "$adb" shell pm path android 2>/dev/null | grep -q '^package:'
+}
+
 "$adb" start-server >/dev/null
 deadline=$((SECONDS + boot_timeout_seconds))
-until [[ "$("$adb" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == "1" ]]; do
+until device_ready; do
   if ((SECONDS > deadline)); then
     echo "::error::Emulator for API ${api} did not boot within ${boot_timeout_seconds}s." >&2
     tail -50 "$output/emulator.log" >&2 || true
@@ -81,4 +89,17 @@ done
 recorder_pid=$!
 
 ./gradlew :example:connectedDebugAndroidTest --console=plain
+report=example/build/reports/androidTests/connected/debug/index.html
 cp -R example/build/reports/androidTests/connected "$output/report" 2>/dev/null || true
+
+# AGP reports success even when it could not install the APKs, so check what actually ran.
+if [[ ! -f "$report" ]]; then
+  echo "::error::No instrumented test report was produced for API ${api}." >&2
+  exit 1
+fi
+mapfile -t counters < <(grep -oE '<div class="counter">[0-9]+</div>' "$report" | grep -oE '[0-9]+')
+if ((${#counters[@]} < 2)) || ((counters[0] == 0)) || ((counters[1] != 0)); then
+  echo "::error::API ${api} ran ${counters[0]:-0} instrumented tests with ${counters[1]:-unknown} failures." >&2
+  exit 1
+fi
+echo "API ${api}: ${counters[0]} instrumented tests passed."
