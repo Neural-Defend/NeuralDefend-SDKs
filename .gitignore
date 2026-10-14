@@ -29,6 +29,14 @@ pubspec.lock
 .flutter-plugins
 .flutter-plugins-dependencies
 
+# Swift and Xcode. The library has no dependencies, so Package.resolved is not committed.
+.build/
+.swiftpm/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+Package.resolved
+
 # Secrets. API keys belong in the environment, never in the repo.
 .env
 .env.*
