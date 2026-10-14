@@ -84,6 +84,7 @@ private final class Exchange: @unchecked Sendable {
     private var finished = false
     private var body = Data()
     private var timer: Task<Void, Never>?
+    private var reportedBytes: Int64 = 0
 
     init(
         task: URLSessionTask,
@@ -139,7 +140,12 @@ private final class Exchange: @unchecked Sendable {
     }
 
     func progress(sent: Int64) {
-        onProgress?(sent, totalBytes)
+        guard let onProgress else { return }
+        lock.lock()
+        let advanced = sent > reportedBytes
+        if advanced { reportedBytes = sent }
+        lock.unlock()
+        if advanced { onProgress(sent, totalBytes) }
     }
 
     func complete(error: (any Error)?, response: URLResponse?) {
@@ -155,6 +161,10 @@ private final class Exchange: @unchecked Sendable {
         timer?.cancel()
         timer = nil
         lock.unlock()
+        // Darwin can complete a task without delivering its last didSendBodyData callback.
+        if reason == nil && error == nil {
+            progress(sent: task.countOfBytesSent)
+        }
         continuation.resume(returning: outcome(reason: reason, error: error, response: response, body: body))
     }
 
