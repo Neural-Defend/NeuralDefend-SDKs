@@ -21,30 +21,40 @@ avdmanager="$sdk/cmdline-tools/latest/bin/avdmanager"
 adb="$sdk/platform-tools/adb"
 emulator="$sdk/emulator/emulator"
 
+# avdmanager honours XDG_CONFIG_HOME (set on GitHub runners) but the emulator does not, so
+# without a shared ANDROID_AVD_HOME the emulator cannot find the AVD that was just created.
+export ANDROID_AVD_HOME="${ANDROID_AVD_HOME:-$HOME/.android/avd}"
+mkdir -p "$ANDROID_AVD_HOME"
+
 yes | "$sdkmanager" --licenses >/dev/null || true
 "$sdkmanager" --install "platform-tools" "emulator" "$image" >/dev/null
 echo no | "$avdmanager" create avd --force --name "$avd" --package "$image" --device pixel_5 >/dev/null
+if ! "$emulator" -list-avds | grep -qx "$avd"; then
+  echo "::error::The emulator cannot see AVD ${avd} in ${ANDROID_AVD_HOME}." >&2
+  exit 1
+fi
 
 "$emulator" -avd "$avd" -no-window -no-audio -no-boot-anim -no-snapshot -no-metrics \
   -gpu swiftshader_indirect -camera-back none -camera-front none >"$output/emulator.log" 2>&1 &
 emulator_pid=$!
 
 recorder_pid=""
+# adb blocks while no device is online, so every cleanup call is bounded.
 cleanup() {
   if [[ -n "$recorder_pid" ]]; then
     kill -INT "$recorder_pid" 2>/dev/null || true
     wait "$recorder_pid" 2>/dev/null || true
     sleep 2
-    "$adb" pull /sdcard/instrumented-tests.mp4 "$output/instrumented-tests-api-${api}.mp4" >/dev/null 2>&1 || true
+    timeout 60 "$adb" pull /sdcard/instrumented-tests.mp4 "$output/instrumented-tests-api-${api}.mp4" >/dev/null 2>&1 || true
   fi
-  "$adb" logcat -d >"$output/logcat.txt" 2>/dev/null || true
-  "$adb" emu kill >/dev/null 2>&1 || true
+  timeout 60 "$adb" logcat -d >"$output/logcat.txt" 2>/dev/null || true
+  timeout 30 "$adb" emu kill >/dev/null 2>&1 || true
   sleep 5
   kill "$emulator_pid" 2>/dev/null || true
 }
 trap cleanup EXIT
 
-"$adb" wait-for-device
+"$adb" start-server >/dev/null
 deadline=$((SECONDS + boot_timeout_seconds))
 until [[ "$("$adb" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == "1" ]]; do
   if ((SECONDS > deadline)); then
