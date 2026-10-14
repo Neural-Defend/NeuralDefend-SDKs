@@ -1,0 +1,9 @@
+.dart_tool/
+build/
+pubspec.lock
+generated/
+tool/
+test/
+example/flutter_app/.dart_tool/
+example/flutter_app/build/
+example/flutter_app/pubspec.lock

@@ -1,7 +1,7 @@
 # Release checklist
 
-Concise pre-flight list for `python-v*`, `ts-v*`, `mcp-v*`, and `packages/go/v*` patch
-releases. Full context lives in [releasing.md](releasing.md).
+Concise pre-flight list for `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`, and
+`dart-v*` patch releases. Full context lives in [releasing.md](releasing.md).
 
 ## One-time registry and environment setup
 
@@ -11,10 +11,13 @@ releases. Full context lives in [releasing.md](releasing.md).
   `NeuralDefend-SDKs`, and the correct workflow filenames.
 - [ ] **npm trusted publisher** — confirm `@neuraldefend/sdk` trusted publishing for
   `release-npm.yml` → environment `npm`. Do not retain long-lived registry tokens.
-- [ ] **Protected environments** — `pypi`, `npm`, `mcp-pypi`, and `staging` require
+- [ ] **pub.dev automated publishing** — `neuraldefend` belongs to the Neural Defend
+  verified publisher and allows GitHub Actions from `Neural-Defend/NeuralDefend-SDKs`
+  with tag pattern `dart-v{{version}}` and required environment `pub-dev`.
+- [ ] **Protected environments** — `pypi`, `npm`, `mcp-pypi`, `pub-dev`, and `staging` require
   company reviewers, self-review prevention, and no administrator bypass.
 - [ ] **Tag protection** — restrict creation, update, and deletion of `python-v*`,
-  `ts-v*`, `mcp-v*`, and `packages/go/v*` tags to release managers; protect `main` with
+  `ts-v*`, `mcp-v*`, `packages/go/v*`, and `dart-v*` tags to release managers; protect `main` with
   required reviews and CI checks.
 - [ ] **Spec-sync secrets** — set repository variables `SPEC_SOURCE_REPOSITORY` and
   `SPEC_SOURCE_REF`, plus secret `SDK_SPEC_SYNC_TOKEN`, so the scheduled spec-sync
@@ -25,7 +28,7 @@ releases. Full context lives in [releasing.md](releasing.md).
 ## Before tagging
 
 - [ ] Package versions match intended tags (`python-vX.Y.Z`, `ts-vX.Y.Z`, `mcp-vX.Y.Z`,
-  `packages/go/vX.Y.Z`).
+  `packages/go/vX.Y.Z`, `dart-vX.Y.Z`).
 - [ ] Changelogs updated; `scripts/validate_versions.py` passes.
 - [ ] `scripts/check_generated.py` reports no drift; staging smoke tests pass.
 - [ ] Run each release workflow manually in **dry-run** mode and inspect artifacts.
@@ -36,11 +39,12 @@ releases. Full context lives in [releasing.md](releasing.md).
 2. `mcp-vX.Y.Z` after `neuraldefend==X.Y.Z` is installable from PyPI
 3. `ts-vX.Y.Z`
 4. `packages/go/vX.Y.Z`
+5. `dart-vX.Y.Z`
 
 ## Post-publication verification
 
-- [ ] Install exact PyPI wheels/sdists, the npm tarball, and the Go module in clean
-  consumers.
+- [ ] Install exact PyPI wheels/sdists, the npm tarball, the Go module, and the pub.dev
+  package in clean consumers.
 - [ ] Run staging smoke tests against published artifacts.
 - [ ] Attach release notes, checksums, SBOMs, and provenance links to GitHub Releases.
 
