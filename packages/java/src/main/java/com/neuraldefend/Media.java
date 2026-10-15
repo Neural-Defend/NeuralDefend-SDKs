@@ -142,9 +142,8 @@ public final class Media {
                 } catch (IOException ex) {
                     throw new ValidationException("file-like object must support seek() and tell()");
                 }
-                Closeable closer = stream instanceof Closeable ? (Closeable) stream : null;
                 return PreparedUpload.fromStream(
-                        selectedName, maxBytes, stream, stream, closer != null, extensions);
+                        selectedName, maxBytes, stream, stream, false, extensions);
             }
             if (size >= 0) {
                 if (size == 0) {
@@ -164,15 +163,8 @@ public final class Media {
             if (read <= 0) {
                 throw new ValidationException("file must not be empty");
             }
-            Closeable closer = stream instanceof Closeable ? (Closeable) stream : null;
             return PreparedUpload.fromPrefix(
-                    selectedName,
-                    maxBytes,
-                    stream,
-                    closer != null,
-                    extensions,
-                    prefix,
-                    read);
+                    selectedName, maxBytes, stream, false, extensions, prefix, read);
         }
         throw new ValidationException("file must be a path, bytes, or binary file-like object");
     }

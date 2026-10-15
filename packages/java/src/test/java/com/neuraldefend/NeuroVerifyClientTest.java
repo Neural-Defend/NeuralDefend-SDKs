@@ -4,16 +4,20 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import okhttp3.mockwebserver.SocketPolicy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -123,6 +127,83 @@ final class NeuroVerifyClientTest {
         options.maxRetries = 0;
         NeuroVerifyClient client = NeuroVerifyClient.staging(options);
         assertEquals(NeuroVerifyClient.STAGING_URL, client.getBaseUrl());
+    }
+
+    @Test
+    void stagingDoesNotMutateCallerOptions() {
+        ClientOptions options = new ClientOptions();
+        options.apiKey = "key";
+        options.baseUrl = "https://wrong.local";
+        options.allowCustomBaseUrl = true;
+        options.maxRetries = 0;
+        options.userAgent = "custom-agent";
+        NeuroVerifyClient client = NeuroVerifyClient.staging(options);
+        assertEquals(NeuroVerifyClient.STAGING_URL, client.getBaseUrl());
+        assertEquals("https://wrong.local", options.baseUrl);
+        assertEquals("custom-agent", options.userAgent);
+        assertEquals(0, options.maxRetries);
+    }
+
+    @Test
+    void customHttpClientDoesNotImplicitlyAllowInsecureOrigins() {
+        OkHttpClient httpClient = new OkHttpClient();
+
+        ClientOptions http = new ClientOptions();
+        http.apiKey = "key";
+        http.baseUrl = "http://127.0.0.1:9";
+        http.httpClient = httpClient;
+        http.maxRetries = 0;
+        ValidationException httpError =
+                assertThrows(ValidationException.class, () -> NeuroVerifyClient.newClient(http));
+        assertTrue(httpError.getDetail().contains("HTTPS"), httpError.getDetail());
+
+        ClientOptions customHost = new ClientOptions();
+        customHost.apiKey = "key";
+        customHost.baseUrl = "https://api.example.com";
+        customHost.httpClient = httpClient;
+        customHost.maxRetries = 0;
+        ValidationException hostError =
+                assertThrows(ValidationException.class, () -> NeuroVerifyClient.newClient(customHost));
+        assertTrue(hostError.getDetail().contains("allow_custom_base_url"), hostError.getDetail());
+
+        ClientOptions allowedHttp = new ClientOptions();
+        allowedHttp.apiKey = "key";
+        allowedHttp.baseUrl = "http://127.0.0.1:9";
+        allowedHttp.allowHttpForTesting = true;
+        allowedHttp.maxRetries = 0;
+        assertEquals("http://127.0.0.1:9", NeuroVerifyClient.newClient(allowedHttp).getBaseUrl());
+    }
+
+    @Test
+    void officialOriginsAreCanonicalizedAndDecoratedUrlsAreRejected() {
+        ClientOptions mixedCase = new ClientOptions();
+        mixedCase.apiKey = "key";
+        mixedCase.baseUrl = "HTTPS://Deepscan.NeuralDefend.com:443/./";
+        mixedCase.maxRetries = 0;
+        assertEquals(
+                NeuroVerifyClient.PRODUCTION_URL, NeuroVerifyClient.newClient(mixedCase).getBaseUrl());
+
+        ClientOptions stagingPort = new ClientOptions();
+        stagingPort.apiKey = "key";
+        stagingPort.baseUrl = "https://Stage.Deepscan.NeuralDefend.com:443/";
+        stagingPort.maxRetries = 0;
+        assertEquals(
+                NeuroVerifyClient.STAGING_URL, NeuroVerifyClient.newClient(stagingPort).getBaseUrl());
+
+        for (String badUrl :
+                List.of(
+                        "https://user:pass@deepscan.neuraldefend.com",
+                        "https://deepscan.neuraldefend.com?x=1",
+                        "https://deepscan.neuraldefend.com#frag",
+                        "https://deepscan.neuraldefend.com/v1",
+                        "http://deepscan.neuraldefend.com")) {
+            ClientOptions options = new ClientOptions();
+            options.apiKey = "key";
+            options.baseUrl = badUrl;
+            options.maxRetries = 0;
+            assertThrows(
+                    ValidationException.class, () -> NeuroVerifyClient.newClient(options), badUrl);
+        }
     }
 
     @Test
@@ -272,6 +353,140 @@ final class NeuroVerifyClientTest {
                                         Media.bytesMedia(
                                                 "x.jpg", "x".getBytes(StandardCharsets.UTF_8))));
         assertFalse(error.getMessage().contains("secret-test-key"));
+        assertFalse(String.valueOf(error.getEnvelope()).contains("secret-test-key"));
+        assertTrue(String.valueOf(error.getEnvelope()).contains("[REDACTED]"));
+    }
+
+    @Test
+    void customHttpClientDoesNotFollowRedirects() throws Exception {
+        Map<String, Object> success = TestFixtures.loadCase("image/documented/low-risk.json");
+        server.enqueue(
+                new MockResponse()
+                        .setResponseCode(302)
+                        .addHeader("Location", server.url("/detect/image").toString()));
+        server.enqueue(buildMockResponse(TestFixtures.responseFromCase(success)));
+
+        ClientOptions options = testOptions();
+        options.maxRetries = 0;
+        options.httpClient =
+                new OkHttpClient.Builder().followRedirects(true).followSslRedirects(true).build();
+        NeuroVerifyClient client = NeuroVerifyClient.newClient(options);
+
+        HttpException error =
+                assertThrows(
+                        HttpException.class,
+                        () ->
+                                client.detectImage(
+                                        Media.bytesMedia(
+                                                "x.jpg", "x".getBytes(StandardCharsets.UTF_8))));
+        assertEquals(302, error.getStatusCode());
+        assertEquals(1, server.getRequestCount());
+    }
+
+    @Test
+    void customHttpClientHonorsConfiguredTimeout() {
+        server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE));
+        ClientOptions options = testOptions();
+        options.maxRetries = 0;
+        options.timeout = Duration.ofMillis(400);
+        options.httpClient =
+                new OkHttpClient.Builder()
+                        .readTimeout(Duration.ofSeconds(30))
+                        .callTimeout(Duration.ofSeconds(30))
+                        .build();
+        NeuroVerifyClient client = NeuroVerifyClient.newClient(options);
+
+        assertTimeoutPreemptively(
+                Duration.ofSeconds(3),
+                () ->
+                        assertThrows(
+                                TimeoutException.class,
+                                () ->
+                                        client.detectImage(
+                                                Media.bytesMedia(
+                                                        "x.jpg",
+                                                        "x".getBytes(StandardCharsets.UTF_8)))));
+    }
+
+    @Test
+    void callerStreamsStayOpenAndRewindFailuresStayValidationErrors() throws Exception {
+        Map<String, Object> success = TestFixtures.loadCase("image/documented/low-risk.json");
+        server.enqueue(buildMockResponse(TestFixtures.responseFromCase(success)));
+        ClientOptions options = testOptions();
+        options.maxRetries = 0;
+        NeuroVerifyClient client = NeuroVerifyClient.newClient(options);
+
+        TrackingStream image = new TrackingStream("image-bytes".getBytes(StandardCharsets.UTF_8));
+        ImageResult imageResult =
+                client.detectImage(Media.inputStreamMedia("x.jpg", image, -1));
+        assertTrue(imageResult.scored());
+        assertFalse(image.closed);
+
+        Map<String, Object> videoSuccess = TestFixtures.loadCase("video/documented/both-low.json");
+        server.enqueue(buildMockResponse(TestFixtures.responseFromCase(videoSuccess)));
+        TrackingStream video = new TrackingStream("video-bytes".getBytes(StandardCharsets.UTF_8));
+        VideoResult videoResult =
+                client.detectVideo(
+                        Media.inputStreamMedia("x.mp4", video, -1), new VideoOptions());
+        assertTrue(videoResult.scored());
+        assertFalse(video.closed);
+
+        TrackingStream rejected = new TrackingStream("x".getBytes(StandardCharsets.UTF_8));
+        ClientOptions retrying = testOptions();
+        retrying.maxRetries = 3;
+        NeuroVerifyClient retryClient = NeuroVerifyClient.newClient(retrying);
+        ValidationException error =
+                assertThrows(
+                        ValidationException.class,
+                        () ->
+                                retryClient.detectVideo(
+                                        Media.inputStreamMedia("x.mp4", rejected, -1),
+                                        new VideoOptions()));
+        assertTrue(error.getDetail().contains("max_retries=0"));
+        assertFalse(rejected.closed);
+
+        server.enqueue(buildMockResponse(TestFixtures.responseFromCase(success)));
+        ClientOptions rewindOptions = testOptions();
+        rewindOptions.maxRetries = 1;
+        NeuroVerifyClient rewindClient = NeuroVerifyClient.newClient(rewindOptions);
+        ResetOnceStream flaky = new ResetOnceStream("payload".getBytes(StandardCharsets.UTF_8));
+        ValidationException rewind =
+                assertThrows(
+                        ValidationException.class,
+                        () ->
+                                rewindClient.detectImage(
+                                        Media.inputStreamMedia("x.jpg", flaky, flaky.available())));
+        assertTrue(rewind.getDetail().contains("rewound"), rewind.getDetail());
+    }
+
+    @Test
+    void retryAfterHttpDateIsCappedWithoutJitter() throws Exception {
+        Map<String, Object> limited = TestFixtures.loadCase("image/synthetic/rate-limited-429.json");
+        Map<String, Object> success = TestFixtures.loadCase("image/documented/low-risk.json");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> headers = (Map<String, Object>) limited.get("headers");
+        headers.put("retry-after", "Sun, 26 Jul 2026 13:00:00 GMT");
+        final int[] calls = {0};
+        server.setDispatcher(
+                new okhttp3.mockwebserver.Dispatcher() {
+                    @Override
+                    public MockResponse dispatch(RecordedRequest request) {
+                        calls[0]++;
+                        Map<String, Object> caseData = calls[0] > 1 ? success : limited;
+                        return buildMockResponse(TestFixtures.responseFromCase(caseData));
+                    }
+                });
+
+        ClientOptions options = testOptions();
+        options.maxRetries = 1;
+        options.random = () -> 1.0;
+        options.clock = () -> Instant.parse("2026-07-26T12:00:00Z");
+        NeuroVerifyClient client = NeuroVerifyClient.newClient(options);
+        ImageResult result =
+                client.detectImage(
+                        Media.bytesMedia("x.jpg", "x".getBytes(StandardCharsets.UTF_8)));
+        assertTrue(result.scored());
+        assertEquals(List.of(Duration.ofSeconds(3600)), sleeps);
     }
 
     private ClientOptions testOptions() {
@@ -306,6 +521,72 @@ final class NeuroVerifyClientTest {
         }
         response.setBody(new String(parts.body(), StandardCharsets.UTF_8));
         return response;
+    }
+
+    private static final class TrackingStream extends InputStream {
+        private final byte[] value;
+        private int offset;
+        private boolean closed;
+
+        TrackingStream(byte[] value) {
+            this.value = value;
+        }
+
+        @Override
+        public int read() {
+            if (offset >= value.length) {
+                return -1;
+            }
+            return value[offset++] & 0xff;
+        }
+
+        @Override
+        public void close() {
+            closed = true;
+        }
+    }
+
+    private static final class ResetOnceStream extends InputStream {
+        private final byte[] value;
+        private int offset;
+        private int mark;
+        private int resets;
+
+        ResetOnceStream(byte[] value) {
+            this.value = value;
+        }
+
+        @Override
+        public int read() {
+            if (offset >= value.length) {
+                return -1;
+            }
+            return value[offset++] & 0xff;
+        }
+
+        @Override
+        public int available() {
+            return Math.max(0, value.length - offset);
+        }
+
+        @Override
+        public boolean markSupported() {
+            return true;
+        }
+
+        @Override
+        public synchronized void mark(int readlimit) {
+            mark = offset;
+        }
+
+        @Override
+        public synchronized void reset() throws IOException {
+            resets++;
+            if (resets > 1) {
+                throw new IOException("cannot rewind");
+            }
+            offset = mark;
+        }
     }
 
     private static final class NonSeekableInputStream extends java.io.InputStream {
