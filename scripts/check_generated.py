@@ -12,6 +12,7 @@ from generate import (
     DART_DESTINATION,
     GO_DESTINATION,
     JAVA_DESTINATION,
+    KOTLIN_DESTINATION,
     PYTHON_DESTINATION,
     SWIFT_DESTINATION,
     TYPESCRIPT_DESTINATION,
@@ -73,6 +74,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="committed Dart generated-source directory",
     )
     parser.add_argument(
+        "--kotlin-dir",
+        type=Path,
+        default=KOTLIN_DESTINATION,
+        help="committed Kotlin generated-source directory",
+    )
+    parser.add_argument(
         "--swift-dir",
         type=Path,
         default=SWIFT_DESTINATION,
@@ -113,6 +120,11 @@ def main(argv: list[str] | None = None) -> int:
                 snapshot / "dart",
                 args.dart_dir.resolve(),
             )
+            kotlin_current = _compare(
+                "kotlin",
+                snapshot / "kotlin",
+                args.kotlin_dir.resolve(),
+            )
             swift_current = _compare(
                 "swift",
                 snapshot / "swift",
@@ -131,6 +143,7 @@ def main(argv: list[str] | None = None) -> int:
         typescript_current,
         go_current,
         dart_current,
+        kotlin_current,
         java_current,
         swift_current,
     )

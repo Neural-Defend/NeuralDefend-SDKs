@@ -92,6 +92,18 @@ def validate() -> None:
     if dart_runtime is None:
         raise ValueError("packages/dart/lib/src/version.dart: missing sdkVersion constant")
 
+    gradle_properties = (ROOT / "packages/kotlin/gradle.properties").read_text(encoding="utf-8")
+    kotlin_manifest = re.search(r"(?m)^VERSION_NAME\s*=\s*(\S+)\s*$", gradle_properties)
+    if kotlin_manifest is None:
+        raise ValueError("packages/kotlin/gradle.properties: missing VERSION_NAME")
+    kotlin_source = (
+        ROOT / "packages/kotlin/neuraldefend/src/main/kotlin/com/neuraldefend/kotlin/Version.kt"
+    ).read_text(encoding="utf-8")
+    kotlin_runtime = re.search(
+        r'(?m)^internal const val SDK_VERSION: String = "([^"]+)"$', kotlin_source
+    )
+    if kotlin_runtime is None:
+        raise ValueError("packages/kotlin Version.kt: missing SDK_VERSION constant")
     # SwiftPM has no version field; the release tag must match this constant and the changelog.
     swift_source = (ROOT / "packages/swift/Sources/NeuralDefend/Version.swift").read_text(
         encoding="utf-8"
@@ -130,6 +142,8 @@ def validate() -> None:
         "Go runtime": go_version,
         "Dart manifest": dart_manifest.group(1),
         "Dart runtime": dart_runtime.group(1),
+        "Kotlin manifest": kotlin_manifest.group(1),
+        "Kotlin runtime": kotlin_runtime.group(1),
         "Swift runtime": swift_runtime.group(1),
         "Swift changelog": swift_released.group(1),
         "Java manifest": java_manifest,
@@ -150,6 +164,8 @@ def validate() -> None:
         raise ValueError("TypeScript user-agent version does not match package.json")
     if dart_runtime.group(1) != dart_manifest.group(1):
         raise ValueError("Dart sdkVersion does not match pubspec.yaml")
+    if kotlin_runtime.group(1) != kotlin_manifest.group(1):
+        raise ValueError("Kotlin SDK_VERSION does not match gradle.properties VERSION_NAME")
     if swift_runtime.group(1) != swift_released.group(1):
         raise ValueError("Swift sdkVersion does not match the latest packages/swift/CHANGELOG.md entry")
     if java_runtime != java_manifest:

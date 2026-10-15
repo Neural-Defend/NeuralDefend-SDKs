@@ -19,6 +19,7 @@ import generate
 import scan_public_artifacts
 import spec_tools
 import sync_spec
+import validate_versions
 
 
 class StrictYamlTests(unittest.TestCase):
@@ -80,6 +81,87 @@ class ContractTests(unittest.TestCase):
             findings = scan_public_artifacts.scan([archive])
             self.assertTrue(any("prediction_tag" in finding for finding in findings))
             self.assertTrue(any("GitHub token" in finding for finding in findings))
+
+    def test_public_artifact_scan_covers_kotlin_and_gradle_sources(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "Client.kt").write_text('val url = "https://example.com/internal/"\n', encoding="utf-8")
+            (root / "build.gradle.kts").write_text("// mediapipe\n", encoding="utf-8")
+            (root / "gradle.properties").write_text("token=ghp_" + ("b" * 24) + "\n", encoding="utf-8")
+            (root / "AndroidManifest.xml").write_text("<manifest/>\n", encoding="utf-8")
+            cache = root / ".gradle"
+            cache.mkdir()
+            (cache / "cached.kt").write_text("// prediction_tag\n", encoding="utf-8")
+
+            findings = scan_public_artifacts.scan([root])
+
+            self.assertEqual(len(findings), 3, findings)
+            self.assertTrue(any("Client.kt" in finding and "/internal/" in finding for finding in findings))
+            self.assertTrue(any("build.gradle.kts" in finding for finding in findings))
+            self.assertTrue(any("gradle.properties" in finding for finding in findings))
+
+    def test_public_artifact_scan_allows_only_listed_third_party_internal_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "sdk.api").write_text(
+                "public synthetic fun <init> (ILkotlin/jvm/internal/DefaultConstructorMarker;)V\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(scan_public_artifacts.scan([root]), [])
+            (root / "other.api").write_text("Lcom/neuraldefend/internal/Secret;\n", encoding="utf-8")
+            self.assertEqual(len(scan_public_artifacts.scan([root])), 1)
+
+
+class VersionValidationTests(unittest.TestCase):
+    VERSION_FILES = (
+        "packages/python/pyproject.toml",
+        "packages/python/src/neuraldefend/client.py",
+        "packages/mcp/pyproject.toml",
+        "packages/mcp/src/neuraldefend_mcp/__init__.py",
+        "packages/typescript/package.json",
+        "packages/typescript/package-lock.json",
+        "packages/typescript/src/client.ts",
+        "packages/go/version.go",
+        "packages/dart/pubspec.yaml",
+        "packages/dart/lib/src/version.dart",
+        "packages/swift/Sources/NeuralDefend/Version.swift",
+        "packages/swift/CHANGELOG.md",
+        "packages/java/build.gradle.kts",
+        "packages/java/src/main/java/com/neuraldefend/SdkVersion.java",
+        "packages/kotlin/gradle.properties",
+        "packages/kotlin/neuraldefend/src/main/kotlin/com/neuraldefend/kotlin/Version.kt",
+    )
+
+    def _copy_repository_versions(self, root: Path) -> None:
+        for relative in self.VERSION_FILES:
+            target = root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes((validate_versions.ROOT / relative).read_bytes())
+
+    def test_repository_versions_agree(self) -> None:
+        validate_versions.validate()
+
+    def test_kotlin_runtime_drift_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._copy_repository_versions(root)
+            version_kt = root / self.VERSION_FILES[-1]
+            version_kt.write_text(
+                version_kt.read_text(encoding="utf-8").replace('= "', '= "9', 1),
+                encoding="utf-8",
+            )
+            with mock.patch.object(validate_versions, "ROOT", root):
+                with self.assertRaisesRegex(ValueError, "Kotlin SDK_VERSION"):
+                    validate_versions.validate()
+
+    def test_missing_kotlin_version_name_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self._copy_repository_versions(root)
+            (root / "packages/kotlin/gradle.properties").write_text("GROUP=com.neuraldefend\n", encoding="utf-8")
+            with mock.patch.object(validate_versions, "ROOT", root):
+                with self.assertRaisesRegex(ValueError, "VERSION_NAME"):
+                    validate_versions.validate()
 
 
 class AtomicAndManifestTests(unittest.TestCase):
@@ -256,11 +338,43 @@ class GeneratorTests(unittest.TestCase):
         with mock.patch.object(generate.sys, "platform", "win32"):
             self.assertEqual(generate._docker_user_arguments(), [])
 
+    def test_kotlin_generator_config_targets_okhttp_and_kotlinx_serialization(self) -> None:
+        config = json.loads(generate.KOTLIN_CONFIG.read_text(encoding="utf-8"))
+        self.assertEqual(config["library"], "jvm-okhttp4")
+        self.assertEqual(config["serializationLibrary"], "kotlinx_serialization")
+        self.assertEqual(config["packageName"], "com.neuraldefend.core")
+        self.assertTrue(config["enumUnknownDefaultCase"])
+
+    def test_kotlin_copy_keeps_only_sources_and_drops_stale_files(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary) / "src/main/kotlin"
+            (source / "com/neuraldefend/core/apis").mkdir(parents=True)
+            (source / "com/neuraldefend/core/apis/DefaultApi.kt").write_text("class DefaultApi\n", encoding="utf-8")
+            (source / "com/neuraldefend/core/build.gradle").write_text("plugins {}\n", encoding="utf-8")
+            destination = Path(temporary) / "generated/core"
+            (destination / "stale").mkdir(parents=True)
+            (destination / "stale/Old.kt").write_text("class Old\n", encoding="utf-8")
+
+            generate._copy_kotlin_generated(source, destination)
+
+            copied = sorted(path.relative_to(destination).as_posix() for path in destination.rglob("*") if path.is_file())
+            self.assertEqual(copied, ["com/neuraldefend/core/apis/DefaultApi.kt"])
+
+    def test_kotlin_copy_rejects_missing_or_empty_output(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            with self.assertRaisesRegex(spec_tools.SpecError, "output is missing"):
+                generate._copy_kotlin_generated(root / "absent", root / "out")
+            (root / "empty").mkdir()
+            with self.assertRaisesRegex(spec_tools.SpecError, "no contract .kt files"):
+                generate._copy_kotlin_generated(root / "empty", root / "out")
+
     def test_generator_configs_exclude_docs_and_tests(self) -> None:
         for path in (
             generate.PYTHON_CONFIG,
             generate.TYPESCRIPT_CONFIG,
             generate.DART_CONFIG,
+            generate.KOTLIN_CONFIG,
             generate.SWIFT_CONFIG,
         ):
             config = json.loads(path.read_text(encoding="utf-8"))

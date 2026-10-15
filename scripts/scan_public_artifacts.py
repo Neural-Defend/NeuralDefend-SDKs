@@ -30,6 +30,8 @@ SKIPPED_DIRECTORIES = {
     ".build",
     ".dart_tool",
     ".git",
+    ".gradle",
+    ".kotlin",
     ".mypy_cache",
     ".pytest_cache",
     ".ruff_cache",
@@ -47,17 +49,25 @@ TEXT_SUFFIXES = {
     "",
     ".cjs",
     ".cts",
+    ".api",
     ".dart",
+    ".gradle",
     ".html",
+    ".java",
     ".js",
     ".json",
+    ".kt",
+    ".kts",
     ".md",
     ".mjs",
+    ".pro",
+    ".properties",
     ".py",
     ".swift",
     ".toml",
     ".ts",
     ".txt",
+    ".xml",
     ".yaml",
     ".yml",
 }
@@ -71,6 +81,12 @@ FORBIDDEN_TERMS = (
     ".pth",
     "/internal/",
     "neuroverify_db_s3_mcc",
+)
+# Third-party public package paths that legitimately contain "/internal/": Kotlin's
+# stdlib marker class in ABI dumps and Gradle's upstream template URL in gradlew.
+THIRD_PARTY_INTERNAL_PATHS = (
+    "kotlin/jvm/internal/",
+    "org/gradle/api/internal/",
 )
 SECRET_PATTERNS = {
     "AWS access key": re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
@@ -139,6 +155,8 @@ def scan(paths: Iterable[Path]) -> list[str]:
         except UnicodeDecodeError:
             continue
         lowered = text.casefold()
+        for path in THIRD_PARTY_INTERNAL_PATHS:
+            lowered = lowered.replace(path, "")
         for term in FORBIDDEN_TERMS:
             if term.casefold() in lowered:
                 findings.append(f"{name}: forbidden internal term {term!r}")

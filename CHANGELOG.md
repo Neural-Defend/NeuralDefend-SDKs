@@ -8,6 +8,7 @@ lines are independent and an SDK version is not the API version:
 - `packages/mcp/CHANGELOG.md` — tagged `mcp-v*`
 - `packages/go/CHANGELOG.md` — tagged `packages/go/v*`
 - `packages/dart/CHANGELOG.md` — tagged `dart-v*`
+- `packages/kotlin/CHANGELOG.md` — tagged `kotlin-v*`
 - `packages/swift/CHANGELOG.md` — tagged with plain `X.Y.Z` versions for Swift Package Manager
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning follows
@@ -39,6 +40,17 @@ surface.
 
 ### Added
 
+- Public Kotlin and Android SDK (`packages/kotlin`, package `com.neuraldefend.kotlin`) v1.0.0, published to Maven
+  Central as `com.neuraldefend:neuraldefend-kotlin` (JVM, Java 8+) and
+  `com.neuraldefend:neuraldefend-android` (API 21+), with coroutine and Java call APIs,
+  streaming uploads from files and content `Uri`s, normalized results, bounded retries,
+  cancellation, and a Jetpack Compose example app (ADR-0011).
+- OpenAPI Generator Kotlin output integrated into `scripts/generate.py` and
+  `scripts/check_generated.py`; Kotlin version alignment in `scripts/validate_versions.py`;
+  Kotlin, Gradle, and Android sources covered by `scripts/scan_public_artifacts.py`.
+- `release-kotlin.yml` Maven Central workflow with `scripts/publish_maven_central.py`,
+  Kotlin JVM (Java 8 to 25), Android, and emulator jobs in `test.yml`, Kotlin staging smoke
+  tests, and Dependabot updates for Gradle.
 - Public Dart and Flutter SDK (`packages/dart`, pub.dev package `neuraldefend`) v1.0.0 for
   Android, iOS, desktop, web, and the Dart VM, with streaming uploads, `XFile`-compatible
   media input, normalized results, bounded retries, cancellation, and a Flutter example

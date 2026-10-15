@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate private Python, TypeScript, Go, Dart, Java, and Swift cores with pinned Docker tooling."""
+"""Generate private Python, TypeScript, Go, Dart, Java, Kotlin, and Swift cores with pinned Docker tooling."""
 
 from __future__ import annotations
 
@@ -51,6 +51,8 @@ _GO_GENERATED_SKIP = frozenset(
 )
 DART_CONFIG = REPO_ROOT / "generator" / "dart.json"
 DART_DESTINATION = REPO_ROOT / "packages" / "dart" / "generated" / "core"
+KOTLIN_CONFIG = REPO_ROOT / "generator" / "kotlin.json"
+KOTLIN_DESTINATION = REPO_ROOT / "packages" / "kotlin" / "generated" / "core"
 SWIFT_CONFIG = REPO_ROOT / "generator" / "swift.json"
 SWIFT_DESTINATION = REPO_ROOT / "packages" / "swift" / "generated" / "core"
 DIGEST_RE = re.compile(r"^sha256:[0-9a-f]{64}$")
@@ -329,6 +331,24 @@ def _copy_dart_generated(library_root: Path, destination: Path) -> None:
         raise SpecError("Dart generator produced no contract .dart files")
 
 
+def _copy_kotlin_generated(source_root: Path, destination: Path) -> None:
+    """Copy only the generated Kotlin sources; the Gradle project and wrapper are not kept."""
+
+    if not source_root.is_dir():
+        raise SpecError(f"Kotlin generator output is missing: {source_root}")
+    if destination.exists():
+        shutil.rmtree(destination)
+    destination.mkdir(parents=True)
+    copied = 0
+    for path in sorted(source_root.rglob("*.kt")):
+        target = destination / path.relative_to(source_root)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(path, target)
+        copied += 1
+    if copied == 0:
+        raise SpecError("Kotlin generator produced no contract .kt files")
+
+
 def _copy_swift_generated(sources_root: Path, destination: Path) -> None:
     """Copy only the generated Swift sources; the package manifest, podspec, and docs are not kept."""
 
@@ -354,6 +374,7 @@ def _assert_generated_contract(
     dart_source: Path,
     swift_source: Path,
     java_source: Path,
+    kotlin_source: Path,
 ) -> None:
     python_text = _combined_text(python_source)
     typescript_text = _combined_text(typescript_source)
@@ -361,6 +382,7 @@ def _assert_generated_contract(
     dart_text = _combined_text(dart_source)
     swift_text = _combined_text(swift_source)
     java_text = _combined_text(java_source)
+    kotlin_text = _combined_text(kotlin_source)
     checks = {
         "Python detect_image operation": "detect_image" in python_text,
         "Python detect_video operation": "detect_video" in python_text,
@@ -376,18 +398,22 @@ def _assert_generated_contract(
         "Swift sample_rate parameter": '"sample_rate"' in swift_text,
         "Java detectImage operation": "detectImage" in java_text,
         "Java detectVideo operation": "detectVideo" in java_text,
+        "Kotlin detectImage operation": "fun detectImage(" in kotlin_text,
+        "Kotlin detectVideo operation": "fun detectVideo(" in kotlin_text,
         "Python x-api-key authentication": "x-api-key" in python_text,
         "TypeScript x-api-key authentication": "x-api-key" in typescript_text,
         "Go x-api-key authentication": "x-api-key" in go_text,
         "Dart API-key authentication support": "ApiKeyAuth" in dart_text,
         "Swift x-api-key authentication": "x-api-key (HEADER)" in swift_text,
         "Java x-api-key authentication": "x-api-key" in java_text,
+        "Kotlin x-api-key authentication": 'headers["x-api-key"]' in kotlin_text,
         "Python multipart file field": "file" in python_text,
         "TypeScript multipart file field": "file" in typescript_text,
         "Go multipart file field": "FormFile" in go_text or "formFile" in go_text,
         "Dart multipart file field": "MultipartFile" in dart_text,
         "Swift multipart file field": '"file":' in swift_text,
         "Java multipart file field": '"file"' in java_text,
+        "Kotlin multipart file field": '"file" to PartConfig(' in kotlin_text,
     }
     missing = [name for name, present in checks.items() if not present]
     if missing:
@@ -399,7 +425,10 @@ def _assert_generated_contract(
         "UnifiedVideoAuthenticityScore",
         "ApiError",
     ):
-        if any(model not in text for text in (python_text, typescript_text, dart_text, swift_text)):
+        if any(
+            model not in text
+            for text in (python_text, typescript_text, dart_text, swift_text, kotlin_text)
+        ):
             raise SpecError(f"generated model is missing: {model}")
         if model not in java_text:
             raise SpecError(f"generated Java model is missing: {model}")
@@ -427,6 +456,7 @@ def generate_snapshot(snapshot: Path) -> None:
         dart_build = build / "dart"
         swift_build = build / "swift"
         java_build = build / "java"
+        kotlin_build = build / "kotlin"
         _generate(
             image=image,
             generator="python",
@@ -457,6 +487,12 @@ def generate_snapshot(snapshot: Path) -> None:
             config_path="generator/dart.json",
             output=dart_build,
         )
+        _generate(
+            image=image,
+            generator="kotlin",
+            config_path="generator/kotlin.json",
+            output=kotlin_build,
+        )
         _docker_generate(
             image=image,
             generator="swift5",
@@ -468,6 +504,7 @@ def generate_snapshot(snapshot: Path) -> None:
         go_source = go_build
         dart_source = dart_build / "lib"
         swift_source = swift_build / "Sources" / "NeuralDefendCore"
+        kotlin_source = kotlin_build / "src" / "main" / "kotlin"
         java_source = (
             java_build
             / "src"
@@ -490,6 +527,8 @@ def generate_snapshot(snapshot: Path) -> None:
             raise SpecError(f"Swift generator output is missing: {swift_source}")
         if not java_source.is_dir():
             raise SpecError(f"Java generator output is missing: {java_source}")
+        if not kotlin_source.is_dir():
+            raise SpecError(f"Kotlin generator output is missing: {kotlin_source}")
         _assert_generated_contract(
             python_source,
             typescript_source,
@@ -497,6 +536,7 @@ def generate_snapshot(snapshot: Path) -> None:
             dart_source,
             swift_source,
             java_source,
+            kotlin_source,
         )
         _postprocess_python_generated(python_source)
         leaked_generated_artifacts = [
@@ -522,6 +562,7 @@ def generate_snapshot(snapshot: Path) -> None:
         _copy_swift_generated(swift_source, snapshot / "swift")
         java_snapshot = snapshot / "java"
         _copy_java_generated(java_build, java_snapshot)
+        _copy_kotlin_generated(kotlin_source, snapshot / "kotlin")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -550,7 +591,8 @@ def main(argv: list[str] | None = None) -> int:
             replace_directory(snapshot / "dart", DART_DESTINATION)
             replace_directory(snapshot / "swift", SWIFT_DESTINATION)
             replace_directory(snapshot / "java", JAVA_DESTINATION)
-        print("generated Python, TypeScript, Go, Dart, Swift, and Java private cores")
+            replace_directory(snapshot / "kotlin", KOTLIN_DESTINATION)
+        print("generated Python, TypeScript, Go, Dart, Swift, Java, and Kotlin private cores")
         return 0
     except (OSError, SpecError) as exc:
         print(f"generation failed: {exc}", file=sys.stderr)

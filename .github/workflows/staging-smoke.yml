@@ -112,6 +112,21 @@ jobs:
         env:
           NEURALDEFEND_STAGING_API_KEY: ${{ secrets.NEURALDEFEND_STAGING_API_KEY }}
         run: dart test --tags staging
+      - name: Set up Java
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+          cache-dependency-path: |
+            packages/kotlin/**/*.gradle.kts
+            packages/kotlin/gradle/libs.versions.toml
+            packages/kotlin/gradle/wrapper/gradle-wrapper.properties
+      - name: Run Kotlin smoke tests
+        working-directory: packages/kotlin
+        env:
+          NEURALDEFEND_STAGING_API_KEY: ${{ secrets.NEURALDEFEND_STAGING_API_KEY }}
+        run: ./gradlew --console=plain -Pneuraldefend.jvmOnly=true :neuraldefend:stagingTest
       - name: Set up Swift
         run: python3 scripts/setup_swift_toolchain.py latest
       - name: Run Swift smoke tests
