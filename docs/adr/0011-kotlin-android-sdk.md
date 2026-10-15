@@ -1,4 +1,4 @@
-# ADR 0009: Kotlin, Java, and Android SDK on OkHttp with a private generated contract
+# ADR 0011: Kotlin, Java, and Android SDK on OkHttp with a private generated contract
 
 - Status: Accepted
 - Date: 2026-10-14

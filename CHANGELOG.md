@@ -44,7 +44,7 @@ surface.
   Central as `com.neuraldefend:neuraldefend` (JVM, Java 8+) and
   `com.neuraldefend:neuraldefend-android` (API 21+), with coroutine and Java call APIs,
   streaming uploads from files and content `Uri`s, normalized results, bounded retries,
-  cancellation, and a Jetpack Compose example app (ADR-0009).
+  cancellation, and a Jetpack Compose example app (ADR-0011).
 - OpenAPI Generator Kotlin output integrated into `scripts/generate.py` and
   `scripts/check_generated.py`; Kotlin version alignment in `scripts/validate_versions.py`;
   Kotlin, Gradle, and Android sources covered by `scripts/scan_public_artifacts.py`.
