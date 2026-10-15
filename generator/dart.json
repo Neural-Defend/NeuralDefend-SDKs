@@ -1,0 +1,11 @@
+{
+  "globalProperties": {
+    "apiDocs": false,
+    "apiTests": false,
+    "modelDocs": false,
+    "modelTests": false
+  },
+  "pubName": "neuraldefend_core",
+  "pubLibrary": "neuraldefend_core",
+  "hideGenerationTimestamp": true
+}

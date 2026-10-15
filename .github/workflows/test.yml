@@ -141,6 +141,106 @@ jobs:
         working-directory: packages/go
         run: go test ./...
 
+  dart:
+    name: Dart ${{ matrix.sdk }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk: ["3.5.4", stable]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Dart
+        run: python scripts/setup_dart_toolchain.py --dart "${{ matrix.sdk }}"
+      - name: Install dependencies
+        working-directory: packages/dart
+        run: dart pub get
+      - name: Check formatting
+        if: matrix.sdk == 'stable'
+        working-directory: packages/dart
+        run: dart format --output=none --set-exit-if-changed lib test tool example
+      - name: Analyze
+        working-directory: packages/dart
+        run: dart analyze --fatal-infos
+      - name: Test on the Dart VM
+        working-directory: packages/dart
+        run: dart test
+      - name: Test in Chrome (dart2js and dart2wasm)
+        if: matrix.sdk == 'stable'
+        working-directory: packages/dart
+        run: |
+          dart test -p chrome
+          dart test -p chrome -c dart2wasm
+      - name: Compile for web
+        working-directory: packages/dart
+        run: |
+          dart compile js -o "$RUNNER_TEMP/web_check.js" tool/web_compile_check.dart
+          dart compile wasm -o "$RUNNER_TEMP/web_check.wasm" tool/web_compile_check.dart
+      - name: Validate package
+        working-directory: packages/dart
+        run: dart pub publish --dry-run
+
+  flutter-example:
+    name: Flutter example ${{ matrix.flutter }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        flutter: ["3.24.x", stable]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Flutter
+        run: python scripts/setup_dart_toolchain.py --flutter "${{ matrix.flutter }}"
+      - name: Prepare Flutter
+        run: |
+          flutter config --no-analytics
+          flutter --version
+      - name: Install dependencies
+        working-directory: packages/dart/example/flutter_app
+        run: flutter pub get
+      - name: Analyze
+        working-directory: packages/dart/example/flutter_app
+        run: flutter analyze
+      - name: Widget tests
+        working-directory: packages/dart/example/flutter_app
+        run: flutter test
+      - name: Build for web
+        working-directory: packages/dart/example/flutter_app
+        run: |
+          flutter create --platforms=web --project-name neuraldefend_flutter_example .
+          flutter build web
+
+  dart-platforms:
+    name: Dart stable ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Dart
+        shell: bash
+        run: python scripts/setup_dart_toolchain.py --dart stable
+      - name: Install and test Dart SDK
+        working-directory: packages/dart
+        shell: bash
+        run: |
+          dart pub get
+          dart test
+
   python-platforms:
     name: Python 3.14 ${{ matrix.os }}
     runs-on: ${{ matrix.os }}

@@ -40,6 +40,19 @@ updates:
         patterns:
           - "*"
 
+  - package-ecosystem: pub
+    directory: /packages/dart
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:35"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    groups:
+      dart-dependencies:
+        patterns:
+          - "*"
+
   - package-ecosystem: github-actions
     directory: /
     schedule:
