@@ -1,11 +1,11 @@
 # Release runbook
 
-The Python, TypeScript, Go, Dart, and Swift SDKs release independently. The MCP package depends on the
-published Python SDK and must be released after a compatible Python version is available
-on PyPI. Publishing requires an explicit protected-environment approval for PyPI, npm, and
-pub.dev; the Go SDK publishes through GitHub tags and the public Go module proxy, and the
-Swift SDK publishes through plain `X.Y.Z` Git tags that Swift Package Manager resolves directly. Building this
-repository does not publish anything.
+The Python, TypeScript, Go, Dart, Java, and Swift SDKs release independently. The MCP package depends
+on the published Python SDK and must be released after a compatible Python version is available
+on PyPI. Publishing requires an explicit protected-environment approval for PyPI, npm, pub.dev,
+and Maven Central; the Go SDK publishes through GitHub tags and the public Go module proxy, and the
+Swift SDK publishes through plain `X.Y.Z` Git tags that Swift Package Manager resolves directly.
+Building this repository does not publish anything.
 
 ## One-time setup
 
@@ -27,7 +27,8 @@ repository does not publish anything.
    package to the verified publisher, then under **Admin → Automated publishing** enable
    GitHub Actions for repository `Neural-Defend/NeuralDefend-SDKs`, tag pattern
    `dart-v{{version}}`, and required environment `pub-dev`.
-4. Configure GitHub environments `pypi`, `npm`, `mcp-pypi`, `pub-dev`, `swift-release`, and
+4. Configure GitHub environments `pypi`, `npm`, `mcp-pypi`, `pub-dev`, `maven-central`,
+   `swift-release`, and
    `staging` with required company reviewers, self-review prevention, and no administrator
    bypass.
 5. Make the repository public only after the full-history security review. npm provenance
@@ -35,19 +36,27 @@ repository does not publish anything.
    private.
 6. Configure PyPI and npm trusted publishing for the corresponding workflows. Do not
    retain registry publication tokens.
-7. Set repository variables `SPEC_SOURCE_REPOSITORY` and `SPEC_SOURCE_REF` (the production
+7. Register the `com.neuraldefend` namespace on the [Sonatype Central Portal](https://central.sonatype.com/).
+   Create a Central Portal user token and add repository secrets:
+   - `MAVEN_CENTRAL_USERNAME` — Central Portal user token username
+   - `MAVEN_CENTRAL_PASSWORD` — Central Portal user token password
+   - `MAVEN_CENTRAL_SIGNING_KEY` — ASCII-armored GPG private key (`gpg --export-secret-keys --armor <key id>`)
+   - `MAVEN_CENTRAL_SIGNING_PASSWORD` — GPG key passphrase (omit or leave empty if none)
+   Protect the `maven-central` environment with required reviewers. The Java release workflow
+   publishes signed artifacts with automatic Central Portal release approval.
+8. Set repository variables `SPEC_SOURCE_REPOSITORY` and `SPEC_SOURCE_REF` (the production
    API branch), plus secret `SDK_SPEC_SYNC_TOKEN`, so the scheduled workflow can read the
    private API repository. The scheduled `spec-sync` workflow fails loudly when any of
    these are missing; it does not skip sync silently.
-8. Add `NEURALDEFEND_STAGING_API_KEY` to the protected `staging` environment.
-9. Protect `main` with pull-request reviews and required checks. Restrict creation,
-   update, and deletion of `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`, `dart-v*`, and
-   Swift `[0-9]*.[0-9]*.[0-9]*` tags to release managers with a tag ruleset. For Swift this
-   ruleset is the real release control: a pushed tag is installable immediately, while the
-   `swift-release` environment only gates the GitHub Release page.
+9. Add `NEURALDEFEND_STAGING_API_KEY` to the protected `staging` environment.
+10. Protect `main` with pull-request reviews and required checks. Restrict creation,
+   update, and deletion of `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`, `dart-v*`,
+   `java-v*`, and Swift `[0-9]*.[0-9]*.[0-9]*` tags to release managers with a tag ruleset.
+   For Swift this ruleset is the real release control: a pushed tag is installable immediately,
+   while the `swift-release` environment only gates the GitHub Release page.
    Deleting or moving a Swift tag breaks every app that resolved it, so the ruleset must
    block both.
-10. Enable secret scanning, push protection, Dependabot security updates, and required CI
+11. Enable secret scanning, push protection, Dependabot security updates, and required CI
    checks.
 11. After the first Swift tag exists, submit `https://github.com/Neural-Defend/NeuralDefend-SDKs`
    at <https://swiftpackageindex.com/add-a-package>. The index reads `.spi.yml` for the
@@ -107,9 +116,11 @@ test -n "${SPEC_SOURCE_REF:-}" && echo "SPEC_SOURCE_REF is set" \
    - `mcp-vX.Y.Z`
    - `packages/go/vX.Y.Z`
    - `dart-vX.Y.Z`
+   - `java-vX.Y.Z`
    - `X.Y.Z` for Swift, matching `NeuroVerifyClient.sdkVersion` and the latest
      `packages/swift/CHANGELOG.md` entry
-7. Inspect the wheel/sdist, npm tarball, or `dart pub publish --dry-run` file list before approving the protected release job.
+7. Inspect the wheel/sdist, npm tarball, `dart pub publish --dry-run` file list, or Java
+   jars before approving the protected release job.
 8. Run each release workflow manually in dry-run mode and retain its artifacts for review.
 
 The workflows use OIDC and provenance attestations. A release tag starts publishing only
@@ -125,11 +136,14 @@ time and verify the registry before proceeding:
 3. `ts-vX.Y.Z`
 4. `packages/go/vX.Y.Z` after the commit is on the default branch
 5. `dart-vX.Y.Z` after the commit is on the default branch
-6. `X.Y.Z` (Swift) after the commit is on the default branch
+6. `java-vX.Y.Z` after the commit is on the default branch
+7. `X.Y.Z` (Swift) after the commit is on the default branch
 
 The Go tag uses the module path prefix so `go get` resolves the version from the public
-module proxy. No registry approval step is required; verify `go get` in a clean module
-after the tag is pushed.
+module proxy. The Java tag builds and tests the SDK, then publishes signed artifacts to
+Maven Central after approval in the protected `maven-central` environment, and creates a
+GitHub Release. No registry approval step is required for Go; verify `go get` in a clean
+module after the tag is pushed.
 
 The Dart tag starts `release-dart.yml`, which tests the package, checks the tag against
 `pubspec.yaml`, and publishes to pub.dev with a GitHub OIDC token after the `pub-dev`
@@ -157,6 +171,8 @@ an explicit non-`latest` dist-tag.
 4. Install the exact Go module version with `go get` in a clean module.
 5. Add the exact `neuraldefend` version to clean Dart and Flutter projects and confirm the
    pub.dev score page shows all expected platforms.
+6. Resolve `com.neuraldefend:neuraldefend-sdk:X.Y.Z` from Maven Central in a clean Gradle
+   or Maven project.
 6. Add the exact Swift version to a clean Xcode app with
    `.package(url: "https://github.com/Neural-Defend/NeuralDefend-SDKs", exact: "X.Y.Z")`,
    build for an iOS Simulator, and confirm Swift Package Index lists the version.

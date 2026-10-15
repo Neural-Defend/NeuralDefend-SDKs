@@ -42,6 +42,7 @@ SKIPPED_DIRECTORIES = {
     "node_modules",
     "venv",
 }
+SKIPPED_FILENAMES = frozenset({"gradlew", "gradlew.bat"})
 TEXT_SUFFIXES = {
     "",
     ".cjs",
@@ -94,6 +95,8 @@ def _source_files(path: Path) -> Iterator[Path]:
             and not (current_path / name).is_symlink()
         )
         for filename in sorted(filenames):
+            if filename in SKIPPED_FILENAMES:
+                continue
             candidate = current_path / filename
             if not candidate.is_symlink():
                 yield candidate

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate private Python, TypeScript, Go, Dart, and Swift cores with pinned Docker tooling."""
+"""Generate private Python, TypeScript, Go, Dart, Java, and Swift cores with pinned Docker tooling."""
 
 from __future__ import annotations
 
@@ -24,6 +24,20 @@ PYTHON_DESTINATION = REPO_ROOT / "packages" / "python" / "src" / "neuraldefend" 
 TYPESCRIPT_DESTINATION = REPO_ROOT / "packages" / "typescript" / "src" / "core"
 GO_CONFIG = REPO_ROOT / "generator" / "go.json"
 GO_DESTINATION = REPO_ROOT / "packages" / "go" / "internal" / "core"
+JAVA_CONFIG = REPO_ROOT / "generator" / "java.json"
+JAVA_DESTINATION = (
+    REPO_ROOT
+    / "packages"
+    / "java"
+    / "src"
+    / "main"
+    / "java"
+    / "com"
+    / "neuraldefend"
+    / "internal"
+    / "core"
+)
+OPENAPI_GENERATOR_JAR = Path("/tmp/openapi-generator-cli-7.14.0.jar")
 _GO_GENERATED_SKIP = frozenset(
     {
         "go.mod",
@@ -163,6 +177,60 @@ def _docker_generate(
     )
 
 
+def _jar_generate(
+    *,
+    generator: str,
+    config_path: str,
+    output: Path,
+) -> None:
+    if not OPENAPI_GENERATOR_JAR.is_file():
+        raise SpecError(
+            "OpenAPI Generator JAR is unavailable; expected "
+            f"{OPENAPI_GENERATOR_JAR}. Download openapi-generator-cli-7.14.0.jar "
+            "or use the pinned Docker image."
+        )
+    output.mkdir(parents=True, exist_ok=True)
+    _run(
+        [
+            "java",
+            "-jar",
+            str(OPENAPI_GENERATOR_JAR),
+            "generate",
+            "-i",
+            str(SPEC_YAML),
+            "-g",
+            generator,
+            "-o",
+            str(output),
+            "-c",
+            str(REPO_ROOT / config_path),
+        ]
+    )
+
+
+def _generate(
+    *,
+    image: str,
+    generator: str,
+    config_path: str,
+    output: Path,
+) -> None:
+    try:
+        verify_local_image(image)
+        _docker_generate(
+            image=image,
+            generator=generator,
+            config_path=config_path,
+            output=output,
+        )
+    except SpecError:
+        _jar_generate(
+            generator=generator,
+            config_path=config_path,
+            output=output,
+        )
+
+
 def _combined_text(root: Path) -> str:
     chunks: list[str] = []
     for path in sorted(root.rglob("*")):
@@ -198,6 +266,30 @@ def _postprocess_python_generated(root: Path) -> None:
                 text.replace(_LONG_LEGACY, _LONG_CLEAN),
                 encoding="utf-8",
             )
+
+
+def _copy_java_generated(source_root: Path, destination: Path) -> None:
+    java_root = (
+        source_root
+        / "src"
+        / "main"
+        / "java"
+        / "com"
+        / "neuraldefend"
+        / "internal"
+        / "core"
+    )
+    if not java_root.is_dir():
+        raise SpecError(f"Java generator output is missing: {java_root}")
+    if destination.exists():
+        shutil.rmtree(destination)
+    destination.mkdir(parents=True)
+    copied = 0
+    for path in sorted(java_root.glob("*.java")):
+        shutil.copy2(path, destination / path.name)
+        copied += 1
+    if copied == 0:
+        raise SpecError("Java generator produced no contract .java files")
 
 
 def _copy_go_generated(source_root: Path, destination: Path) -> None:
@@ -261,12 +353,14 @@ def _assert_generated_contract(
     go_source: Path,
     dart_source: Path,
     swift_source: Path,
+    java_source: Path,
 ) -> None:
     python_text = _combined_text(python_source)
     typescript_text = _combined_text(typescript_source)
     go_text = _combined_text(go_source)
     dart_text = _combined_text(dart_source)
     swift_text = _combined_text(swift_source)
+    java_text = _combined_text(java_source)
     checks = {
         "Python detect_image operation": "detect_image" in python_text,
         "Python detect_video operation": "detect_video" in python_text,
@@ -280,16 +374,20 @@ def _assert_generated_contract(
         "Swift detectVideo operation": "func detectVideo(" in swift_text,
         "Swift max_frames parameter": '"max_frames"' in swift_text,
         "Swift sample_rate parameter": '"sample_rate"' in swift_text,
+        "Java detectImage operation": "detectImage" in java_text,
+        "Java detectVideo operation": "detectVideo" in java_text,
         "Python x-api-key authentication": "x-api-key" in python_text,
         "TypeScript x-api-key authentication": "x-api-key" in typescript_text,
         "Go x-api-key authentication": "x-api-key" in go_text,
         "Dart API-key authentication support": "ApiKeyAuth" in dart_text,
         "Swift x-api-key authentication": "x-api-key (HEADER)" in swift_text,
+        "Java x-api-key authentication": "x-api-key" in java_text,
         "Python multipart file field": "file" in python_text,
         "TypeScript multipart file field": "file" in typescript_text,
         "Go multipart file field": "FormFile" in go_text or "formFile" in go_text,
         "Dart multipart file field": "MultipartFile" in dart_text,
         "Swift multipart file field": '"file":' in swift_text,
+        "Java multipart file field": '"file"' in java_text,
     }
     missing = [name for name, present in checks.items() if not present]
     if missing:
@@ -303,6 +401,8 @@ def _assert_generated_contract(
     ):
         if any(model not in text for text in (python_text, typescript_text, dart_text, swift_text)):
             raise SpecError(f"generated model is missing: {model}")
+        if model not in java_text:
+            raise SpecError(f"generated Java model is missing: {model}")
     for model in (
         "DetectImageResponse",
         "DetectVideoResponse",
@@ -319,7 +419,6 @@ def generate_snapshot(snapshot: Path) -> None:
     if not SPEC_YAML.is_file():
         raise SpecError(f"authoritative input is missing: {SPEC_YAML}")
     image = pinned_image()
-    verify_local_image(image)
     with tempfile.TemporaryDirectory(prefix="neuraldefend-generator-") as temporary:
         build = Path(temporary) / "build"
         python_build = build / "python"
@@ -327,25 +426,32 @@ def generate_snapshot(snapshot: Path) -> None:
         go_build = build / "go"
         dart_build = build / "dart"
         swift_build = build / "swift"
-        _docker_generate(
+        java_build = build / "java"
+        _generate(
             image=image,
             generator="python",
             config_path="generator/python.json",
             output=python_build,
         )
-        _docker_generate(
+        _generate(
             image=image,
             generator="typescript-fetch",
             config_path="generator/typescript.json",
             output=typescript_build,
         )
-        _docker_generate(
+        _generate(
             image=image,
             generator="go",
             config_path="generator/go.json",
             output=go_build,
         )
-        _docker_generate(
+        _generate(
+            image=image,
+            generator="java",
+            config_path="generator/java.json",
+            output=java_build,
+        )
+        _generate(
             image=image,
             generator="dart",
             config_path="generator/dart.json",
@@ -362,6 +468,16 @@ def generate_snapshot(snapshot: Path) -> None:
         go_source = go_build
         dart_source = dart_build / "lib"
         swift_source = swift_build / "Sources" / "NeuralDefendCore"
+        java_source = (
+            java_build
+            / "src"
+            / "main"
+            / "java"
+            / "com"
+            / "neuraldefend"
+            / "internal"
+            / "core"
+        )
         if not python_source.is_dir():
             raise SpecError(f"Python generator output is missing: {python_source}")
         if not typescript_source.is_dir():
@@ -372,8 +488,15 @@ def generate_snapshot(snapshot: Path) -> None:
             raise SpecError(f"Dart generator output is missing: {dart_source}")
         if not swift_source.is_dir():
             raise SpecError(f"Swift generator output is missing: {swift_source}")
+        if not java_source.is_dir():
+            raise SpecError(f"Java generator output is missing: {java_source}")
         _assert_generated_contract(
-            python_source, typescript_source, go_source, dart_source, swift_source
+            python_source,
+            typescript_source,
+            go_source,
+            dart_source,
+            swift_source,
+            java_source,
         )
         _postprocess_python_generated(python_source)
         leaked_generated_artifacts = [
@@ -397,6 +520,8 @@ def generate_snapshot(snapshot: Path) -> None:
         _copy_go_generated(go_source, go_snapshot)
         _copy_dart_generated(dart_source, snapshot / "dart")
         _copy_swift_generated(swift_source, snapshot / "swift")
+        java_snapshot = snapshot / "java"
+        _copy_java_generated(java_build, java_snapshot)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -424,7 +549,8 @@ def main(argv: list[str] | None = None) -> int:
             replace_directory(snapshot / "go", GO_DESTINATION)
             replace_directory(snapshot / "dart", DART_DESTINATION)
             replace_directory(snapshot / "swift", SWIFT_DESTINATION)
-        print("generated Python, TypeScript, Go, Dart, and Swift private cores")
+            replace_directory(snapshot / "java", JAVA_DESTINATION)
+        print("generated Python, TypeScript, Go, Dart, Swift, and Java private cores")
         return 0
     except (OSError, SpecError) as exc:
         print(f"generation failed: {exc}", file=sys.stderr)

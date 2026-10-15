@@ -11,6 +11,7 @@ from pathlib import Path
 from generate import (
     DART_DESTINATION,
     GO_DESTINATION,
+    JAVA_DESTINATION,
     PYTHON_DESTINATION,
     SWIFT_DESTINATION,
     TYPESCRIPT_DESTINATION,
@@ -77,6 +78,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=SWIFT_DESTINATION,
         help="committed Swift generated-source directory",
     )
+    parser.add_argument(
+        "--java-dir",
+        type=Path,
+        default=JAVA_DESTINATION,
+        help="committed Java generated-source directory",
+    )
     return parser
 
 
@@ -111,10 +118,22 @@ def main(argv: list[str] | None = None) -> int:
                 snapshot / "swift",
                 args.swift_dir.resolve(),
             )
+            java_current = _compare(
+                "java",
+                snapshot / "java",
+                args.java_dir.resolve(),
+            )
     except (OSError, SpecError) as exc:
         print(f"generated-source check failed: {exc}", file=sys.stderr)
         return 1
-    current = (python_current, typescript_current, go_current, dart_current, swift_current)
+    current = (
+        python_current,
+        typescript_current,
+        go_current,
+        dart_current,
+        java_current,
+        swift_current,
+    )
     return 0 if all(current) else 1
 
 
