@@ -112,8 +112,8 @@ jobs:
       - name: Build signed bundle
         working-directory: packages/kotlin
         env:
-          SIGNING_KEY: ${{ secrets.MAVEN_CENTRAL_SIGNING_KEY }}
-          SIGNING_PASSWORD: ${{ secrets.MAVEN_CENTRAL_SIGNING_PASSWORD }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
         run: ./gradlew --console=plain --no-build-cache -Pneuraldefend.requireSigning=true centralBundle
       - name: Verify and scan the signed bundle
         shell: bash
