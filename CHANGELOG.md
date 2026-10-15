@@ -9,12 +9,19 @@ lines are independent and an SDK version is not the API version:
 - `packages/go/CHANGELOG.md` — tagged `packages/go/v*`
 - `packages/dart/CHANGELOG.md` — tagged `dart-v*`
 - `packages/kotlin/CHANGELOG.md` — tagged `kotlin-v*`
+- `packages/swift/CHANGELOG.md` — tagged with plain `X.Y.Z` versions for Swift Package Manager
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versioning follows
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html), judged from the facade's public
 surface.
 
 ## [Unreleased]
+
+### Added
+
+- Swift SDK (`NeuralDefend` library, root `Package.swift`) for iOS, macOS, Mac Catalyst,
+  visionOS, and Linux, with a SwiftUI example, a private `swift5` generated contract core,
+  CI on Linux, macOS, and the iOS Simulator, and `release-swift.yml` (ADR-0010).
 
 ### Changed
 

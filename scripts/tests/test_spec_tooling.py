@@ -124,6 +124,10 @@ class VersionValidationTests(unittest.TestCase):
         "packages/go/version.go",
         "packages/dart/pubspec.yaml",
         "packages/dart/lib/src/version.dart",
+        "packages/swift/Sources/NeuralDefend/Version.swift",
+        "packages/swift/CHANGELOG.md",
+        "packages/java/build.gradle.kts",
+        "packages/java/src/main/java/com/neuraldefend/SdkVersion.java",
         "packages/kotlin/gradle.properties",
         "packages/kotlin/neuraldefend/src/main/kotlin/com/neuraldefend/Version.kt",
     )
@@ -371,6 +375,7 @@ class GeneratorTests(unittest.TestCase):
             generate.TYPESCRIPT_CONFIG,
             generate.DART_CONFIG,
             generate.KOTLIN_CONFIG,
+            generate.SWIFT_CONFIG,
         ):
             config = json.loads(path.read_text(encoding="utf-8"))
             self.assertTrue(config["hideGenerationTimestamp"])
@@ -383,6 +388,32 @@ class GeneratorTests(unittest.TestCase):
                     "modelTests": False,
                 },
             )
+
+    def test_swift_copy_keeps_only_swift_sources(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            sources = Path(temporary) / "Sources" / "NeuralDefendCore"
+            (sources / "Models").mkdir(parents=True)
+            (sources / "Models" / "ApiError.swift").write_text("struct ApiError {}\n")
+            (sources / "README.md").write_text("docs\n")
+            destination = Path(temporary) / "core"
+            destination.mkdir()
+            (destination / "Stale.swift").write_text("stale\n")
+
+            generate._copy_swift_generated(sources, destination)
+
+            copied = sorted(
+                path.relative_to(destination).as_posix()
+                for path in destination.rglob("*")
+                if path.is_file()
+            )
+            self.assertEqual(copied, ["Models/ApiError.swift"])
+
+    def test_swift_copy_rejects_empty_output(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            sources = Path(temporary) / "Sources"
+            sources.mkdir()
+            with self.assertRaises(generate.SpecError):
+                generate._copy_swift_generated(sources, Path(temporary) / "core")
 
     def test_python_postprocess_replaces_generator_todos(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:

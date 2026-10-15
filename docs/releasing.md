@@ -1,10 +1,11 @@
 # Release runbook
 
-The Python, TypeScript, Go, Dart, and Kotlin SDKs release independently. The MCP package depends on the
-published Python SDK and must be released after a compatible Python version is available
-on PyPI. Publishing requires an explicit protected-environment approval for PyPI, npm,
-pub.dev, and Maven Central; the Go SDK publishes through GitHub tags and the public Go module proxy. Building this
-repository does not publish anything.
+The Python, TypeScript, Go, Dart, Java, Swift, and Kotlin SDKs release independently. The MCP
+package depends on the published Python SDK and must be released after a compatible Python
+version is available on PyPI. Publishing requires an explicit protected-environment approval for
+PyPI, npm, pub.dev, and Maven Central; the Go SDK publishes through GitHub tags and the public Go
+module proxy, and the Swift SDK publishes through plain `X.Y.Z` Git tags that Swift Package
+Manager resolves directly. Building this repository does not publish anything.
 
 ## One-time setup
 
@@ -26,8 +27,8 @@ repository does not publish anything.
    package to the verified publisher, then under **Admin → Automated publishing** enable
    GitHub Actions for repository `Neural-Defend/NeuralDefend-SDKs`, tag pattern
    `dart-v{{version}}`, and required environment `pub-dev`.
-4. Set up Maven Central for the Kotlin SDK (see [Maven Central setup](#maven-central-setup)
-   for the details of each step):
+4. Set up Maven Central for the Java and Kotlin SDKs (see
+   [Maven Central setup](#maven-central-setup) for the details of each step):
    - create a Central Portal account at <https://central.sonatype.com> under a shared
      company identity;
    - register and verify the `com.neuraldefend` namespace with the DNS TXT record the
@@ -35,11 +36,14 @@ repository does not publish anything.
    - generate a portal user token (username and password pair);
    - generate a dedicated GPG signing key and publish its public key to
      `keyserver.ubuntu.com`;
-   - create the `maven-central` GitHub environment, limited to tags matching `kotlin-v*`,
-     and store secrets `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`, `SIGNING_KEY`,
-     and `SIGNING_PASSWORD` in it.
-5. Configure GitHub environments `pypi`, `npm`, `mcp-pypi`, `pub-dev`, `maven-central`, and `staging` with required
-   company reviewers, self-review prevention, and no administrator bypass.
+   - create the `maven-central` GitHub environment, limited to tags matching `java-v*` and
+     `kotlin-v*`, and store secrets `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`,
+     `MAVEN_CENTRAL_SIGNING_KEY` (ASCII-armored private key), and
+     `MAVEN_CENTRAL_SIGNING_PASSWORD` in it. `release-java.yml` and `release-kotlin.yml` both
+     publish from this environment.
+5. Configure GitHub environments `pypi`, `npm`, `mcp-pypi`, `pub-dev`, `maven-central`,
+   `swift-release`, and `staging` with required company reviewers, self-review prevention,
+   and no administrator bypass.
 6. Make the repository public only after the full-history security review. npm provenance
    publishing requires public source; do not run the npm release while the repository is
    private.
@@ -52,9 +56,16 @@ repository does not publish anything.
 9. Add `NEURALDEFEND_STAGING_API_KEY` to the protected `staging` environment.
 10. Protect `main` with pull-request reviews and required checks. Restrict creation,
    update, and deletion of `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`, `dart-v*`,
-   and `kotlin-v*` tags to release managers.
+   `java-v*`, `kotlin-v*`, and Swift `[0-9]*.[0-9]*.[0-9]*` tags to release managers with a
+   tag ruleset. For Swift this ruleset is the real release control: a pushed tag is
+   installable immediately, while the `swift-release` environment only gates the GitHub
+   Release page. Deleting or moving a Swift tag breaks every app that resolved it, so the
+   ruleset must block both.
 11. Enable secret scanning, push protection, Dependabot security updates, and required CI
    checks.
+12. After the first Swift tag exists, submit `https://github.com/Neural-Defend/NeuralDefend-SDKs`
+   at <https://swiftpackageindex.com/add-a-package>. The index reads `.spi.yml` for the
+   documentation target and builds every later tag automatically.
 
 Before making the repository public, scan the complete Git history—not only the current
 tree—for credentials, customer media, biometric data, internal model details, and private
@@ -87,11 +98,12 @@ GPG key stored only in the protected `maven-central` environment.
    ```
 
    Store the full contents of `signing-key.asc` (including the `BEGIN`/`END` lines) as
-   `SIGNING_KEY` and the passphrase as `SIGNING_PASSWORD`, then delete the exported file.
+   `MAVEN_CENTRAL_SIGNING_KEY` and the passphrase as `MAVEN_CENTRAL_SIGNING_PASSWORD`, then
+   delete the exported file.
    Keep an offline backup of the key and a revocation certificate.
 5. **Environment.** Create the GitHub environment `maven-central` with required company
    reviewers, self-review prevention, no administrator bypass, and a deployment-branch
-   rule that allows only tags matching `kotlin-v*`. Add the four secrets above to this
+   rule that allows only tags matching `java-v*` and `kotlin-v*`. Add the four secrets above to this
    environment, not to the repository.
 
 Rotate the user token and signing key if a release manager leaves or a secret may have
@@ -146,9 +158,12 @@ test -n "${SPEC_SOURCE_REF:-}" && echo "SPEC_SOURCE_REF is set" \
    - `mcp-vX.Y.Z`
    - `packages/go/vX.Y.Z`
    - `dart-vX.Y.Z`
+   - `java-vX.Y.Z`
+   - `X.Y.Z` for Swift, matching `NeuroVerifyClient.sdkVersion` and the latest
+     `packages/swift/CHANGELOG.md` entry
    - `kotlin-vX.Y.Z` (matches `VERSION_NAME` in `packages/kotlin/gradle.properties`)
-7. Inspect the wheel/sdist, npm tarball, `dart pub publish --dry-run` file list, or the Kotlin
-   `central-bundle` artifact before approving the protected release job.
+7. Inspect the wheel/sdist, npm tarball, `dart pub publish --dry-run` file list, Java jars, or
+   the Kotlin `central-bundle` artifact before approving the protected release job.
 8. Run each release workflow manually in dry-run mode and retain its artifacts for review.
 
 The workflows use OIDC and provenance attestations. A release tag starts publishing only
@@ -164,16 +179,27 @@ time and verify the registry before proceeding:
 3. `ts-vX.Y.Z`
 4. `packages/go/vX.Y.Z` after the commit is on the default branch
 5. `dart-vX.Y.Z` after the commit is on the default branch
-6. `kotlin-vX.Y.Z` after the commit is on the default branch
+6. `java-vX.Y.Z` after the commit is on the default branch
+7. `X.Y.Z` (Swift) after the commit is on the default branch
+8. `kotlin-vX.Y.Z` after the commit is on the default branch
 
 The Go tag uses the module path prefix so `go get` resolves the version from the public
-module proxy. No registry approval step is required; verify `go get` in a clean module
-after the tag is pushed.
+module proxy. The Java tag builds and tests the SDK, then publishes signed artifacts to
+Maven Central after approval in the protected `maven-central` environment, and creates a
+GitHub Release. No registry approval step is required for Go; verify `go get` in a clean
+module after the tag is pushed.
 
 The Dart tag starts `release-dart.yml`, which tests the package, checks the tag against
 `pubspec.yaml`, and publishes to pub.dev with a GitHub OIDC token after the `pub-dev`
 environment reviewer approves. pub.dev versions cannot be deleted; a defective version can
 only be retracted within seven days or superseded.
+
+The Swift tag starts `release-swift.yml`, which checks the tag against
+`NeuroVerifyClient.sdkVersion`, confirms the commit is on the default branch, runs the macOS
+tests, resolves the package as a consumer, and creates the GitHub Release after the
+`swift-release` environment reviewer approves. Swift Package Manager can install the tag as
+soon as it is pushed, so run the dry run and every check before tagging. Never delete or move
+a Swift tag; publish a new patch version instead.
 
 The Kotlin tag starts `release-kotlin.yml`. The build job checks that the tag matches
 `VERSION_NAME`, that the tagged commit is on the default branch, and that the Gradle
@@ -199,11 +225,16 @@ an explicit non-`latest` dist-tag.
 4. Install the exact Go module version with `go get` in a clean module.
 5. Add the exact `neuraldefend` version to clean Dart and Flutter projects and confirm the
    pub.dev score page shows all expected platforms.
-6. Add `com.neuraldefend:neuraldefend:X.Y.Z` to a clean JVM Gradle project and
+6. Resolve `com.neuraldefend:neuraldefend-sdk:X.Y.Z` from Maven Central in a clean Gradle
+   or Maven project.
+7. Add the exact Swift version to a clean Xcode app with
+   `.package(url: "https://github.com/Neural-Defend/NeuralDefend-SDKs", exact: "X.Y.Z")`,
+   build for an iOS Simulator, and confirm Swift Package Index lists the version.
+8. Add `com.neuraldefend:neuraldefend:X.Y.Z` to a clean JVM Gradle project and
    `com.neuraldefend:neuraldefend-android:X.Y.Z` to a clean Android app, and confirm both
    resolve from Maven Central (new versions can take up to 30 minutes to appear).
-7. Run approved staging smoke tests against the published artifacts.
-8. Publish release notes, checksums, SBOMs, and provenance links.
+9. Run approved staging smoke tests against the published artifacts.
+10. Publish release notes, checksums, SBOMs, and provenance links.
 
 Registry releases are immutable. If a defect is found, stop rollout and publish a patched
 version; yank/deprecate the affected version only when necessary and document the reason.

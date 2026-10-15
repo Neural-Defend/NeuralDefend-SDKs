@@ -72,6 +72,20 @@ updates:
         patterns:
           - "*"
 
+  # The Swift SDK has no dependencies today; this entry keeps future ones under review.
+  - package-ecosystem: swift
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:40"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    groups:
+      swift-dependencies:
+        patterns:
+          - "*"
+
   - package-ecosystem: github-actions
     directory: /
     schedule:

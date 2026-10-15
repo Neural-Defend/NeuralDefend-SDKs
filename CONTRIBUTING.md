@@ -9,9 +9,11 @@ data disclosure are higher risks than implementation convenience.
 2. Treat `spec/public.yaml` as generated input. Never edit either spec file by hand.
 3. Never edit `packages/python/src/neuraldefend/_core/`,
    `packages/typescript/src/core/`, the Go generated contract tree under
-   `packages/go/` (see ADR-0007), `packages/dart/generated/core/` (see ADR-0008), or
-   `packages/kotlin/generated/core/` (see ADR-0009); regenerate them with
-   `scripts/generate.py`. Do not format or lint the generated trees either.
+   `packages/go/` (see ADR-0007), `packages/dart/generated/core/` (see ADR-0008),
+   the Java generated contract tree under `packages/java/` (see ADR-0009),
+   `packages/swift/generated/core/` (see ADR-0010), or `packages/kotlin/generated/core/`
+   (see ADR-0011); regenerate them with `scripts/generate.py`. Do not format or lint the
+   generated trees either.
 4. Never commit API keys, customer media, biometric data, build outputs, or local
    environment files.
 
@@ -32,7 +34,7 @@ README. Contract changes require:
 - a refreshed spec with `spec/SPEC_SOURCE.json`;
 - regenerated private cores;
 - a language-neutral fixture under `tests/fixtures/`; and
-- equivalent Python, TypeScript, Go, Dart, and Kotlin tests.
+- equivalent Python, TypeScript, Go, Dart, Java, Swift, and Kotlin tests.
 
 Kotlin public API changes also need `./gradlew updateKotlinAbi` in `packages/kotlin` and
 the updated `neuraldefend/api/neuraldefend.api` committed with the change.

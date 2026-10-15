@@ -18,6 +18,7 @@ DEFAULT_PATHS = (
     REPO_ROOT / "README.md",
     REPO_ROOT / "CHANGELOG.md",
     REPO_ROOT / "CONTRIBUTING.md",
+    REPO_ROOT / "Package.swift",
     REPO_ROOT / "SECURITY.md",
     REPO_ROOT / "docs" / "client",
     REPO_ROOT / "examples",
@@ -26,6 +27,7 @@ DEFAULT_PATHS = (
     REPO_ROOT / "spec",
 )
 SKIPPED_DIRECTORIES = {
+    ".build",
     ".dart_tool",
     ".git",
     ".gradle",
@@ -33,13 +35,16 @@ SKIPPED_DIRECTORIES = {
     ".mypy_cache",
     ".pytest_cache",
     ".ruff_cache",
+    ".swiftpm",
     ".venv",
     "__pycache__",
+    "DerivedData",
     "build",
     "dist",
     "node_modules",
     "venv",
 }
+SKIPPED_FILENAMES = frozenset({"gradlew", "gradlew.bat"})
 TEXT_SUFFIXES = {
     "",
     ".cjs",
@@ -58,6 +63,7 @@ TEXT_SUFFIXES = {
     ".pro",
     ".properties",
     ".py",
+    ".swift",
     ".toml",
     ".ts",
     ".txt",
@@ -105,6 +111,8 @@ def _source_files(path: Path) -> Iterator[Path]:
             and not (current_path / name).is_symlink()
         )
         for filename in sorted(filenames):
+            if filename in SKIPPED_FILENAMES:
+                continue
             candidate = current_path / filename
             if not candidate.is_symlink():
                 yield candidate

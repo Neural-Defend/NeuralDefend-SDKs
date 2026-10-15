@@ -42,6 +42,13 @@ captures/
 *.keystore
 *.jks
 *.hprof
+# Swift and Xcode. The library has no dependencies, so Package.resolved is not committed.
+.build/
+.swiftpm/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+Package.resolved
 
 # Secrets. API keys belong in the environment, never in the repo.
 .env

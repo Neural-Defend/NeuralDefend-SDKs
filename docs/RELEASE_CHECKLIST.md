@@ -1,7 +1,8 @@
 # Release checklist
 
-Concise pre-flight list for `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`,
-`dart-v*`, and `kotlin-v*` patch releases. Full context lives in [releasing.md](releasing.md).
+Concise pre-flight list for `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`, `dart-v*`,
+`java-v*`, `kotlin-v*`, and Swift `X.Y.Z` patch releases. Full context lives in
+[releasing.md](releasing.md).
 
 ## One-time registry and environment setup
 
@@ -19,13 +20,20 @@ Concise pre-flight list for `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`,
   token is generated; a dedicated GPG key is created and its public key is published to
   `keyserver.ubuntu.com`. See [Maven Central setup](releasing.md#maven-central-setup).
 - [ ] **Maven Central secrets** — environment `maven-central` holds
-  `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`, `SIGNING_KEY` (ASCII-armoured
-  private key), and `SIGNING_PASSWORD`, and only allows tags matching `kotlin-v*`.
-- [ ] **Protected environments** — `pypi`, `npm`, `mcp-pypi`, `pub-dev`, `maven-central`, and `staging` require
-  company reviewers, self-review prevention, and no administrator bypass.
+  `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`, `MAVEN_CENTRAL_SIGNING_KEY`
+  (ASCII-armoured private key), and `MAVEN_CENTRAL_SIGNING_PASSWORD`. Both
+  `release-java.yml` and `release-kotlin.yml` use it, so it allows only tags matching
+  `java-v*` and `kotlin-v*`.
+- [ ] **Protected environments** — `pypi`, `npm`, `mcp-pypi`, `pub-dev`, `maven-central`,
+  `swift-release`, and `staging` require company reviewers, self-review prevention, and no
+  administrator bypass.
 - [ ] **Tag protection** — restrict creation, update, and deletion of `python-v*`,
-  `ts-v*`, `mcp-v*`, `packages/go/v*`, `dart-v*`, and `kotlin-v*` tags to release managers; protect `main` with
-  required reviews and CI checks.
+  `ts-v*`, `mcp-v*`, `packages/go/v*`, `dart-v*`, `java-v*`, `kotlin-v*`, and Swift
+  `[0-9]*.[0-9]*.[0-9]*` tags to release managers; protect `main` with required reviews and
+  CI checks. The Swift tag ruleset must block deletion and force-updates, because a pushed
+  Swift tag is installable immediately.
+- [ ] **Swift Package Index** — after the first Swift tag, submit the repository at
+  <https://swiftpackageindex.com/add-a-package>.
 - [ ] **Spec-sync secrets** — set repository variables `SPEC_SOURCE_REPOSITORY` and
   `SPEC_SOURCE_REF`, plus secret `SDK_SPEC_SYNC_TOKEN`, so the scheduled spec-sync
   workflow can read the private API repository.
@@ -35,7 +43,8 @@ Concise pre-flight list for `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`,
 ## Before tagging
 
 - [ ] Package versions match intended tags (`python-vX.Y.Z`, `ts-vX.Y.Z`, `mcp-vX.Y.Z`,
-  `packages/go/vX.Y.Z`, `dart-vX.Y.Z`, `kotlin-vX.Y.Z`).
+  `packages/go/vX.Y.Z`, `dart-vX.Y.Z`, `java-vX.Y.Z`, `kotlin-vX.Y.Z`, Swift `X.Y.Z`
+  matching `NeuroVerifyClient.sdkVersion`).
 - [ ] Changelogs updated; `scripts/validate_versions.py` passes.
 - [ ] `scripts/check_generated.py` reports no drift; staging smoke tests pass.
 - [ ] Run each release workflow manually in **dry-run** mode and inspect artifacts.
@@ -47,12 +56,15 @@ Concise pre-flight list for `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`,
 3. `ts-vX.Y.Z`
 4. `packages/go/vX.Y.Z`
 5. `dart-vX.Y.Z`
-6. `kotlin-vX.Y.Z`
+6. `java-vX.Y.Z` after Maven Central credentials and the `maven-central` environment are configured
+7. `X.Y.Z` (Swift; never delete or move it once pushed)
+8. `kotlin-vX.Y.Z`
 
 ## Post-publication verification
 
 - [ ] Install exact PyPI wheels/sdists, the npm tarball, the Go module, the pub.dev
-  package, and both Maven Central artifacts in clean consumers.
+  package, the Maven Central artifacts (Java and both Kotlin artifacts), and the Swift package
+  (`exact: "X.Y.Z"`) in clean consumers.
 - [ ] Run staging smoke tests against published artifacts.
 - [ ] Attach release notes, checksums, SBOMs, and provenance links to GitHub Releases.
 

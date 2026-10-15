@@ -104,6 +104,34 @@ def validate() -> None:
     )
     if kotlin_runtime is None:
         raise ValueError("packages/kotlin Version.kt: missing SDK_VERSION constant")
+    # SwiftPM has no version field; the release tag must match this constant and the changelog.
+    swift_source = (ROOT / "packages/swift/Sources/NeuralDefend/Version.swift").read_text(
+        encoding="utf-8"
+    )
+    swift_runtime = re.search(r'static let sdkVersion = "([^"]+)"', swift_source)
+    if swift_runtime is None:
+        raise ValueError("packages/swift/Sources/NeuralDefend/Version.swift: missing sdkVersion")
+    swift_changelog = (ROOT / "packages/swift/CHANGELOG.md").read_text(encoding="utf-8")
+    swift_released = re.search(r"(?m)^## \[(\d[^\]]*)\]", swift_changelog)
+    if swift_released is None:
+        raise ValueError("packages/swift/CHANGELOG.md: missing a released version heading")
+    java_manifest = ""
+    for line in (ROOT / "packages/java/build.gradle.kts").read_text(encoding="utf-8").splitlines():
+        if line.strip().startswith('version = "'):
+            java_manifest = line.split('"')[1]
+            break
+    if not java_manifest:
+        raise ValueError("packages/java/build.gradle.kts: missing version")
+    java_runtime = ""
+    java_runtime_match = re.search(
+        r'VERSION\s*=\s*"([^"]+)"',
+        (ROOT / "packages/java/src/main/java/com/neuraldefend/SdkVersion.java").read_text(
+            encoding="utf-8"
+        ),
+    )
+    if java_runtime_match is None:
+        raise ValueError("packages/java/.../SdkVersion.java: missing VERSION constant")
+    java_runtime = java_runtime_match.group(1)
 
     versions = {
         "Python manifest": python_version,
@@ -116,6 +144,10 @@ def validate() -> None:
         "Dart runtime": dart_runtime.group(1),
         "Kotlin manifest": kotlin_manifest.group(1),
         "Kotlin runtime": kotlin_runtime.group(1),
+        "Swift runtime": swift_runtime.group(1),
+        "Swift changelog": swift_released.group(1),
+        "Java manifest": java_manifest,
+        "Java runtime": java_runtime,
     }
     invalid = {
         name: value for name, value in versions.items() if not SEMVER.fullmatch(value)
@@ -134,6 +166,10 @@ def validate() -> None:
         raise ValueError("Dart sdkVersion does not match pubspec.yaml")
     if kotlin_runtime.group(1) != kotlin_manifest.group(1):
         raise ValueError("Kotlin SDK_VERSION does not match gradle.properties VERSION_NAME")
+    if swift_runtime.group(1) != swift_released.group(1):
+        raise ValueError("Swift sdkVersion does not match the latest packages/swift/CHANGELOG.md entry")
+    if java_runtime != java_manifest:
+        raise ValueError("Java SdkVersion.VERSION does not match build.gradle.kts")
 
 
 def main() -> int:
