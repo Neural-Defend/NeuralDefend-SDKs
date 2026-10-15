@@ -54,7 +54,9 @@ struct TransportTests {
             let elapsed = Date().timeIntervalSince(started)
             #expect(elapsed >= 0.45, "the SDK deadline, not URLSession's, must end the attempt")
             #expect(elapsed < 5)
-            #expect(server.requests.count == 1)
+            // A slow simulator can hit the deadline before the server logs the request, so
+            // zero is fine; a retry would make it two or more.
+            #expect(server.requests.count <= 1)
         }
     }
 

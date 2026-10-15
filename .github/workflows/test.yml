@@ -330,7 +330,7 @@ jobs:
         shell: bash
         run: |
           if ! xcodebuild -showdestinations -scheme NeuralDefend 2>/dev/null \
-            | grep 'platform:iOS Simulator' | grep -vq 'error:'; then
+            | grep 'platform:iOS Simulator' | grep 'name:iPhone' | grep -vq 'Placeholder'; then
             echo "::warning::This runner has no iOS Simulator platform for Xcode ${{ matrix.xcode }}; skipping."
             exit 0
           fi
