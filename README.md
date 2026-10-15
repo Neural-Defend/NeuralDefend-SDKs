@@ -26,10 +26,11 @@ for signs of AI generation, manipulation, spoofing, and related authenticity ris
 | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" width="22" height="22" alt="Python" /> | [Python `neuraldefend` 1.0.3](https://pypi.org/project/neuraldefend/1.0.3/) | Python services and scripts (Python 3.9+) | `pip install neuraldefend` | [Python SDK](packages/python/README.md) |
 | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" width="22" height="22" alt="Node.js" /> | [TypeScript `@neuraldefend/sdk` 1.0.4](https://www.npmjs.com/package/@neuraldefend/sdk/v/1.0.4) | Node.js 22+ and evergreen browsers | `npm install @neuraldefend/sdk` | [TypeScript SDK](packages/typescript/README.md) |
 | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original-wordmark.svg" width="22" height="22" alt="Go" /> | [Go `neuraldefend` 1.0.0](https://github.com/Neural-Defend/NeuralDefend-SDKs/tree/main/packages/go) | Go services and CLIs (Go 1.22+) | `go get github.com/Neural-Defend/NeuralDefend-SDKs/packages/go@v1.0.0` | [Go SDK](packages/go/README.md) |
+| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" width="22" height="22" alt="Java" /> | [Java `neuraldefend-sdk` 1.0.0](https://github.com/Neural-Defend/NeuralDefend-SDKs/tree/main/packages/java) | JVM services (Java 17+) | see [Java SDK](packages/java/README.md) | [Java SDK](packages/java/README.md) |
 | <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/flutter/flutter-original.svg" width="22" height="22" alt="Flutter" /> | [Dart `neuraldefend` 1.0.0](https://pub.dev/packages/neuraldefend) | Flutter apps (Android, iOS, desktop, web) and Dart servers (Dart 3.5+) | `flutter pub add neuraldefend` | [Dart and Flutter SDK](packages/dart/README.md) |
 | <img src="https://cdn.simpleicons.org/modelcontextprotocol/000000" width="22" height="22" alt="MCP" /> | [MCP `neuraldefend-mcp` 2.0.0](https://pypi.org/project/neuraldefend-mcp/2.0.0/) | MCP-compatible agents and tools (Python 3.10+) | `pip install neuraldefend-mcp` | [MCP server](packages/mcp/README.md) |
 
-Use the Python, TypeScript, Go, or Dart SDK for application code. Use the MCP server when an agent
+Use the Python, TypeScript, Go, Dart, or Java SDK for application code. Use the MCP server when an agent
 needs controlled access to authorized local media; it requires an explicit directory
 allowlist.
 

@@ -92,6 +92,24 @@ def validate() -> None:
     if dart_runtime is None:
         raise ValueError("packages/dart/lib/src/version.dart: missing sdkVersion constant")
 
+    java_manifest = ""
+    for line in (ROOT / "packages/java/build.gradle.kts").read_text(encoding="utf-8").splitlines():
+        if line.strip().startswith('version = "'):
+            java_manifest = line.split('"')[1]
+            break
+    if not java_manifest:
+        raise ValueError("packages/java/build.gradle.kts: missing version")
+    java_runtime = ""
+    java_runtime_match = re.search(
+        r'VERSION\s*=\s*"([^"]+)"',
+        (ROOT / "packages/java/src/main/java/com/neuraldefend/SdkVersion.java").read_text(
+            encoding="utf-8"
+        ),
+    )
+    if java_runtime_match is None:
+        raise ValueError("packages/java/.../SdkVersion.java: missing VERSION constant")
+    java_runtime = java_runtime_match.group(1)
+
     versions = {
         "Python manifest": python_version,
         "Python runtime": python_runtime,
@@ -101,6 +119,8 @@ def validate() -> None:
         "Go runtime": go_version,
         "Dart manifest": dart_manifest.group(1),
         "Dart runtime": dart_runtime.group(1),
+        "Java manifest": java_manifest,
+        "Java runtime": java_runtime,
     }
     invalid = {
         name: value for name, value in versions.items() if not SEMVER.fullmatch(value)
@@ -117,6 +137,8 @@ def validate() -> None:
         raise ValueError("TypeScript user-agent version does not match package.json")
     if dart_runtime.group(1) != dart_manifest.group(1):
         raise ValueError("Dart sdkVersion does not match pubspec.yaml")
+    if java_runtime != java_manifest:
+        raise ValueError("Java SdkVersion.VERSION does not match build.gradle.kts")
 
 
 def main() -> int:

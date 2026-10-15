@@ -1,0 +1,15 @@
+{
+  "globalProperties": {
+    "apiDocs": false,
+    "apiTests": false,
+    "modelDocs": false,
+    "modelTests": false
+  },
+  "groupId": "com.neuraldefend",
+  "artifactId": "neuraldefend-sdk-core",
+  "modelPackage": "com.neuraldefend.internal.core",
+  "apiPackage": "com.neuraldefend.internal.core",
+  "invokerPackage": "com.neuraldefend.internal.core",
+  "library": "native",
+  "hideGenerationTimestamp": true
+}
