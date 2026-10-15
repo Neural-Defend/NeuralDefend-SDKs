@@ -161,9 +161,10 @@ private final class Exchange: @unchecked Sendable {
         timer?.cancel()
         timer = nil
         lock.unlock()
-        // Darwin can complete a task without delivering its last didSendBodyData callback.
-        if reason == nil && error == nil {
-            progress(sent: task.countOfBytesSent)
+        // Darwin can complete an upload without delivering didSendBodyData callbacks, and
+        // countOfBytesSent can still read 0 at that point, so a response ends the attempt at 100%.
+        if reason == nil && error == nil && response is HTTPURLResponse {
+            progress(sent: totalBytes)
         }
         continuation.resume(returning: outcome(reason: reason, error: error, response: response, body: body))
     }

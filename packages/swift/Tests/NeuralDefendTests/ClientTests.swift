@@ -306,9 +306,7 @@ struct RequestShapeTests {
             #expect(Int(total) == server.requests.first?.bodyLength)
             #expect(events.filter { $0.0 == 0 }.count == 2)
             #expect(events.last?.0 == total)
-            // A server may answer the first attempt before reading the whole body, so only the
-            // final (successful) attempt is guaranteed to report the full length.
-            #expect(events.filter { $0.0 == total }.count >= 1)
+            #expect(events.filter { $0.0 == total }.count >= 2)
         }
     }
 }
