@@ -1,7 +1,7 @@
 # Release checklist
 
 Concise pre-flight list for `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`, and
-`java-v*` patch releases. Full context lives in [releasing.md](releasing.md).
+`dart-v*`, and `java-v*` patch releases. Full context lives in [releasing.md](releasing.md).
 
 ## One-time registry and environment setup
 
@@ -11,15 +11,18 @@ Concise pre-flight list for `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`, an
   `NeuralDefend-SDKs`, and the correct workflow filenames.
 - [ ] **npm trusted publisher** — confirm `@neuraldefend/sdk` trusted publishing for
   `release-npm.yml` → environment `npm`. Do not retain long-lived registry tokens.
+- [ ] **pub.dev automated publishing** — `neuraldefend` belongs to the Neural Defend
+  verified publisher and allows GitHub Actions from `Neural-Defend/NeuralDefend-SDKs`
+  with tag pattern `dart-v{{version}}` and required environment `pub-dev`.
 - [ ] **Maven Central** — confirm the `com.neuraldefend` namespace is registered on the
   Central Portal and repository secrets `MAVEN_CENTRAL_USERNAME`, `MAVEN_CENTRAL_PASSWORD`,
   `MAVEN_CENTRAL_SIGNING_KEY`, and `MAVEN_CENTRAL_SIGNING_PASSWORD` are configured for
   `release-java.yml` → environment `maven-central`.
-- [ ] **Protected environments** — `pypi`, `npm`, `mcp-pypi`, `maven-central`, and
+- [ ] **Protected environments** — `pypi`, `npm`, `mcp-pypi`, `pub-dev`, `maven-central`, and
   `staging` require company reviewers, self-review prevention, and no administrator bypass.
 - [ ] **Tag protection** — restrict creation, update, and deletion of `python-v*`,
-  `ts-v*`, `mcp-v*`, `packages/go/v*`, and `java-v*` tags to release managers; protect
-  `main` with required reviews and CI checks.
+  `ts-v*`, `mcp-v*`, `packages/go/v*`, `dart-v*`, and `java-v*` tags to release managers;
+  protect `main` with required reviews and CI checks.
 - [ ] **Spec-sync secrets** — set repository variables `SPEC_SOURCE_REPOSITORY` and
   `SPEC_SOURCE_REF`, plus secret `SDK_SPEC_SYNC_TOKEN`, so the scheduled spec-sync
   workflow can read the private API repository.
@@ -29,7 +32,7 @@ Concise pre-flight list for `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`, an
 ## Before tagging
 
 - [ ] Package versions match intended tags (`python-vX.Y.Z`, `ts-vX.Y.Z`, `mcp-vX.Y.Z`,
-  `packages/go/vX.Y.Z`, `java-vX.Y.Z`).
+  `packages/go/vX.Y.Z`, `dart-vX.Y.Z`, `java-vX.Y.Z`).
 - [ ] Changelogs updated; `scripts/validate_versions.py` passes.
 - [ ] `scripts/check_generated.py` reports no drift; staging smoke tests pass.
 - [ ] Run each release workflow manually in **dry-run** mode and inspect artifacts.
@@ -40,12 +43,13 @@ Concise pre-flight list for `python-v*`, `ts-v*`, `mcp-v*`, `packages/go/v*`, an
 2. `mcp-vX.Y.Z` after `neuraldefend==X.Y.Z` is installable from PyPI
 3. `ts-vX.Y.Z`
 4. `packages/go/vX.Y.Z`
-5. `java-vX.Y.Z` after Maven Central credentials and the `maven-central` environment are configured
+5. `dart-vX.Y.Z`
+6. `java-vX.Y.Z` after Maven Central credentials and the `maven-central` environment are configured
 
 ## Post-publication verification
 
-- [ ] Install exact PyPI wheels/sdists, the npm tarball, the Go module, and the Maven
-  Central artifact in clean consumers.
+- [ ] Install exact PyPI wheels/sdists, the npm tarball, the Go module, the pub.dev
+  package, and the Maven Central artifact in clean consumers.
 - [ ] Run staging smoke tests against published artifacts.
 - [ ] Attach release notes, checksums, SBOMs, and provenance links to GitHub Releases.
 

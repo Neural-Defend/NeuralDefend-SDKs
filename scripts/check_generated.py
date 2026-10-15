@@ -9,6 +9,7 @@ import tempfile
 from pathlib import Path
 
 from generate import (
+    DART_DESTINATION,
     GO_DESTINATION,
     JAVA_DESTINATION,
     PYTHON_DESTINATION,
@@ -65,6 +66,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="committed Go generated-source directory",
     )
     parser.add_argument(
+        "--dart-dir",
+        type=Path,
+        default=DART_DESTINATION,
+        help="committed Dart generated-source directory",
+    )
+    parser.add_argument(
         "--java-dir",
         type=Path,
         default=JAVA_DESTINATION,
@@ -94,6 +101,11 @@ def main(argv: list[str] | None = None) -> int:
                 snapshot / "go",
                 args.go_dir.resolve(),
             )
+            dart_current = _compare(
+                "dart",
+                snapshot / "dart",
+                args.dart_dir.resolve(),
+            )
             java_current = _compare(
                 "java",
                 snapshot / "java",
@@ -104,7 +116,11 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     return (
         0
-        if python_current and typescript_current and go_current and java_current
+        if python_current
+        and typescript_current
+        and go_current
+        and dart_current
+        and java_current
         else 1
     )
 

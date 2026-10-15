@@ -257,7 +257,7 @@ class GeneratorTests(unittest.TestCase):
             self.assertEqual(generate._docker_user_arguments(), [])
 
     def test_generator_configs_exclude_docs_and_tests(self) -> None:
-        for path in (generate.PYTHON_CONFIG, generate.TYPESCRIPT_CONFIG):
+        for path in (generate.PYTHON_CONFIG, generate.TYPESCRIPT_CONFIG, generate.DART_CONFIG):
             config = json.loads(path.read_text(encoding="utf-8"))
             self.assertTrue(config["hideGenerationTimestamp"])
             self.assertEqual(

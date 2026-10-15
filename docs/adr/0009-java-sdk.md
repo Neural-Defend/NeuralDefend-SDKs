@@ -1,4 +1,4 @@
-# ADR 0008: Java SDK with private generated core and streaming facade
+# ADR 0009: Java SDK with private generated core and streaming facade
 
 - Status: Accepted
 - Date: 2026-08-26
