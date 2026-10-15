@@ -83,6 +83,15 @@ def validate() -> None:
     if not go_version:
         raise ValueError("packages/go/version.go: missing Version constant")
 
+    pubspec = (ROOT / "packages/dart/pubspec.yaml").read_text(encoding="utf-8")
+    dart_manifest = re.search(r"(?m)^version:\s*['\"]?([^'\"\s]+)['\"]?\s*$", pubspec)
+    if dart_manifest is None:
+        raise ValueError("packages/dart/pubspec.yaml: missing version")
+    dart_source = (ROOT / "packages/dart/lib/src/version.dart").read_text(encoding="utf-8")
+    dart_runtime = re.search(r"const String sdkVersion = '([^']+)';", dart_source)
+    if dart_runtime is None:
+        raise ValueError("packages/dart/lib/src/version.dart: missing sdkVersion constant")
+
     versions = {
         "Python manifest": python_version,
         "Python runtime": python_runtime,
@@ -90,6 +99,8 @@ def validate() -> None:
         "MCP runtime": mcp_runtime,
         "TypeScript manifest": typescript_version,
         "Go runtime": go_version,
+        "Dart manifest": dart_manifest.group(1),
+        "Dart runtime": dart_runtime.group(1),
     }
     invalid = {
         name: value for name, value in versions.items() if not SEMVER.fullmatch(value)
@@ -104,6 +115,8 @@ def validate() -> None:
         raise ValueError("TypeScript package-lock versions do not match package.json")
     if user_agent is None or user_agent.group(1) != typescript_version:
         raise ValueError("TypeScript user-agent version does not match package.json")
+    if dart_runtime.group(1) != dart_manifest.group(1):
+        raise ValueError("Dart sdkVersion does not match pubspec.yaml")
 
 
 def main() -> int:
