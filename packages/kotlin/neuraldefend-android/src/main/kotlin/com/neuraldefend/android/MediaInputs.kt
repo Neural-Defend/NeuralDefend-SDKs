@@ -6,9 +6,9 @@ import android.content.res.AssetFileDescriptor
 import android.net.Uri
 import android.provider.OpenableColumns
 import android.webkit.MimeTypeMap
-import com.neuraldefend.MediaInput
-import com.neuraldefend.ValidationError
-import com.neuraldefend.ValidationErrorCode
+import com.neuraldefend.kotlin.MediaInput
+import com.neuraldefend.kotlin.ValidationError
+import com.neuraldefend.kotlin.ValidationErrorCode
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException

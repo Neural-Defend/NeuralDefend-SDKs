@@ -1,7 +1,10 @@
-# Neural Defend NeuroVerify SDK for Kotlin, Java, and Android
+# Neural Defend NeuroVerify SDK for Kotlin and Android
 
-The official JVM and Android client for the Neural Defend NeuroVerify image and video
-authenticity APIs. It provides:
+The official Kotlin and Android client for the Neural Defend NeuroVerify image and video
+authenticity APIs. Java-first projects should use the
+[Java SDK](../java/README.md) (`com.neuraldefend:neuraldefend-sdk`) instead. The two SDKs
+use different packages (`com.neuraldefend.kotlin` and `com.neuraldefend`), so they can
+share a classpath. It provides:
 
 - typed, normalized image and video results;
 - coroutine (`suspend`) APIs for Kotlin and a callback/blocking `NeuroVerifyCall` API for
@@ -22,7 +25,7 @@ checks, and human review appropriate to your use case.
 
 | Artifact | Use it for | Requirements |
 | --- | --- | --- |
-| `com.neuraldefend:neuraldefend:1.0.0` | JVM servers, CLIs, desktop apps, and Android | Java 8 or newer; Kotlin 2.1 or newer when called from Kotlin |
+| `com.neuraldefend:neuraldefend-kotlin:1.0.0` | JVM servers, CLIs, desktop apps, and Android | Java 8 or newer; Kotlin 2.1 or newer when called from Kotlin |
 | `com.neuraldefend:neuraldefend-android:1.0.0` | Android apps that upload content `Uri`s | Android 5.0 (API 21) or newer; includes the JVM artifact |
 
 You also need a Neural Defend API key with access to the image and/or video endpoint.
@@ -38,7 +41,7 @@ Gradle (Kotlin DSL):
 
 ```kotlin
 dependencies {
-    implementation("com.neuraldefend:neuraldefend:1.0.0")
+    implementation("com.neuraldefend:neuraldefend-kotlin:1.0.0")
     // Android apps that upload photo-picker or camera content:
     implementation("com.neuraldefend:neuraldefend-android:1.0.0")
 }
@@ -49,7 +52,7 @@ Maven:
 ```xml
 <dependency>
   <groupId>com.neuraldefend</groupId>
-  <artifactId>neuraldefend</artifactId>
+  <artifactId>neuraldefend-kotlin</artifactId>
   <version>1.0.0</version>
 </dependency>
 ```
@@ -87,9 +90,9 @@ the SDK.
 ## Quick start (Kotlin on a server)
 
 ```kotlin
-import com.neuraldefend.MediaInput
-import com.neuraldefend.NeuroVerifyClient
-import com.neuraldefend.ResultStatus
+import com.neuraldefend.kotlin.MediaInput
+import com.neuraldefend.kotlin.NeuroVerifyClient
+import com.neuraldefend.kotlin.ResultStatus
 import java.io.File
 
 suspend fun main() {
@@ -116,10 +119,10 @@ Create one client and reuse it: it holds a connection pool. `close()` releases i
 ## Quick start (Java)
 
 ```java
-import com.neuraldefend.ImageResult;
-import com.neuraldefend.MediaInput;
-import com.neuraldefend.NeuroVerifyClient;
-import com.neuraldefend.NeuroVerifyError;
+import com.neuraldefend.kotlin.ImageResult;
+import com.neuraldefend.kotlin.MediaInput;
+import com.neuraldefend.kotlin.NeuroVerifyClient;
+import com.neuraldefend.kotlin.NeuroVerifyError;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 

@@ -1,4 +1,4 @@
-package com.neuraldefend
+package com.neuraldefend.kotlin
 
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json

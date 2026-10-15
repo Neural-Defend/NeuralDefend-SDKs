@@ -1,24 +1,24 @@
-public final class com/neuraldefend/AbortError : com/neuraldefend/NeuroVerifyError {
+public final class com/neuraldefend/kotlin/AbortError : com/neuraldefend/kotlin/NeuroVerifyError {
 	public fun <init> ()V
 	public fun <init> (Ljava/lang/String;)V
 	public synthetic fun <init> (Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
-public final class com/neuraldefend/AuthenticationError : com/neuraldefend/HttpError {
+public final class com/neuraldefend/kotlin/AuthenticationError : com/neuraldefend/kotlin/HttpError {
 	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
-public abstract class com/neuraldefend/DetectionResult {
-	public synthetic fun <init> (Lcom/neuraldefend/ResultStatus;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZLjava/util/List;Ljava/util/Map;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+public abstract class com/neuraldefend/kotlin/DetectionResult {
+	public synthetic fun <init> (Lcom/neuraldefend/kotlin/ResultStatus;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IZLjava/util/List;Ljava/util/Map;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getAiThreatSignals ()Ljava/util/List;
 	public final fun getBillable ()Z
 	public final fun getContentType ()Ljava/lang/String;
 	public final fun getFilename ()Ljava/lang/String;
 	public final fun getOriginalStatus ()Ljava/lang/String;
 	public final fun getRaw ()Ljava/util/Map;
-	public final fun getStatus ()Lcom/neuraldefend/ResultStatus;
+	public final fun getStatus ()Lcom/neuraldefend/kotlin/ResultStatus;
 	public final fun getStatusCode ()I
 	public final fun getUniqueTrxId ()Ljava/lang/String;
 	public final fun isRejected ()Z
@@ -26,121 +26,121 @@ public abstract class com/neuraldefend/DetectionResult {
 	public abstract fun toJson ()Ljava/util/Map;
 }
 
-public class com/neuraldefend/HttpError : com/neuraldefend/NeuroVerifyError {
+public class com/neuraldefend/kotlin/HttpError : com/neuraldefend/kotlin/NeuroVerifyError {
 	public fun <init> (Ljava/lang/String;I)V
 	public fun <init> (Ljava/lang/String;ILjava/lang/String;)V
 	public synthetic fun <init> (Ljava/lang/String;ILjava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
-public final class com/neuraldefend/ImageResult : com/neuraldefend/DetectionResult {
+public final class com/neuraldefend/kotlin/ImageResult : com/neuraldefend/kotlin/DetectionResult {
 	public final fun getMessage ()Ljava/lang/String;
 	public final fun getOriginalRiskLevel ()Ljava/lang/String;
-	public final fun getRiskLevel ()Lcom/neuraldefend/RiskLevel;
+	public final fun getRiskLevel ()Lcom/neuraldefend/kotlin/RiskLevel;
 	public final fun getRiskScore ()Ljava/lang/Double;
 	public final fun isHighRisk ()Z
 	public fun toJson ()Ljava/util/Map;
 	public fun toString ()Ljava/lang/String;
 }
 
-public abstract class com/neuraldefend/MediaInput {
-	public static final field Companion Lcom/neuraldefend/MediaInput$Companion;
+public abstract class com/neuraldefend/kotlin/MediaInput {
+	public static final field Companion Lcom/neuraldefend/kotlin/MediaInput$Companion;
 	public static final field IMAGE_EXTENSIONS Ljava/util/Set;
 	public static final field IMAGE_MAX_BYTES J
 	public static final field VIDEO_EXTENSIONS Ljava/util/Set;
 	public static final field VIDEO_MAX_BYTES J
-	public static final fun bytes ([BLjava/lang/String;)Lcom/neuraldefend/MediaInput;
-	public static final fun file (Ljava/io/File;)Lcom/neuraldefend/MediaInput;
-	public static final fun file (Ljava/io/File;Ljava/lang/String;)Lcom/neuraldefend/MediaInput;
+	public static final fun bytes ([BLjava/lang/String;)Lcom/neuraldefend/kotlin/MediaInput;
+	public static final fun file (Ljava/io/File;)Lcom/neuraldefend/kotlin/MediaInput;
+	public static final fun file (Ljava/io/File;Ljava/lang/String;)Lcom/neuraldefend/kotlin/MediaInput;
 	public static final fun mimeTypeFor (Ljava/lang/String;)Ljava/lang/String;
-	public static final fun singleUseStream (Ljava/io/InputStream;JLjava/lang/String;)Lcom/neuraldefend/MediaInput;
-	public static final fun stream (JLjava/lang/String;Lcom/neuraldefend/StreamSupplier;)Lcom/neuraldefend/MediaInput;
+	public static final fun singleUseStream (Ljava/io/InputStream;JLjava/lang/String;)Lcom/neuraldefend/kotlin/MediaInput;
+	public static final fun stream (JLjava/lang/String;Lcom/neuraldefend/kotlin/StreamSupplier;)Lcom/neuraldefend/kotlin/MediaInput;
 }
 
-public final class com/neuraldefend/MediaInput$Companion {
-	public final fun bytes ([BLjava/lang/String;)Lcom/neuraldefend/MediaInput;
-	public final fun file (Ljava/io/File;)Lcom/neuraldefend/MediaInput;
-	public final fun file (Ljava/io/File;Ljava/lang/String;)Lcom/neuraldefend/MediaInput;
-	public static synthetic fun file$default (Lcom/neuraldefend/MediaInput$Companion;Ljava/io/File;Ljava/lang/String;ILjava/lang/Object;)Lcom/neuraldefend/MediaInput;
+public final class com/neuraldefend/kotlin/MediaInput$Companion {
+	public final fun bytes ([BLjava/lang/String;)Lcom/neuraldefend/kotlin/MediaInput;
+	public final fun file (Ljava/io/File;)Lcom/neuraldefend/kotlin/MediaInput;
+	public final fun file (Ljava/io/File;Ljava/lang/String;)Lcom/neuraldefend/kotlin/MediaInput;
+	public static synthetic fun file$default (Lcom/neuraldefend/kotlin/MediaInput$Companion;Ljava/io/File;Ljava/lang/String;ILjava/lang/Object;)Lcom/neuraldefend/kotlin/MediaInput;
 	public final fun mimeTypeFor (Ljava/lang/String;)Ljava/lang/String;
-	public final fun singleUseStream (Ljava/io/InputStream;JLjava/lang/String;)Lcom/neuraldefend/MediaInput;
-	public final fun stream (JLjava/lang/String;Lcom/neuraldefend/StreamSupplier;)Lcom/neuraldefend/MediaInput;
+	public final fun singleUseStream (Ljava/io/InputStream;JLjava/lang/String;)Lcom/neuraldefend/kotlin/MediaInput;
+	public final fun stream (JLjava/lang/String;Lcom/neuraldefend/kotlin/StreamSupplier;)Lcom/neuraldefend/kotlin/MediaInput;
 }
 
-public final class com/neuraldefend/NetworkError : com/neuraldefend/NeuroVerifyError {
+public final class com/neuraldefend/kotlin/NetworkError : com/neuraldefend/kotlin/NeuroVerifyError {
 	public fun <init> (Ljava/lang/String;)V
 }
 
-public final class com/neuraldefend/NeuroVerifyCall {
+public final class com/neuraldefend/kotlin/NeuroVerifyCall {
 	public final fun cancel ()V
-	public final fun enqueue (Lcom/neuraldefend/NeuroVerifyCallback;)V
+	public final fun enqueue (Lcom/neuraldefend/kotlin/NeuroVerifyCallback;)V
 	public final fun execute ()Ljava/lang/Object;
 	public final fun isCanceled ()Z
 }
 
-public abstract interface class com/neuraldefend/NeuroVerifyCallback {
-	public abstract fun onFailure (Lcom/neuraldefend/NeuroVerifyCall;Lcom/neuraldefend/NeuroVerifyError;)V
-	public abstract fun onResult (Lcom/neuraldefend/NeuroVerifyCall;Ljava/lang/Object;)V
+public abstract interface class com/neuraldefend/kotlin/NeuroVerifyCallback {
+	public abstract fun onFailure (Lcom/neuraldefend/kotlin/NeuroVerifyCall;Lcom/neuraldefend/kotlin/NeuroVerifyError;)V
+	public abstract fun onResult (Lcom/neuraldefend/kotlin/NeuroVerifyCall;Ljava/lang/Object;)V
 }
 
-public final class com/neuraldefend/NeuroVerifyClient : java/io/Closeable {
-	public static final field Companion Lcom/neuraldefend/NeuroVerifyClient$Companion;
+public final class com/neuraldefend/kotlin/NeuroVerifyClient : java/io/Closeable {
+	public static final field Companion Lcom/neuraldefend/kotlin/NeuroVerifyClient$Companion;
 	public static final field PRODUCTION_URL Ljava/lang/String;
 	public static final field SDK_VERSION Ljava/lang/String;
 	public static final field STAGING_URL Ljava/lang/String;
-	public static final fun builder ()Lcom/neuraldefend/NeuroVerifyClient$Builder;
+	public static final fun builder ()Lcom/neuraldefend/kotlin/NeuroVerifyClient$Builder;
 	public fun close ()V
-	public final synthetic fun detectImage (Lcom/neuraldefend/MediaInput;Lcom/neuraldefend/UploadProgressListener;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static synthetic fun detectImage$default (Lcom/neuraldefend/NeuroVerifyClient;Lcom/neuraldefend/MediaInput;Lcom/neuraldefend/UploadProgressListener;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
-	public final synthetic fun detectVideo (Lcom/neuraldefend/MediaInput;Ljava/lang/Integer;Ljava/lang/Integer;Lcom/neuraldefend/UploadProgressListener;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
-	public static synthetic fun detectVideo$default (Lcom/neuraldefend/NeuroVerifyClient;Lcom/neuraldefend/MediaInput;Ljava/lang/Integer;Ljava/lang/Integer;Lcom/neuraldefend/UploadProgressListener;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final synthetic fun detectImage (Lcom/neuraldefend/kotlin/MediaInput;Lcom/neuraldefend/kotlin/UploadProgressListener;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun detectImage$default (Lcom/neuraldefend/kotlin/NeuroVerifyClient;Lcom/neuraldefend/kotlin/MediaInput;Lcom/neuraldefend/kotlin/UploadProgressListener;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
+	public final synthetic fun detectVideo (Lcom/neuraldefend/kotlin/MediaInput;Ljava/lang/Integer;Ljava/lang/Integer;Lcom/neuraldefend/kotlin/UploadProgressListener;Lkotlin/coroutines/Continuation;)Ljava/lang/Object;
+	public static synthetic fun detectVideo$default (Lcom/neuraldefend/kotlin/NeuroVerifyClient;Lcom/neuraldefend/kotlin/MediaInput;Ljava/lang/Integer;Ljava/lang/Integer;Lcom/neuraldefend/kotlin/UploadProgressListener;Lkotlin/coroutines/Continuation;ILjava/lang/Object;)Ljava/lang/Object;
 	public final fun getBaseUrl ()Ljava/lang/String;
 	public final fun getMaxRetries ()I
 	public final fun getRetryAfterCapMillis ()J
 	public final fun getTimeoutMillis ()J
-	public final fun newImageCall (Lcom/neuraldefend/MediaInput;)Lcom/neuraldefend/NeuroVerifyCall;
-	public final fun newImageCall (Lcom/neuraldefend/MediaInput;Lcom/neuraldefend/UploadProgressListener;)Lcom/neuraldefend/NeuroVerifyCall;
-	public static synthetic fun newImageCall$default (Lcom/neuraldefend/NeuroVerifyClient;Lcom/neuraldefend/MediaInput;Lcom/neuraldefend/UploadProgressListener;ILjava/lang/Object;)Lcom/neuraldefend/NeuroVerifyCall;
-	public final fun newVideoCall (Lcom/neuraldefend/MediaInput;)Lcom/neuraldefend/NeuroVerifyCall;
-	public final fun newVideoCall (Lcom/neuraldefend/MediaInput;Ljava/lang/Integer;)Lcom/neuraldefend/NeuroVerifyCall;
-	public final fun newVideoCall (Lcom/neuraldefend/MediaInput;Ljava/lang/Integer;Ljava/lang/Integer;)Lcom/neuraldefend/NeuroVerifyCall;
-	public final fun newVideoCall (Lcom/neuraldefend/MediaInput;Ljava/lang/Integer;Ljava/lang/Integer;Lcom/neuraldefend/UploadProgressListener;)Lcom/neuraldefend/NeuroVerifyCall;
-	public static synthetic fun newVideoCall$default (Lcom/neuraldefend/NeuroVerifyClient;Lcom/neuraldefend/MediaInput;Ljava/lang/Integer;Ljava/lang/Integer;Lcom/neuraldefend/UploadProgressListener;ILjava/lang/Object;)Lcom/neuraldefend/NeuroVerifyCall;
-	public static final fun staging ()Lcom/neuraldefend/NeuroVerifyClient;
-	public static final fun staging (Ljava/lang/String;)Lcom/neuraldefend/NeuroVerifyClient;
+	public final fun newImageCall (Lcom/neuraldefend/kotlin/MediaInput;)Lcom/neuraldefend/kotlin/NeuroVerifyCall;
+	public final fun newImageCall (Lcom/neuraldefend/kotlin/MediaInput;Lcom/neuraldefend/kotlin/UploadProgressListener;)Lcom/neuraldefend/kotlin/NeuroVerifyCall;
+	public static synthetic fun newImageCall$default (Lcom/neuraldefend/kotlin/NeuroVerifyClient;Lcom/neuraldefend/kotlin/MediaInput;Lcom/neuraldefend/kotlin/UploadProgressListener;ILjava/lang/Object;)Lcom/neuraldefend/kotlin/NeuroVerifyCall;
+	public final fun newVideoCall (Lcom/neuraldefend/kotlin/MediaInput;)Lcom/neuraldefend/kotlin/NeuroVerifyCall;
+	public final fun newVideoCall (Lcom/neuraldefend/kotlin/MediaInput;Ljava/lang/Integer;)Lcom/neuraldefend/kotlin/NeuroVerifyCall;
+	public final fun newVideoCall (Lcom/neuraldefend/kotlin/MediaInput;Ljava/lang/Integer;Ljava/lang/Integer;)Lcom/neuraldefend/kotlin/NeuroVerifyCall;
+	public final fun newVideoCall (Lcom/neuraldefend/kotlin/MediaInput;Ljava/lang/Integer;Ljava/lang/Integer;Lcom/neuraldefend/kotlin/UploadProgressListener;)Lcom/neuraldefend/kotlin/NeuroVerifyCall;
+	public static synthetic fun newVideoCall$default (Lcom/neuraldefend/kotlin/NeuroVerifyClient;Lcom/neuraldefend/kotlin/MediaInput;Ljava/lang/Integer;Ljava/lang/Integer;Lcom/neuraldefend/kotlin/UploadProgressListener;ILjava/lang/Object;)Lcom/neuraldefend/kotlin/NeuroVerifyCall;
+	public static final fun staging ()Lcom/neuraldefend/kotlin/NeuroVerifyClient;
+	public static final fun staging (Ljava/lang/String;)Lcom/neuraldefend/kotlin/NeuroVerifyClient;
 	public final fun toJson ()Ljava/util/Map;
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class com/neuraldefend/NeuroVerifyClient$Builder {
-	public final fun allowCustomBaseUrl (Z)Lcom/neuraldefend/NeuroVerifyClient$Builder;
-	public final fun apiKey (Ljava/lang/String;)Lcom/neuraldefend/NeuroVerifyClient$Builder;
-	public final fun baseUrl (Ljava/lang/String;)Lcom/neuraldefend/NeuroVerifyClient$Builder;
-	public final fun build ()Lcom/neuraldefend/NeuroVerifyClient;
-	public final fun maxRetries (I)Lcom/neuraldefend/NeuroVerifyClient$Builder;
-	public final fun okHttpClient (Lokhttp3/OkHttpClient;)Lcom/neuraldefend/NeuroVerifyClient$Builder;
-	public final fun onWarning (Lcom/neuraldefend/WarningListener;)Lcom/neuraldefend/NeuroVerifyClient$Builder;
-	public final fun retryAfterCap (JLjava/util/concurrent/TimeUnit;)Lcom/neuraldefend/NeuroVerifyClient$Builder;
-	public final synthetic fun retryAfterCap-LRDsOJo (J)Lcom/neuraldefend/NeuroVerifyClient$Builder;
-	public final fun staging ()Lcom/neuraldefend/NeuroVerifyClient$Builder;
-	public final fun timeout (JLjava/util/concurrent/TimeUnit;)Lcom/neuraldefend/NeuroVerifyClient$Builder;
-	public final synthetic fun timeout-LRDsOJo (J)Lcom/neuraldefend/NeuroVerifyClient$Builder;
-	public final fun userAgent (Ljava/lang/String;)Lcom/neuraldefend/NeuroVerifyClient$Builder;
+public final class com/neuraldefend/kotlin/NeuroVerifyClient$Builder {
+	public final fun allowCustomBaseUrl (Z)Lcom/neuraldefend/kotlin/NeuroVerifyClient$Builder;
+	public final fun apiKey (Ljava/lang/String;)Lcom/neuraldefend/kotlin/NeuroVerifyClient$Builder;
+	public final fun baseUrl (Ljava/lang/String;)Lcom/neuraldefend/kotlin/NeuroVerifyClient$Builder;
+	public final fun build ()Lcom/neuraldefend/kotlin/NeuroVerifyClient;
+	public final fun maxRetries (I)Lcom/neuraldefend/kotlin/NeuroVerifyClient$Builder;
+	public final fun okHttpClient (Lokhttp3/OkHttpClient;)Lcom/neuraldefend/kotlin/NeuroVerifyClient$Builder;
+	public final fun onWarning (Lcom/neuraldefend/kotlin/WarningListener;)Lcom/neuraldefend/kotlin/NeuroVerifyClient$Builder;
+	public final fun retryAfterCap (JLjava/util/concurrent/TimeUnit;)Lcom/neuraldefend/kotlin/NeuroVerifyClient$Builder;
+	public final synthetic fun retryAfterCap-LRDsOJo (J)Lcom/neuraldefend/kotlin/NeuroVerifyClient$Builder;
+	public final fun staging ()Lcom/neuraldefend/kotlin/NeuroVerifyClient$Builder;
+	public final fun timeout (JLjava/util/concurrent/TimeUnit;)Lcom/neuraldefend/kotlin/NeuroVerifyClient$Builder;
+	public final synthetic fun timeout-LRDsOJo (J)Lcom/neuraldefend/kotlin/NeuroVerifyClient$Builder;
+	public final fun userAgent (Ljava/lang/String;)Lcom/neuraldefend/kotlin/NeuroVerifyClient$Builder;
 }
 
-public final class com/neuraldefend/NeuroVerifyClient$Companion {
-	public final fun builder ()Lcom/neuraldefend/NeuroVerifyClient$Builder;
-	public final fun staging ()Lcom/neuraldefend/NeuroVerifyClient;
-	public final fun staging (Ljava/lang/String;)Lcom/neuraldefend/NeuroVerifyClient;
-	public final synthetic fun staging (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/neuraldefend/NeuroVerifyClient;
-	public static synthetic fun staging$default (Lcom/neuraldefend/NeuroVerifyClient$Companion;Ljava/lang/String;ILjava/lang/Object;)Lcom/neuraldefend/NeuroVerifyClient;
+public final class com/neuraldefend/kotlin/NeuroVerifyClient$Companion {
+	public final fun builder ()Lcom/neuraldefend/kotlin/NeuroVerifyClient$Builder;
+	public final fun staging ()Lcom/neuraldefend/kotlin/NeuroVerifyClient;
+	public final fun staging (Ljava/lang/String;)Lcom/neuraldefend/kotlin/NeuroVerifyClient;
+	public final synthetic fun staging (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/neuraldefend/kotlin/NeuroVerifyClient;
+	public static synthetic fun staging$default (Lcom/neuraldefend/kotlin/NeuroVerifyClient$Companion;Ljava/lang/String;ILjava/lang/Object;)Lcom/neuraldefend/kotlin/NeuroVerifyClient;
 }
 
-public final class com/neuraldefend/NeuroVerifyClientKt {
-	public static final synthetic fun NeuroVerifyClient (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/neuraldefend/NeuroVerifyClient;
-	public static synthetic fun NeuroVerifyClient$default (Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/neuraldefend/NeuroVerifyClient;
+public final class com/neuraldefend/kotlin/NeuroVerifyClientKt {
+	public static final synthetic fun NeuroVerifyClient (Ljava/lang/String;Lkotlin/jvm/functions/Function1;)Lcom/neuraldefend/kotlin/NeuroVerifyClient;
+	public static synthetic fun NeuroVerifyClient$default (Ljava/lang/String;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lcom/neuraldefend/kotlin/NeuroVerifyClient;
 }
 
-public abstract class com/neuraldefend/NeuroVerifyError : java/lang/Exception {
+public abstract class com/neuraldefend/kotlin/NeuroVerifyError : java/lang/Exception {
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/String;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public final fun getDetail ()Ljava/lang/String;
 	public final fun getRequestId ()Ljava/lang/String;
@@ -148,14 +148,14 @@ public abstract class com/neuraldefend/NeuroVerifyError : java/lang/Exception {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class com/neuraldefend/ProtocolError : com/neuraldefend/NeuroVerifyError {
+public final class com/neuraldefend/kotlin/ProtocolError : com/neuraldefend/kotlin/NeuroVerifyError {
 	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/Integer;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/String;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
-public final class com/neuraldefend/RateLimitError : com/neuraldefend/HttpError {
+public final class com/neuraldefend/kotlin/RateLimitError : com/neuraldefend/kotlin/HttpError {
 	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)V
@@ -169,39 +169,39 @@ public final class com/neuraldefend/RateLimitError : com/neuraldefend/HttpError 
 	public final fun getRetryAfterMillis ()Ljava/lang/Long;
 }
 
-public final class com/neuraldefend/ResultStatus : java/lang/Enum {
-	public static final field REJECTED Lcom/neuraldefend/ResultStatus;
-	public static final field SUCCESS Lcom/neuraldefend/ResultStatus;
-	public static final field UNKNOWN Lcom/neuraldefend/ResultStatus;
+public final class com/neuraldefend/kotlin/ResultStatus : java/lang/Enum {
+	public static final field REJECTED Lcom/neuraldefend/kotlin/ResultStatus;
+	public static final field SUCCESS Lcom/neuraldefend/kotlin/ResultStatus;
+	public static final field UNKNOWN Lcom/neuraldefend/kotlin/ResultStatus;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public final fun getWireValue ()Ljava/lang/String;
-	public static fun valueOf (Ljava/lang/String;)Lcom/neuraldefend/ResultStatus;
-	public static fun values ()[Lcom/neuraldefend/ResultStatus;
+	public static fun valueOf (Ljava/lang/String;)Lcom/neuraldefend/kotlin/ResultStatus;
+	public static fun values ()[Lcom/neuraldefend/kotlin/ResultStatus;
 }
 
-public final class com/neuraldefend/RiskLevel : java/lang/Enum {
-	public static final field Companion Lcom/neuraldefend/RiskLevel$Companion;
-	public static final field HIGH Lcom/neuraldefend/RiskLevel;
-	public static final field LOW Lcom/neuraldefend/RiskLevel;
-	public static final field MEDIUM Lcom/neuraldefend/RiskLevel;
-	public static final fun fromWire (Ljava/lang/String;)Lcom/neuraldefend/RiskLevel;
+public final class com/neuraldefend/kotlin/RiskLevel : java/lang/Enum {
+	public static final field Companion Lcom/neuraldefend/kotlin/RiskLevel$Companion;
+	public static final field HIGH Lcom/neuraldefend/kotlin/RiskLevel;
+	public static final field LOW Lcom/neuraldefend/kotlin/RiskLevel;
+	public static final field MEDIUM Lcom/neuraldefend/kotlin/RiskLevel;
+	public static final fun fromWire (Ljava/lang/String;)Lcom/neuraldefend/kotlin/RiskLevel;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
 	public final fun getWireValue ()Ljava/lang/String;
-	public static fun valueOf (Ljava/lang/String;)Lcom/neuraldefend/RiskLevel;
-	public static fun values ()[Lcom/neuraldefend/RiskLevel;
+	public static fun valueOf (Ljava/lang/String;)Lcom/neuraldefend/kotlin/RiskLevel;
+	public static fun values ()[Lcom/neuraldefend/kotlin/RiskLevel;
 }
 
-public final class com/neuraldefend/RiskLevel$Companion {
-	public final fun fromWire (Ljava/lang/String;)Lcom/neuraldefend/RiskLevel;
+public final class com/neuraldefend/kotlin/RiskLevel$Companion {
+	public final fun fromWire (Ljava/lang/String;)Lcom/neuraldefend/kotlin/RiskLevel;
 }
 
-public final class com/neuraldefend/ScopeError : com/neuraldefend/HttpError {
+public final class com/neuraldefend/kotlin/ScopeError : com/neuraldefend/kotlin/HttpError {
 	public fun <init> (Ljava/lang/String;)V
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;)V
 	public synthetic fun <init> (Ljava/lang/String;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 }
 
-public final class com/neuraldefend/ServerError : com/neuraldefend/HttpError {
+public final class com/neuraldefend/kotlin/ServerError : com/neuraldefend/kotlin/HttpError {
 	public fun <init> (Ljava/lang/String;I)V
 	public fun <init> (Ljava/lang/String;ILjava/lang/String;)V
 	public fun <init> (Ljava/lang/String;ILjava/lang/String;Ljava/util/Map;)V
@@ -209,43 +209,43 @@ public final class com/neuraldefend/ServerError : com/neuraldefend/HttpError {
 	public final fun getRaw ()Ljava/util/Map;
 }
 
-public abstract interface class com/neuraldefend/StreamSupplier {
+public abstract interface class com/neuraldefend/kotlin/StreamSupplier {
 	public abstract fun open ()Ljava/io/InputStream;
 }
 
-public final class com/neuraldefend/TimeoutError : com/neuraldefend/NeuroVerifyError {
+public final class com/neuraldefend/kotlin/TimeoutError : com/neuraldefend/kotlin/NeuroVerifyError {
 	public fun <init> (Ljava/lang/String;)V
 }
 
-public abstract interface class com/neuraldefend/UploadProgressListener {
+public abstract interface class com/neuraldefend/kotlin/UploadProgressListener {
 	public abstract fun onProgress (JJ)V
 }
 
-public final class com/neuraldefend/ValidationError : com/neuraldefend/NeuroVerifyError {
-	public fun <init> (Lcom/neuraldefend/ValidationErrorCode;Ljava/lang/String;)V
-	public final fun getCode ()Lcom/neuraldefend/ValidationErrorCode;
+public final class com/neuraldefend/kotlin/ValidationError : com/neuraldefend/kotlin/NeuroVerifyError {
+	public fun <init> (Lcom/neuraldefend/kotlin/ValidationErrorCode;Ljava/lang/String;)V
+	public final fun getCode ()Lcom/neuraldefend/kotlin/ValidationErrorCode;
 }
 
-public final class com/neuraldefend/ValidationErrorCode : java/lang/Enum {
-	public static final field API_KEY_REQUIRED Lcom/neuraldefend/ValidationErrorCode;
-	public static final field CUSTOM_BASE_URL_REQUIRES_OPT_IN Lcom/neuraldefend/ValidationErrorCode;
-	public static final field EMPTY_FILE Lcom/neuraldefend/ValidationErrorCode;
-	public static final field FILENAME_REQUIRED Lcom/neuraldefend/ValidationErrorCode;
-	public static final field FILE_NOT_FOUND Lcom/neuraldefend/ValidationErrorCode;
-	public static final field FILE_TOO_LARGE Lcom/neuraldefend/ValidationErrorCode;
-	public static final field INVALID_BASE_URL Lcom/neuraldefend/ValidationErrorCode;
-	public static final field INVALID_MAX_FRAMES Lcom/neuraldefend/ValidationErrorCode;
-	public static final field INVALID_RETRIES Lcom/neuraldefend/ValidationErrorCode;
-	public static final field INVALID_SAMPLE_RATE Lcom/neuraldefend/ValidationErrorCode;
-	public static final field INVALID_TIMEOUT Lcom/neuraldefend/ValidationErrorCode;
-	public static final field STREAM_NOT_REPLAYABLE Lcom/neuraldefend/ValidationErrorCode;
-	public static final field UNSUPPORTED_INPUT Lcom/neuraldefend/ValidationErrorCode;
+public final class com/neuraldefend/kotlin/ValidationErrorCode : java/lang/Enum {
+	public static final field API_KEY_REQUIRED Lcom/neuraldefend/kotlin/ValidationErrorCode;
+	public static final field CUSTOM_BASE_URL_REQUIRES_OPT_IN Lcom/neuraldefend/kotlin/ValidationErrorCode;
+	public static final field EMPTY_FILE Lcom/neuraldefend/kotlin/ValidationErrorCode;
+	public static final field FILENAME_REQUIRED Lcom/neuraldefend/kotlin/ValidationErrorCode;
+	public static final field FILE_NOT_FOUND Lcom/neuraldefend/kotlin/ValidationErrorCode;
+	public static final field FILE_TOO_LARGE Lcom/neuraldefend/kotlin/ValidationErrorCode;
+	public static final field INVALID_BASE_URL Lcom/neuraldefend/kotlin/ValidationErrorCode;
+	public static final field INVALID_MAX_FRAMES Lcom/neuraldefend/kotlin/ValidationErrorCode;
+	public static final field INVALID_RETRIES Lcom/neuraldefend/kotlin/ValidationErrorCode;
+	public static final field INVALID_SAMPLE_RATE Lcom/neuraldefend/kotlin/ValidationErrorCode;
+	public static final field INVALID_TIMEOUT Lcom/neuraldefend/kotlin/ValidationErrorCode;
+	public static final field STREAM_NOT_REPLAYABLE Lcom/neuraldefend/kotlin/ValidationErrorCode;
+	public static final field UNSUPPORTED_INPUT Lcom/neuraldefend/kotlin/ValidationErrorCode;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lcom/neuraldefend/ValidationErrorCode;
-	public static fun values ()[Lcom/neuraldefend/ValidationErrorCode;
+	public static fun valueOf (Ljava/lang/String;)Lcom/neuraldefend/kotlin/ValidationErrorCode;
+	public static fun values ()[Lcom/neuraldefend/kotlin/ValidationErrorCode;
 }
 
-public final class com/neuraldefend/ValidationWarning {
+public final class com/neuraldefend/kotlin/ValidationWarning {
 	public fun <init> (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V
 	public final fun getCode ()Ljava/lang/String;
 	public final fun getFilename ()Ljava/lang/String;
@@ -253,22 +253,22 @@ public final class com/neuraldefend/ValidationWarning {
 	public fun toString ()Ljava/lang/String;
 }
 
-public final class com/neuraldefend/VideoResult : com/neuraldefend/DetectionResult {
+public final class com/neuraldefend/kotlin/VideoResult : com/neuraldefend/kotlin/DetectionResult {
 	public final fun getAudioMessage ()Ljava/lang/String;
-	public final fun getAudioRiskLevel ()Lcom/neuraldefend/RiskLevel;
+	public final fun getAudioRiskLevel ()Lcom/neuraldefend/kotlin/RiskLevel;
 	public final fun getAudioRiskScore ()Ljava/lang/Double;
 	public final fun getOriginalAudioRiskLevel ()Ljava/lang/String;
 	public final fun getOriginalVideoRiskLevel ()Ljava/lang/String;
 	public final fun getOverallRiskScore ()Ljava/lang/Double;
 	public final fun getVideoMessage ()Ljava/lang/String;
-	public final fun getVideoRiskLevel ()Lcom/neuraldefend/RiskLevel;
+	public final fun getVideoRiskLevel ()Lcom/neuraldefend/kotlin/RiskLevel;
 	public final fun getVideoRiskScore ()Ljava/lang/Double;
 	public final fun hasAudio ()Z
 	public fun toJson ()Ljava/util/Map;
 	public fun toString ()Ljava/lang/String;
 }
 
-public abstract interface class com/neuraldefend/WarningListener {
-	public abstract fun onWarning (Lcom/neuraldefend/ValidationWarning;)V
+public abstract interface class com/neuraldefend/kotlin/WarningListener {
+	public abstract fun onWarning (Lcom/neuraldefend/kotlin/ValidationWarning;)V
 }
 

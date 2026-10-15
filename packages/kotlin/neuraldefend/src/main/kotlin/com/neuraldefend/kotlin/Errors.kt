@@ -1,4 +1,4 @@
-package com.neuraldefend
+package com.neuraldefend.kotlin
 
 /**
  * Base class for every exception thrown by the NeuroVerify SDK.

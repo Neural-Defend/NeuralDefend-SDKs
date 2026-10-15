@@ -9,7 +9,7 @@ plugins {
     signing
 }
 
-description = "Official Kotlin and Java SDK for Neural Defend NeuroVerify image and video authenticity detection."
+description = "Official Kotlin SDK for Neural Defend NeuroVerify image and video authenticity detection."
 
 val latestDependencies = providers.gradleProperty("neuraldefend.latestDependencies").orNull == "true"
 val testJavaVersion = providers.gradleProperty("neuraldefend.testJavaVersion").orNull
@@ -114,7 +114,7 @@ val dokkaJavadocJar = tasks.register<Jar>("dokkaJavadocJar") {
 }
 
 dokka {
-    moduleName.set("neuraldefend")
+    moduleName.set("neuraldefend-kotlin")
     dokkaSourceSets.configureEach {
         includes.from("Module.md")
         sourceLink {
@@ -127,9 +127,9 @@ dokka {
 tasks.jar {
     manifest {
         attributes(
-            "Implementation-Title" to "neuraldefend",
+            "Implementation-Title" to "neuraldefend-kotlin",
             "Implementation-Version" to version,
-            "Automatic-Module-Name" to "com.neuraldefend",
+            "Automatic-Module-Name" to "com.neuraldefend.kotlin",
         )
     }
 }
@@ -137,11 +137,11 @@ tasks.jar {
 publishing {
     publications {
         create<MavenPublication>("release") {
-            artifactId = "neuraldefend"
+            artifactId = "neuraldefend-kotlin"
             from(components["java"])
             artifact(dokkaJavadocJar)
             pom {
-                name.set("Neural Defend NeuroVerify SDK")
+                name.set("Neural Defend NeuroVerify Kotlin SDK")
                 description.set(project.description)
             }
         }

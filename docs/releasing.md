@@ -74,7 +74,8 @@ operation and requires explicit approval.
 
 ## Maven Central setup
 
-The Kotlin SDK publishes `com.neuraldefend:neuraldefend` (JVM) and
+The Java SDK publishes `com.neuraldefend:neuraldefend-sdk`. The Kotlin SDK publishes
+`com.neuraldefend:neuraldefend-kotlin` (JVM) and
 `com.neuraldefend:neuraldefend-android` (Android AAR) through the Central Portal. Maven
 Central has no OIDC trusted publishing, so the release job uses a portal user token and a
 GPG key stored only in the protected `maven-central` environment.
@@ -230,7 +231,7 @@ an explicit non-`latest` dist-tag.
 7. Add the exact Swift version to a clean Xcode app with
    `.package(url: "https://github.com/Neural-Defend/NeuralDefend-SDKs", exact: "X.Y.Z")`,
    build for an iOS Simulator, and confirm Swift Package Index lists the version.
-8. Add `com.neuraldefend:neuraldefend:X.Y.Z` to a clean JVM Gradle project and
+8. Add `com.neuraldefend:neuraldefend-kotlin:X.Y.Z` to a clean JVM Gradle project and
    `com.neuraldefend:neuraldefend-android:X.Y.Z` to a clean Android app, and confirm both
    resolve from Maven Central (new versions can take up to 30 minutes to appear).
 9. Run approved staging smoke tests against the published artifacts.

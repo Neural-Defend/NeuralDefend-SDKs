@@ -1,4 +1,4 @@
-package com.neuraldefend
+package com.neuraldefend.kotlin
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -400,7 +400,7 @@ public class NeuroVerifyClient private constructor(
         public const val STAGING_URL: String = "https://stage.deepscan.neuraldefend.com"
 
         /** Version of this SDK, also sent in the default `User-Agent`. */
-        public const val SDK_VERSION: String = com.neuraldefend.SDK_VERSION
+        public const val SDK_VERSION: String = com.neuraldefend.kotlin.SDK_VERSION
 
         internal const val DEFAULT_TIMEOUT_MILLIS: Long = 120_000
         internal const val DEFAULT_RETRY_AFTER_CAP_MILLIS: Long = 60_000

@@ -1,4 +1,4 @@
-package com.neuraldefend
+package com.neuraldefend.kotlin
 
 /**
  * Service-owned risk band. Base decisions on the band rather than on score thresholds,

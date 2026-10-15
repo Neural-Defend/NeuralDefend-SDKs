@@ -8,8 +8,9 @@ All notable changes to this package follow Keep a Changelog and Semantic Version
 
 ### Added
 
-- Initial Kotlin, Java, and Android SDK, published to Maven Central as
-  `com.neuraldefend:neuraldefend` (JVM, Java 8 or newer) and
+- Initial Kotlin and Android SDK (package `com.neuraldefend.kotlin`), published to Maven
+  Central as
+  `com.neuraldefend:neuraldefend-kotlin` (JVM, Java 8 or newer) and
   `com.neuraldefend:neuraldefend-android` (Android 5.0, API 21, or newer).
 - Coroutine `detectImage` and `detectVideo` functions, and a `NeuroVerifyCall` API with
   `execute`, `enqueue`, and `cancel` for Java and callback-based code.

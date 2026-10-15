@@ -97,7 +97,7 @@ def validate() -> None:
     if kotlin_manifest is None:
         raise ValueError("packages/kotlin/gradle.properties: missing VERSION_NAME")
     kotlin_source = (
-        ROOT / "packages/kotlin/neuraldefend/src/main/kotlin/com/neuraldefend/Version.kt"
+        ROOT / "packages/kotlin/neuraldefend/src/main/kotlin/com/neuraldefend/kotlin/Version.kt"
     ).read_text(encoding="utf-8")
     kotlin_runtime = re.search(
         r'(?m)^internal const val SDK_VERSION: String = "([^"]+)"$', kotlin_source

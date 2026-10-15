@@ -129,7 +129,7 @@ class VersionValidationTests(unittest.TestCase):
         "packages/java/build.gradle.kts",
         "packages/java/src/main/java/com/neuraldefend/SdkVersion.java",
         "packages/kotlin/gradle.properties",
-        "packages/kotlin/neuraldefend/src/main/kotlin/com/neuraldefend/Version.kt",
+        "packages/kotlin/neuraldefend/src/main/kotlin/com/neuraldefend/kotlin/Version.kt",
     )
 
     def _copy_repository_versions(self, root: Path) -> None:

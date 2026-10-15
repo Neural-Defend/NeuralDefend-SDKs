@@ -1,7 +1,7 @@
 package com.neuraldefend.example
 
-import com.neuraldefend.MediaInput
-import com.neuraldefend.NeuroVerifyClient
+import com.neuraldefend.kotlin.MediaInput
+import com.neuraldefend.kotlin.NeuroVerifyClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.ExecutorCoroutineDispatcher

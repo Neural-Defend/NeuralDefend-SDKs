@@ -1,4 +1,4 @@
-package com.neuraldefend
+package com.neuraldefend.kotlin
 
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async

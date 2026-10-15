@@ -1,4 +1,4 @@
-package com.neuraldefend
+package com.neuraldefend.kotlin
 
 import java.io.ByteArrayInputStream
 import java.io.File

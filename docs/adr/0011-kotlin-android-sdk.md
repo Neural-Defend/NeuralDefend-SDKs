@@ -1,4 +1,4 @@
-# ADR 0011: Kotlin, Java, and Android SDK on OkHttp with a private generated contract
+# ADR 0011: Kotlin and Android SDK on OkHttp with a private generated contract
 
 - Status: Accepted
 - Date: 2026-10-14
@@ -23,6 +23,10 @@ Several JVM- and Android-specific constraints shape the design:
 - Many enterprise JVM services still run Java 8 or 11.
 - Android binaries are distributed to end users, so any credential compiled into them is
   extractable.
+- The Java SDK (ADR-0009) already publishes `com.neuraldefend:neuraldefend-sdk` with
+  `com.neuraldefend.NeuroVerifyClient`, `ImageResult`, and `VideoResult`. A second library
+  with the same class names in the same package would break any app that ends up with both
+  on its classpath.
 - Maven Central requires sources and javadoc jars, a complete POM, checksums, and GPG
   signatures for every file, and namespace ownership verified through DNS.
 
@@ -30,13 +34,17 @@ Several JVM- and Android-specific constraints shape the design:
 
 Add `packages/kotlin`, a Gradle build that publishes two artifacts to Maven Central:
 
-- `com.neuraldefend:neuraldefend`: a pure JVM jar (package `com.neuraldefend`) built for
+- `com.neuraldefend:neuraldefend-kotlin`: a pure JVM jar (package `com.neuraldefend.kotlin`) built for
   Java 8 bytecode, with `api` dependencies on OkHttp 4.12 and kotlinx-coroutines 1.9 and an
   `implementation` dependency on kotlinx-serialization-json 1.7.3 for its JSON tree. These
   are lower bounds; CI also tests the newest stable releases.
 - `com.neuraldefend:neuraldefend-android`: an AAR (minSdk 21, package
   `com.neuraldefend.android`) that adds only `MediaInputs.fromUri` and the `INTERNET`
   permission.
+
+The Kotlin SDK uses package `com.neuraldefend.kotlin` and Automatic-Module-Name
+`com.neuraldefend.kotlin` so it never collides with the Java SDK. Java-first projects are
+pointed to the Java SDK; the Kotlin SDK remains callable from Java for Android apps.
 
 The design follows the other SDKs where the platform allows:
 
@@ -85,9 +93,9 @@ The design follows the other SDKs where the platform allows:
 
 ## Consequences
 
-JVM servers, Java code, and Android apps share one tested implementation with no runtime
+Kotlin services and Android apps share one tested implementation with no runtime
 dependency beyond OkHttp, coroutines, and serialization, and apps keep control of those
-versions. Generation now covers five languages; spec or generator changes must regenerate
+versions. Generation now covers seven languages; spec or generator changes must regenerate
 all private cores and add equivalent Kotlin tests. Public API changes show up as diffs in
 the ABI dump and need `./gradlew updateKotlinAbi`. Android builds need compileSdk 37 and a
 Java 21 toolchain to build, but not to consume. Maven Central releases cannot be deleted or

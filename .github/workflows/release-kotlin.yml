@@ -112,8 +112,8 @@ jobs:
       - name: Build signed bundle
         working-directory: packages/kotlin
         env:
-          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
-          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+          SIGNING_KEY: ${{ secrets.MAVEN_CENTRAL_SIGNING_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.MAVEN_CENTRAL_SIGNING_PASSWORD }}
         run: ./gradlew --console=plain --no-build-cache -Pneuraldefend.requireSigning=true centralBundle
       - name: Verify and scan the signed bundle
         shell: bash
@@ -146,13 +146,13 @@ jobs:
 
           \`\`\`kotlin
           dependencies {
-              implementation("com.neuraldefend:neuraldefend:${version}")
+              implementation("com.neuraldefend:neuraldefend-kotlin:${version}")
               // Android apps that upload content Uris (photo picker, camera):
               implementation("com.neuraldefend:neuraldefend-android:${version}")
           }
           \`\`\`
 
-          Maven Central can take up to 30 minutes to show a new release. See https://central.sonatype.com/artifact/com.neuraldefend/neuraldefend and [packages/kotlin/README.md](https://github.com/${GITHUB_REPOSITORY}/tree/main/packages/kotlin/README.md).
+          Maven Central can take up to 30 minutes to show a new release. See https://central.sonatype.com/artifact/com.neuraldefend/neuraldefend-kotlin and [packages/kotlin/README.md](https://github.com/${GITHUB_REPOSITORY}/tree/main/packages/kotlin/README.md).
           EOF
           )"
           gh release create "$GITHUB_REF_NAME" \

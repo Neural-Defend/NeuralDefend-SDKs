@@ -1,4 +1,4 @@
-package com.neuraldefend;
+package com.neuraldefend.kotlin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

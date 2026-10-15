@@ -1,4 +1,4 @@
-package com.neuraldefend
+package com.neuraldefend.kotlin
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job

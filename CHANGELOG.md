@@ -40,8 +40,8 @@ surface.
 
 ### Added
 
-- Public Kotlin, Java, and Android SDK (`packages/kotlin`) v1.0.0, published to Maven
-  Central as `com.neuraldefend:neuraldefend` (JVM, Java 8+) and
+- Public Kotlin and Android SDK (`packages/kotlin`, package `com.neuraldefend.kotlin`) v1.0.0, published to Maven
+  Central as `com.neuraldefend:neuraldefend-kotlin` (JVM, Java 8+) and
   `com.neuraldefend:neuraldefend-android` (API 21+), with coroutine and Java call APIs,
   streaming uploads from files and content `Uri`s, normalized results, bounded retries,
   cancellation, and a Jetpack Compose example app (ADR-0011).

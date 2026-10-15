@@ -18,13 +18,13 @@ if str(SCRIPTS) not in sys.path:
 
 import publish_maven_central as central
 
-ARTIFACT_DIR = "com/neuraldefend/neuraldefend/1.0.0"
+ARTIFACT_DIR = "com/neuraldefend/neuraldefend-kotlin/1.0.0"
 FILES = (
-    "neuraldefend-1.0.0.jar",
-    "neuraldefend-1.0.0-sources.jar",
-    "neuraldefend-1.0.0-javadoc.jar",
-    "neuraldefend-1.0.0.pom",
-    "neuraldefend-1.0.0.module",
+    "neuraldefend-kotlin-1.0.0.jar",
+    "neuraldefend-kotlin-1.0.0-sources.jar",
+    "neuraldefend-kotlin-1.0.0-javadoc.jar",
+    "neuraldefend-kotlin-1.0.0.pom",
+    "neuraldefend-kotlin-1.0.0.module",
 )
 
 
@@ -68,28 +68,28 @@ class VerifyBundleTests(unittest.TestCase):
             bundle = write_bundle(Path(temporary) / "bundle.zip")
             self.assertEqual(
                 central.verify_bundle(bundle, "1.0.0", require_signatures=True),
-                ["com.neuraldefend:neuraldefend:1.0.0"],
+                ["com.neuraldefend:neuraldefend-kotlin:1.0.0"],
             )
 
     def test_unsigned_bundle_passes_only_in_dry_run_mode(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             bundle = write_bundle(Path(temporary) / "bundle.zip", signed=False)
             central.verify_bundle(bundle, "1.0.0", require_signatures=False)
-            with self.assertRaisesRegex(central.PublishError, r"neuraldefend-1\.0\.0\.jar\.asc"):
+            with self.assertRaisesRegex(central.PublishError, r"neuraldefend-kotlin-1\.0\.0\.jar\.asc"):
                 central.verify_bundle(bundle, "1.0.0", require_signatures=True)
 
     def test_missing_javadoc_checksum_and_metadata_are_reported(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             bundle = write_bundle(
                 Path(temporary) / "bundle.zip",
-                skip=("neuraldefend-1.0.0-javadoc.jar", "neuraldefend-1.0.0.pom.sha1"),
-                extra=("com/neuraldefend/neuraldefend/maven-metadata.xml",),
+                skip=("neuraldefend-kotlin-1.0.0-javadoc.jar", "neuraldefend-kotlin-1.0.0.pom.sha1"),
+                extra=("com/neuraldefend/neuraldefend-kotlin/maven-metadata.xml",),
             )
             with self.assertRaises(central.PublishError) as raised:
                 central.verify_bundle(bundle, "1.0.0", require_signatures=True)
             message = str(raised.exception)
             self.assertIn("-javadoc.jar (required by Maven Central)", message)
-            self.assertIn("missing neuraldefend-1.0.0.pom.sha1", message)
+            self.assertIn("missing neuraldefend-kotlin-1.0.0.pom.sha1", message)
             self.assertIn("maven-metadata.xml", message)
 
     def test_version_mismatch_is_rejected(self) -> None:

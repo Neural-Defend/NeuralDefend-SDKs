@@ -45,7 +45,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.neuraldefend.MediaInput
+import com.neuraldefend.kotlin.MediaInput
 import com.neuraldefend.android.MediaInputs
 import java.io.File
 

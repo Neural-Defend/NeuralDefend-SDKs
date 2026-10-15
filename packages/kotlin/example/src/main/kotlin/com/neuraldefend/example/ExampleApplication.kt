@@ -1,7 +1,7 @@
 package com.neuraldefend.example
 
 import android.app.Application
-import com.neuraldefend.NeuroVerifyClient
+import com.neuraldefend.kotlin.NeuroVerifyClient
 import okhttp3.OkHttpClient
 
 /** Which NeuroVerify deployment the demo calls. */

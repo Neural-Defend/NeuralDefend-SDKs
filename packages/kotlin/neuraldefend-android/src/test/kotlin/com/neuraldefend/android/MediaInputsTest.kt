@@ -9,9 +9,9 @@ import android.net.Uri
 import android.os.ParcelFileDescriptor
 import android.provider.OpenableColumns
 import androidx.test.core.app.ApplicationProvider
-import com.neuraldefend.NeuroVerifyClient
-import com.neuraldefend.ValidationError
-import com.neuraldefend.ValidationErrorCode
+import com.neuraldefend.kotlin.NeuroVerifyClient
+import com.neuraldefend.kotlin.ValidationError
+import com.neuraldefend.kotlin.ValidationErrorCode
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
