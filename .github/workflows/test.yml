@@ -267,6 +267,110 @@ jobs:
           dart pub get
           dart test
 
+  swift-linux:
+    name: Swift ${{ matrix.swift }} Linux
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        # 6.0.3 is the oldest supported toolchain; "latest" resolves from swift.org.
+        swift: ["6.0.3", latest]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Swift
+        run: python3 scripts/setup_swift_toolchain.py "${{ matrix.swift }}"
+      - name: Show toolchain
+        run: swift --version
+      - name: Check formatting
+        if: matrix.swift == '6.0.3'
+        run: swift format lint --strict --recursive Package.swift packages/swift/Sources packages/swift/Tests packages/swift/Examples
+      - name: Test Swift SDK
+        run: swift test -Xswiftc -warnings-as-errors
+      - name: Test SwiftUI example model
+        working-directory: packages/swift/Examples/NeuroVerifyDemo
+        run: swift test -Xswiftc -warnings-as-errors
+
+  swift-apple:
+    name: Swift Xcode ${{ matrix.xcode }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Xcode 16.0 ships Swift 6.0, the oldest supported toolchain. Runner images do not
+          # guarantee a simulator runtime for it, so that leg compiles for the simulator only.
+          - os: macos-15
+            xcode: "16.0"
+            simulator-tests: false
+          - os: macos-latest
+            xcode: default
+            simulator-tests: true
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Select Xcode
+        if: matrix.xcode != 'default'
+        run: sudo xcode-select --switch "/Applications/Xcode_${{ matrix.xcode }}.app/Contents/Developer"
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+          xcodebuild -list
+      - name: Test Swift SDK on macOS
+        run: swift test -Xswiftc -warnings-as-errors
+      - name: Build Swift SDK tests for the iOS Simulator
+        if: ${{ !matrix.simulator-tests }}
+        shell: bash
+        run: |
+          if ! xcodebuild -showdestinations -scheme NeuralDefend 2>/dev/null \
+            | grep 'platform:iOS Simulator' | grep -vq 'error:'; then
+            echo "::warning::This runner has no iOS Simulator platform for Xcode ${{ matrix.xcode }}; skipping."
+            exit 0
+          fi
+          xcodebuild build-for-testing -scheme NeuralDefend -destination "generic/platform=iOS Simulator" \
+            -skipPackagePluginValidation SWIFT_TREAT_WARNINGS_AS_ERRORS=YES
+      - name: Pick an iOS Simulator
+        if: matrix.simulator-tests
+        shell: bash
+        run: |
+          destination="$(xcodebuild -showdestinations -scheme NeuralDefend 2>/dev/null \
+            | grep 'platform:iOS Simulator' | grep 'name:iPhone' | grep -v Placeholder \
+            | head -n 1 | sed -E 's/.*id:([^,]+),.*/\1/' || true)"
+          if [[ -z "$destination" ]]; then
+            xcodebuild -showdestinations -scheme NeuralDefend || true
+            xcrun simctl list runtimes || true
+            echo "::error::No iOS Simulator is available for this Xcode."
+            exit 1
+          fi
+          echo "IOS_SIMULATOR_ID=$destination" >> "$GITHUB_ENV"
+      - name: Test Swift SDK on the iOS Simulator
+        if: matrix.simulator-tests
+        run: |
+          xcodebuild test -scheme NeuralDefend -destination "id=$IOS_SIMULATOR_ID" \
+            -skipPackagePluginValidation SWIFT_TREAT_WARNINGS_AS_ERRORS=YES
+      - name: Build for Mac Catalyst
+        run: |
+          xcodebuild build -scheme NeuralDefend -destination "generic/platform=macOS,variant=Mac Catalyst" \
+            -skipPackagePluginValidation SWIFT_TREAT_WARNINGS_AS_ERRORS=YES
+      - name: Test SwiftUI example on macOS
+        working-directory: packages/swift/Examples/NeuroVerifyDemo
+        run: swift test -Xswiftc -warnings-as-errors
+      # Xcode passes -suppress-warnings to package dependencies, which conflicts with
+      # SWIFT_TREAT_WARNINGS_AS_ERRORS; the macOS step above already treats warnings as errors.
+      - name: Test SwiftUI example on the iOS Simulator
+        if: matrix.simulator-tests
+        working-directory: packages/swift/Examples/NeuroVerifyDemo
+        run: |
+          xcodebuild test -scheme NeuroVerifyDemo -destination "id=$IOS_SIMULATOR_ID" \
+            -skipPackagePluginValidation
+
   python-platforms:
     name: Python 3.14 ${{ matrix.os }}
     runs-on: ${{ matrix.os }}

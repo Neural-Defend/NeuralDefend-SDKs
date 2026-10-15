@@ -1,0 +1,13 @@
+{
+  "globalProperties": {
+    "apiDocs": false,
+    "apiTests": false,
+    "modelDocs": false,
+    "modelTests": false
+  },
+  "projectName": "NeuralDefendCore",
+  "useSPMFileStructure": true,
+  "swiftPackagePath": "Sources/NeuralDefendCore",
+  "responseAs": "AsyncAwait",
+  "hideGenerationTimestamp": true
+}

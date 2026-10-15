@@ -92,6 +92,17 @@ def validate() -> None:
     if dart_runtime is None:
         raise ValueError("packages/dart/lib/src/version.dart: missing sdkVersion constant")
 
+    # SwiftPM has no version field; the release tag must match this constant and the changelog.
+    swift_source = (ROOT / "packages/swift/Sources/NeuralDefend/Version.swift").read_text(
+        encoding="utf-8"
+    )
+    swift_runtime = re.search(r'static let sdkVersion = "([^"]+)"', swift_source)
+    if swift_runtime is None:
+        raise ValueError("packages/swift/Sources/NeuralDefend/Version.swift: missing sdkVersion")
+    swift_changelog = (ROOT / "packages/swift/CHANGELOG.md").read_text(encoding="utf-8")
+    swift_released = re.search(r"(?m)^## \[(\d[^\]]*)\]", swift_changelog)
+    if swift_released is None:
+        raise ValueError("packages/swift/CHANGELOG.md: missing a released version heading")
     java_manifest = ""
     for line in (ROOT / "packages/java/build.gradle.kts").read_text(encoding="utf-8").splitlines():
         if line.strip().startswith('version = "'):
@@ -119,6 +130,8 @@ def validate() -> None:
         "Go runtime": go_version,
         "Dart manifest": dart_manifest.group(1),
         "Dart runtime": dart_runtime.group(1),
+        "Swift runtime": swift_runtime.group(1),
+        "Swift changelog": swift_released.group(1),
         "Java manifest": java_manifest,
         "Java runtime": java_runtime,
     }
@@ -137,6 +150,8 @@ def validate() -> None:
         raise ValueError("TypeScript user-agent version does not match package.json")
     if dart_runtime.group(1) != dart_manifest.group(1):
         raise ValueError("Dart sdkVersion does not match pubspec.yaml")
+    if swift_runtime.group(1) != swift_released.group(1):
+        raise ValueError("Swift sdkVersion does not match the latest packages/swift/CHANGELOG.md entry")
     if java_runtime != java_manifest:
         raise ValueError("Java SdkVersion.VERSION does not match build.gradle.kts")
 

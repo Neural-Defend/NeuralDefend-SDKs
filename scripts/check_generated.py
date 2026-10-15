@@ -13,6 +13,7 @@ from generate import (
     GO_DESTINATION,
     JAVA_DESTINATION,
     PYTHON_DESTINATION,
+    SWIFT_DESTINATION,
     TYPESCRIPT_DESTINATION,
     generate_snapshot,
 )
@@ -72,6 +73,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="committed Dart generated-source directory",
     )
     parser.add_argument(
+        "--swift-dir",
+        type=Path,
+        default=SWIFT_DESTINATION,
+        help="committed Swift generated-source directory",
+    )
+    parser.add_argument(
         "--java-dir",
         type=Path,
         default=JAVA_DESTINATION,
@@ -106,6 +113,11 @@ def main(argv: list[str] | None = None) -> int:
                 snapshot / "dart",
                 args.dart_dir.resolve(),
             )
+            swift_current = _compare(
+                "swift",
+                snapshot / "swift",
+                args.swift_dir.resolve(),
+            )
             java_current = _compare(
                 "java",
                 snapshot / "java",
@@ -114,15 +126,15 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, SpecError) as exc:
         print(f"generated-source check failed: {exc}", file=sys.stderr)
         return 1
-    return (
-        0
-        if python_current
-        and typescript_current
-        and go_current
-        and dart_current
-        and java_current
-        else 1
+    current = (
+        python_current,
+        typescript_current,
+        go_current,
+        dart_current,
+        java_current,
+        swift_current,
     )
+    return 0 if all(current) else 1
 
 
 if __name__ == "__main__":
