@@ -318,6 +318,10 @@ client-exposable credential for your tenant, or during development with a stagin
 
 ## Examples
 
+> **Building for a specific industry?** See the [industry use cases](../../docs/use-cases/README.md):
+> eKYC onboarding, KYC re-verification, Video KYC, HR tech, and video conferencing, with
+> complete code for this SDK.
+
 Each example is complete. Dart VM examples read `NEURALDEFEND_API_KEY`; Flutter examples
 pass `apiKey` explicitly. **The output shown under each example is representative**: your
 scores, transaction IDs, byte counts, timings, and messages will differ.

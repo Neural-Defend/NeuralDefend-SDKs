@@ -11,7 +11,7 @@ Send a photo or video, get back a clear `low` / `medium` / `high` risk answer in
 [![API docs](https://img.shields.io/badge/docs-API%20reference-0A66C2?style=flat-square&logo=gitbook&logoColor=white)](https://neuraldefend.gitbook.io/neural-defend)
 [![Website](https://img.shields.io/badge/neuraldefend.com-get%20an%20API%20key-111111?style=flat-square)](https://neuraldefend.com/)
 
-[Choose an SDK](#choose-an-sdk) · [Get an API key](#get-an-api-key) · [Quick start](#quick-start) · [Understanding results](#understanding-results) · [Documentation](#documentation) · [Support](#support)
+[Choose an SDK](#choose-an-sdk) · [Get an API key](#get-an-api-key) · [Quick start](#quick-start) · [Use cases](#industry-use-cases) · [Understanding results](#understanding-results) · [Documentation](#documentation) · [Support](#support)
 
 </div>
 
@@ -406,6 +406,18 @@ Then ask your assistant: *"Check `selfie.jpg` in my media folder for signs of a 
 The server exposes the `detect_image_authenticity` and `detect_video_authenticity` tools.
 [MCP guide →](packages/mcp/README.md)
 
+## Industry use cases
+
+Step-by-step integration guides, with complete code for every SDK:
+
+| Guide | For | What it checks |
+|---|---|---|
+| [eKYC onboarding](docs/use-cases/ekyc-onboarding.md) | Digital banks, fintechs, eKYC providers | The selfie at sign-up |
+| [KYC re-verification](docs/use-cases/kyc-reverification.md) | Banks, wallets, marketplaces | A fresh selfie before risky actions |
+| [Video KYC](docs/use-cases/video-kyc.md) | Video KYC platforms, banks, insurers | The recorded session: face **and** voice |
+| [HR tech](docs/use-cases/hr-tech.md) | Hiring platforms, background checks | Interview recordings and ID photos |
+| [Video conferencing](docs/use-cases/video-conferencing.md) | Meeting, webinar, and telehealth platforms | Short clips of participants during calls |
+
 ## Understanding results
 
 Every SDK returns the same information, named in that language's style
@@ -468,6 +480,7 @@ Keep the `unique_trx_id`: support and billing use it to find your request.
 
 | Topic | Link |
 |---|---|
+| Industry use cases | [eKYC](docs/use-cases/ekyc-onboarding.md) · [KYC re-verification](docs/use-cases/kyc-reverification.md) · [Video KYC](docs/use-cases/video-kyc.md) · [HR tech](docs/use-cases/hr-tech.md) · [Video conferencing](docs/use-cases/video-conferencing.md) |
 | SDK guides | [Python](packages/python/README.md) · [TypeScript](packages/typescript/README.md) · [Go](packages/go/README.md) · [Java](packages/java/README.md) · [Kotlin](packages/kotlin/README.md) · [Dart](packages/dart/README.md) · [Swift](packages/swift/README.md) · [MCP](packages/mcp/README.md) |
 | Changelogs | [Python](packages/python/CHANGELOG.md) · [TypeScript](packages/typescript/CHANGELOG.md) · [Go](packages/go/CHANGELOG.md) · [Java](packages/java/CHANGELOG.md) · [Kotlin](packages/kotlin/CHANGELOG.md) · [Dart](packages/dart/CHANGELOG.md) · [Swift](packages/swift/CHANGELOG.md) · [MCP](packages/mcp/CHANGELOG.md) · [Repository](CHANGELOG.md) |
 | Image endpoint scenarios | [Unified Face Authenticity Score](docs/client/unified-face-authenticity.md) |

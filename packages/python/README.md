@@ -208,6 +208,10 @@ You get the full response, with a separate result for the picture and for the so
 
 ## Examples
 
+> **Building for a specific industry?** See the [industry use cases](../../docs/use-cases/README.md):
+> eKYC onboarding, KYC re-verification, Video KYC, HR tech, and video conferencing, with
+> complete code for this SDK.
+
 Each example is complete: copy it into a `.py` file, set `NEURALDEFEND_API_KEY`, and run
 it. The output shown under each example is representative; your scores, transaction IDs,
 and messages will differ.

@@ -294,6 +294,10 @@ You get the full response, with a separate result for the picture and for the so
 
 ## Examples
 
+> **Building for a specific industry?** See the [industry use cases](../../docs/use-cases/README.md):
+> eKYC onboarding, KYC re-verification, Video KYC, HR tech, and video conferencing, with
+> complete code for this SDK.
+
 Unless an example says otherwise, it is a complete command-line program: paste it into
 `Sources/DetectMedia/main.swift` from the [quick start](#quick-start-image), set
 `NEURALDEFEND_API_KEY`, and run `swift run DetectMedia`. Example 5 is a SwiftUI view for an

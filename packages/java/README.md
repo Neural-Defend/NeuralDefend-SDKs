@@ -236,6 +236,10 @@ A combined image-and-video program also lives in
 
 ## Examples
 
+> **Building for a specific industry?** See the [industry use cases](../../docs/use-cases/README.md):
+> eKYC onboarding, KYC re-verification, Video KYC, HR tech, and video conferencing, with
+> complete code for this SDK.
+
 Each example is a complete class: copy it into a `.java` file, set `NEURALDEFEND_API_KEY`,
 and run it with the SDK on your classpath. The output shown under each example is
 representative; your scores, transaction IDs, and messages will differ.
