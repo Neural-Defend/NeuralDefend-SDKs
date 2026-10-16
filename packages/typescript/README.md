@@ -281,6 +281,10 @@ success low Not likely to be Spoof or AI-generated
 
 ## Examples
 
+> **Building for a specific industry?** See the [industry use cases](../../docs/use-cases/README.md):
+> eKYC onboarding, KYC re-verification, Video KYC, HR tech, and video conferencing, with
+> complete code for this SDK.
+
 Each Node.js example is complete: save it as a `.mjs` file (so top-level `await` works),
 set `NEURALDEFEND_API_KEY`, and run it with `node`. The output shown under each example is
 representative; your scores, transaction IDs, and messages will differ.

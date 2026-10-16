@@ -354,6 +354,10 @@ client-exposable credential for your tenant, or during development with a stagin
 
 ## Examples
 
+> **Building for a specific industry?** See the [industry use cases](../../docs/use-cases/README.md):
+> eKYC onboarding, KYC re-verification, Video KYC, HR tech, and video conferencing, with
+> complete code for this SDK.
+
 Each example is complete: copy it into your project, set `NEURALDEFEND_API_KEY` (JVM
 examples), and run it. The output shown under each example is representative; your
 scores, transaction IDs, and messages will differ. Printing a `RiskLevel` shows the enum

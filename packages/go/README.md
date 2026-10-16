@@ -249,6 +249,10 @@ You get the full response, with a separate result for the picture and for the so
 
 ## Examples
 
+> **Building for a specific industry?** See the [industry use cases](../../docs/use-cases/README.md):
+> eKYC onboarding, KYC re-verification, Video KYC, HR tech, and video conferencing, with
+> complete code for this SDK.
+
 Each example is a complete `package main` program: put it in its own module (see
 [Quick start](#quick-start-image)), set `NEURALDEFEND_API_KEY`, and run it with
 `go run .`. The output shown under each example is representative; your scores,
