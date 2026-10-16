@@ -138,92 +138,73 @@ key even when using the explicit argument.
 
 ## Quick start: image
 
-Save this complete synchronous example as `detect_image.py`, set
-`NEURALDEFEND_API_KEY`, and run `python detect_image.py /path/to/selfie.jpg`.
-
 ```python
 import json
-import os
-import sys
 
 from neuraldefend import NeuroVerifyClient
 
-
-def main() -> None:
-    if len(sys.argv) != 2:
-        raise SystemExit("usage: python detect_image.py IMAGE_PATH")
-
-    # Get an API key from https://neuraldefend.com/ (Book a Demo), then export it.
-    api_key = os.environ["NEURALDEFEND_API_KEY"]
-    with NeuroVerifyClient(api_key=api_key) as client:
-        result = client.detect_image(sys.argv[1])
-
-    # to_dict() contains normalized, JSON-serializable public fields.
-    print(json.dumps(result.to_dict(), indent=2))
-
-    if result.scored:
-        print(f"image risk: {result.risk_level} ({result.risk_score})")
-        if result.high_risk:
-            print("route to the review required by your policy")
-    elif result.rejected:
-        print(f"image was not scored: {result.message}")
-    else:
-        print(f"unrecognized future outcome: {result.status}")
-
-
-if __name__ == "__main__":
-    main()
+result = NeuroVerifyClient().detect_image("selfie.jpg")  # uses NEURALDEFEND_API_KEY
+print(json.dumps(result.to_dict(), indent=2))
 ```
+
+That's it. You get the full response:
+
+```json
+{
+  "unique_trx_id": "trx_example_image_low",
+  "filename": "selfie.jpg",
+  "content_type": "image/jpeg",
+  "status": "success",
+  "status_code": 1,
+  "billable": true,
+  "risk_score": 2.2,
+  "risk_level": "low",
+  "message": "Not likely to be Spoof or AI-generated",
+  "ai_threat_signals": ["Visual Safety Screening", "Liveness Verification"],
+  "scored": true,
+  "rejected": false,
+  "high_risk": false
+}
+```
+
+The field that matters most is `risk_level`: `low`, `medium`, or `high`.
 
 ## Quick start: video
 
-Save this complete synchronous example as `detect_video.py`, set
-`NEURALDEFEND_API_KEY`, and run `python detect_video.py /path/to/clip.mp4`.
-
 ```python
 import json
-import os
-import sys
 
 from neuraldefend import NeuroVerifyClient
 
-
-def main() -> None:
-    if len(sys.argv) != 2:
-        raise SystemExit("usage: python detect_video.py VIDEO_PATH")
-
-    # Get an API key from https://neuraldefend.com/ (Book a Demo), then export it.
-    api_key = os.environ["NEURALDEFEND_API_KEY"]
-    with NeuroVerifyClient(api_key=api_key) as client:
-        result = client.detect_video(
-            sys.argv[1],
-            max_frames=24,
-            sample_rate=2,
-        )
-
-    # The normalized output includes both modalities and convenience properties.
-    print(json.dumps(result.to_dict(), indent=2))
-
-    if result.scored:
-        print(f"video risk: {result.video_risk_level} ({result.video_risk_score})")
-        if result.has_audio:
-            print(f"audio risk: {result.audio_risk_level} ({result.audio_risk_score})")
-        else:
-            print(f"audio not scored: {result.audio_message}")
-        print(f"maximum modality score: {result.overall_risk_score}")
-    elif result.rejected:
-        print(f"video was not scored: {result.video_message}")
-    else:
-        print(f"unrecognized future outcome: {result.status}")
-
-
-if __name__ == "__main__":
-    main()
+result = NeuroVerifyClient().detect_video("clip.mp4")
+print(json.dumps(result.to_dict(), indent=2))
 ```
 
-`overall_risk_score` is a client-side convenience equal to the maximum available modality
-score. It is not a combined score returned by the API and does not replace modality-aware
-policy.
+You get the full response, with a separate result for the picture and for the sound:
+
+```json
+{
+  "unique_trx_id": "trx_example_video_modalities",
+  "filename": "clip.mp4",
+  "content_type": "video/mp4",
+  "status": "success",
+  "status_code": 1,
+  "billable": true,
+  "video_risk_score": 2.2,
+  "video_risk_level": "low",
+  "video_message": "Not likely to be AI-generated",
+  "audio_risk_score": 8.4,
+  "audio_risk_level": "high",
+  "audio_message": "Likely to be AI-generated",
+  "ai_threat_signals": ["Face Swap Detection", "Audio Frequency Analysis"],
+  "scored": true,
+  "rejected": false,
+  "has_audio": true,
+  "overall_risk_score": 8.4
+}
+```
+
+`overall_risk_score` is simply the higher of the two scores.
 
 ## Examples
 
@@ -246,55 +227,42 @@ and messages will differ.
 
 ### 1. Check one photo
 
-The shortest possible program. The `with` block opens a connection and closes it for you.
+Print just the answer instead of the whole response.
 
 ```python
 from neuraldefend import NeuroVerifyClient
 
-with NeuroVerifyClient() as client:  # reads NEURALDEFEND_API_KEY
-    result = client.detect_image("selfie.jpg")
-
-print(result.status, result.risk_level, result.risk_score)
-print(result.message)
+result = NeuroVerifyClient().detect_image("selfie.jpg")
+print(result.risk_level, result.message)
 ```
 
 Output:
 
 ```text
-success low 2.2
-Not likely to be Spoof or AI-generated
+low Not likely to be Spoof or AI-generated
 ```
 
 ### 2. Check a video with sound
 
-A video gets **two** separate answers: one for the picture and one for the audio. A clip
-without sound is still scored; only the audio fields are empty.
+A video gets **two** answers: one for the picture and one for the sound.
 
 ```python
 from neuraldefend import NeuroVerifyClient
 
-with NeuroVerifyClient() as client:
-    result = client.detect_video("interview.mp4")
-
-if result.scored:
-    print(f"Video: {result.video_risk_level} ({result.video_risk_score})")
-    if result.has_audio:
-        print(f"Audio: {result.audio_risk_level} ({result.audio_risk_score})")
-    else:
-        print(f"Audio: not scored ({result.audio_message})")
-else:
-    print(f"Not scored: {result.video_message}")
+result = NeuroVerifyClient().detect_video("interview.mp4")
+print("Video:", result.video_risk_level)
+print("Audio:", result.audio_risk_level)
 ```
 
 Output:
 
 ```text
-Video: low (2.2)
-Audio: high (8.4)
+Video: low
+Audio: high
 ```
 
-Here the face looks real but the voice is likely synthetic, which is why the two
-modalities are reported separately.
+Here the face looks real but the voice is likely fake. A video with no sound prints
+`Audio: None`.
 
 ### 3. Turn a result into a decision
 

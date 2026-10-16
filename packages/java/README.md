@@ -182,116 +182,56 @@ key even when setting it explicitly.
 
 ## Quick start: image
 
-Save this complete example as `DetectImage.java`, set `NEURALDEFEND_API_KEY`, and run it
-with the SDK on your classpath, passing an image path as the only argument.
+Save as `QuickStart.java` and run it with the SDK on your classpath:
 
 ```java
 import com.neuraldefend.ClientOptions;
-import com.neuraldefend.ImageResult;
 import com.neuraldefend.Media;
 import com.neuraldefend.NeuroVerifyClient;
 
-public final class DetectImage {
+public class QuickStart {
     public static void main(String[] args) {
-        if (args.length != 1) {
-            System.err.println("usage: java DetectImage IMAGE_PATH");
-            System.exit(2);
-        }
-
-        // Get an API key from https://neuraldefend.com/ (Book a Demo), then export it.
-        ClientOptions options = new ClientOptions();
-        options.apiKey = System.getenv("NEURALDEFEND_API_KEY");
-        NeuroVerifyClient client = NeuroVerifyClient.newClient(options);
-
-        ImageResult result = client.detectImage(Media.fileMedia(args[0]));
-
-        System.out.println("transaction: " + result.uniqueTrxId);
-        System.out.println("status:      " + result.status + " (code " + result.statusCode + ")");
-        System.out.println("billable:    " + result.billable);
-
-        if (result.scored()) {
-            System.out.printf("image risk:  %s (%s)%n", result.riskLevel, result.riskScore);
-            if (result.highRisk()) {
-                System.out.println("route to the review required by your policy");
-            }
-        } else if (result.rejected()) {
-            System.out.println("image was not scored: " + result.message);
-        } else {
-            System.out.println("unrecognized future outcome: " + result.status);
-        }
+        var client = NeuroVerifyClient.newClient(new ClientOptions()); // uses NEURALDEFEND_API_KEY
+        var result = client.detectImage(Media.fileMedia("selfie.jpg"));
+        System.out.println(result.raw);
     }
 }
 ```
 
-Output:
+That's it. `result.raw` is the full response exactly as the API sent it:
 
 ```text
-transaction: trx_example_image_low
-status:      success (code 1)
-billable:    true
-image risk:  low (2.2)
+{risk_level=low, unique_trx_id=trx_example_image_low, filename=selfie.jpg, status_code=1.0, content_type=image/jpeg, risk_score=2.2, ai_threat_signals=[Visual Safety Screening, Liveness Verification], message=Not likely to be Spoof or AI-generated, billable=Y, status=success}
 ```
 
-## Quick start: video
+The field that matters most is `risk_level`: `low`, `medium`, or `high`. In your code, read
+the same values from typed fields such as `result.riskLevel` (see [Examples](#examples)).
+`raw` is a plain `Map`, so numbers print as `1.0` and the key order can vary.
 
-Save this complete example as `DetectVideo.java`, set `NEURALDEFEND_API_KEY`, and run it
-with a video path as the only argument.
+## Quick start: video
 
 ```java
 import com.neuraldefend.ClientOptions;
 import com.neuraldefend.Media;
 import com.neuraldefend.NeuroVerifyClient;
 import com.neuraldefend.VideoOptions;
-import com.neuraldefend.VideoResult;
 
-public final class DetectVideo {
+public class QuickStartVideo {
     public static void main(String[] args) {
-        if (args.length != 1) {
-            System.err.println("usage: java DetectVideo VIDEO_PATH");
-            System.exit(2);
-        }
-
-        // Get an API key from https://neuraldefend.com/ (Book a Demo), then export it.
-        ClientOptions options = new ClientOptions();
-        options.apiKey = System.getenv("NEURALDEFEND_API_KEY");
-        NeuroVerifyClient client = NeuroVerifyClient.newClient(options);
-
-        VideoOptions sampling = new VideoOptions();
-        sampling.maxFrames = 24;   // optional; the service samples 12 frames by default
-        sampling.sampleRate = 2;   // optional
-
-        VideoResult result = client.detectVideo(Media.fileMedia(args[0]), sampling);
-
-        if (result.scored()) {
-            System.out.printf("video risk: %s (%s)%n", result.videoRiskLevel, result.videoRiskScore);
-            if (result.hasAudio()) {
-                System.out.printf("audio risk: %s (%s)%n", result.audioRiskLevel, result.audioRiskScore);
-            } else {
-                System.out.println("audio not scored: " + result.audioMessage);
-            }
-            System.out.println("maximum modality score: " + result.overallRiskScore());
-        } else if (result.rejected()) {
-            System.out.println("video was not scored: " + result.videoMessage);
-        } else {
-            System.out.println("unrecognized future outcome: " + result.status);
-        }
+        var client = NeuroVerifyClient.newClient(new ClientOptions());
+        var result = client.detectVideo(Media.fileMedia("clip.mp4"), new VideoOptions());
+        System.out.println(result.raw);
     }
 }
 ```
 
-Output:
+You get the full response, with a separate result for the picture and for the sound:
 
 ```text
-video risk: low (2.2)
-audio risk: high (8.4)
-maximum modality score: 8.4
+{video_risk_level=low, unique_trx_id=trx_example_video_modalities, status_code=1.0, audio_risk_level=high, audio_message=Likely to be AI-generated, billable=Y, audio_risk_score=8.4, filename=clip.mp4, content_type=video/mp4, ai_threat_signals=[Face Swap Detection, Audio Frequency Analysis], video_message=Not likely to be AI-generated, video_risk_score=2.2, status=success}
 ```
 
-`overallRiskScore()` is a client-side convenience equal to the maximum available modality
-score. It is not a combined score returned by the API and does not replace modality-aware
-policy.
-
-A smaller combined image-and-video program also lives in
+A combined image-and-video program also lives in
 [`examples/DetectMedia.java`](examples/DetectMedia.java).
 
 ## Examples
@@ -315,23 +255,18 @@ representative; your scores, transaction IDs, and messages will differ.
 
 ### 1. Check one photo
 
-The shortest possible program. An empty `ClientOptions` means "use the defaults and read
-the key from `NEURALDEFEND_API_KEY`".
+Print just the answer instead of the whole response.
 
 ```java
 import com.neuraldefend.ClientOptions;
-import com.neuraldefend.ImageResult;
 import com.neuraldefend.Media;
 import com.neuraldefend.NeuroVerifyClient;
 
 public final class CheckOnePhoto {
     public static void main(String[] args) {
-        NeuroVerifyClient client = NeuroVerifyClient.newClient(new ClientOptions());
-
-        ImageResult result = client.detectImage(Media.fileMedia("selfie.jpg"));
-
-        System.out.println(result.status + " " + result.riskLevel + " " + result.riskScore);
-        System.out.println(result.message);
+        var client = NeuroVerifyClient.newClient(new ClientOptions());
+        var result = client.detectImage(Media.fileMedia("selfie.jpg"));
+        System.out.println(result.riskLevel + " " + result.message);
     }
 }
 ```
@@ -339,39 +274,25 @@ public final class CheckOnePhoto {
 Output:
 
 ```text
-success low 2.2
-Not likely to be Spoof or AI-generated
+low Not likely to be Spoof or AI-generated
 ```
 
 ### 2. Check a video with sound
 
-A video gets **two** separate answers: one for the picture and one for the audio. A clip
-without sound is still scored; only the audio fields are `null`.
+A video gets **two** answers: one for the picture and one for the sound.
 
 ```java
 import com.neuraldefend.ClientOptions;
 import com.neuraldefend.Media;
 import com.neuraldefend.NeuroVerifyClient;
 import com.neuraldefend.VideoOptions;
-import com.neuraldefend.VideoResult;
 
 public final class CheckVideo {
     public static void main(String[] args) {
-        NeuroVerifyClient client = NeuroVerifyClient.newClient(new ClientOptions());
-
-        VideoResult result =
-                client.detectVideo(Media.fileMedia("interview.mp4"), new VideoOptions());
-
-        if (result.scored()) {
-            System.out.printf("Video: %s (%s)%n", result.videoRiskLevel, result.videoRiskScore);
-            if (result.hasAudio()) {
-                System.out.printf("Audio: %s (%s)%n", result.audioRiskLevel, result.audioRiskScore);
-            } else {
-                System.out.println("Audio: not scored (" + result.audioMessage + ")");
-            }
-        } else {
-            System.out.println("Not scored: " + result.videoMessage);
-        }
+        var client = NeuroVerifyClient.newClient(new ClientOptions());
+        var result = client.detectVideo(Media.fileMedia("interview.mp4"), new VideoOptions());
+        System.out.println("Video: " + result.videoRiskLevel);
+        System.out.println("Audio: " + result.audioRiskLevel);
     }
 }
 ```
@@ -379,12 +300,12 @@ public final class CheckVideo {
 Output:
 
 ```text
-Video: low (2.2)
-Audio: high (8.4)
+Video: low
+Audio: high
 ```
 
-Here the face looks real but the voice is likely synthetic, which is why the two
-modalities are reported separately.
+Here the face looks real but the voice is likely fake. A video with no sound prints
+`Audio: null`.
 
 ### 3. Turn a result into a decision
 

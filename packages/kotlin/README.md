@@ -185,43 +185,26 @@ shell history.
 
 ## Quick start: JVM image
 
-Save this as `DetectImage.kt`, set `NEURALDEFEND_API_KEY`, and run it with the image path
-as the first argument.
-
 ```kotlin
 import com.neuraldefend.kotlin.MediaInput
 import com.neuraldefend.kotlin.NeuroVerifyClient
-import com.neuraldefend.kotlin.ResultStatus
 import java.io.File
 
-suspend fun main(args: Array<String>) {
-    require(args.size == 1) { "usage: DetectImage IMAGE_PATH" }
-
-    // Reads NEURALDEFEND_API_KEY when apiKey is omitted.
-    // Get a key from https://neuraldefend.com/ (Book a Demo).
-    NeuroVerifyClient().use { client ->
-        val image = client.detectImage(MediaInput.file(File(args[0])))
-
-        println(image.toJson())   // normalized fields; never includes the API key or raw envelope
-
-        when (image.status) {
-            ResultStatus.SUCCESS -> println("image risk: ${image.riskLevel} (${image.riskScore})")
-            ResultStatus.REJECTED -> println("image was not scored (billable: ${image.billable}): ${image.message}")
-            ResultStatus.UNKNOWN -> println("unrecognized outcome \"${image.originalStatus}\"; upgrade the SDK")
-        }
+suspend fun main() {
+    NeuroVerifyClient().use { client -> // uses NEURALDEFEND_API_KEY
+        println(client.detectImage(MediaInput.file(File("selfie.jpg"))).toJson())
     }
 }
 ```
 
-Output:
+That's it. You get the full response:
 
 ```text
 {status=success, scored=true, rejected=false, uniqueTrxId=trx_example_image_low, filename=selfie.jpg, contentType=image/jpeg, statusCode=1, billable=true, aiThreatSignals=[Visual Safety Screening, Liveness Verification], riskScore=2.2, riskLevel=low, message=Not likely to be Spoof or AI-generated, highRisk=false}
-image risk: LOW (2.2)
 ```
 
-Create one client and reuse it: it holds a connection pool. `use { }` (or `close()`)
-releases it.
+The field that matters most is `riskLevel`: `low`, `medium`, or `high`. `use { }` closes
+the client when you are done.
 
 ## Quick start: JVM video
 
@@ -230,40 +213,20 @@ import com.neuraldefend.kotlin.MediaInput
 import com.neuraldefend.kotlin.NeuroVerifyClient
 import java.io.File
 
-suspend fun main(args: Array<String>) {
-    require(args.size == 1) { "usage: DetectVideo VIDEO_PATH" }
-
+suspend fun main() {
     NeuroVerifyClient().use { client ->
-        val video = client.detectVideo(MediaInput.file(File(args[0])), maxFrames = 24, sampleRate = 2)
-
-        if (video.scored) {
-            println("video risk: ${video.videoRiskLevel} (${video.videoRiskScore})")
-            if (video.hasAudio) {
-                println("audio risk: ${video.audioRiskLevel} (${video.audioRiskScore})")
-            } else {
-                println("audio not scored: ${video.audioMessage}")
-            }
-            println("maximum modality score: ${video.overallRiskScore}")
-        } else if (video.rejected) {
-            println("video was not scored: ${video.videoMessage}")
-        } else {
-            println("unrecognized outcome \"${video.originalStatus}\"; upgrade the SDK")
-        }
+        println(client.detectVideo(MediaInput.file(File("clip.mp4"))).toJson())
     }
 }
 ```
 
-Output:
+You get the full response, with a separate result for the picture and for the sound:
 
 ```text
-video risk: LOW (2.2)
-audio risk: HIGH (8.4)
-maximum modality score: 8.4
+{status=success, scored=true, rejected=false, uniqueTrxId=trx_example_video_modalities, filename=clip.mp4, contentType=video/mp4, statusCode=1, billable=true, aiThreatSignals=[Face Swap Detection, Audio Frequency Analysis], hasAudio=true, videoRiskScore=2.2, videoRiskLevel=low, videoMessage=Not likely to be AI-generated, audioRiskScore=8.4, audioRiskLevel=high, audioMessage=Likely to be AI-generated, overallRiskScore=8.4}
 ```
 
-`overallRiskScore` is a client-side convenience equal to the higher available modality
-score. It is not a combined score returned by the API and does not replace
-modality-aware policy.
+`overallRiskScore` is simply the higher of the two scores.
 
 ## Quick start: Java
 
@@ -412,8 +375,7 @@ name (`LOW`); use `riskLevel?.wireValue` when you want the lower-case API value 
 
 ### 1. Check one photo
 
-The shortest possible program. `use { }` closes the client for you, even if something
-goes wrong.
+Print just the answer instead of the whole response.
 
 ```kotlin
 import com.neuraldefend.kotlin.MediaInput
@@ -421,26 +383,22 @@ import com.neuraldefend.kotlin.NeuroVerifyClient
 import java.io.File
 
 suspend fun main() {
-    val result = NeuroVerifyClient().use { client ->          // reads NEURALDEFEND_API_KEY
-        client.detectImage(MediaInput.file(File("selfie.jpg")))
+    NeuroVerifyClient().use { client ->
+        val result = client.detectImage(MediaInput.file(File("selfie.jpg")))
+        println("${result.riskLevel} ${result.message}")
     }
-
-    println("${result.status} ${result.riskLevel} ${result.riskScore}")
-    println(result.message)
 }
 ```
 
 Output:
 
 ```text
-SUCCESS LOW 2.2
-Not likely to be Spoof or AI-generated
+LOW Not likely to be Spoof or AI-generated
 ```
 
 ### 2. Check a video with sound
 
-A video gets **two** separate answers: one for the picture and one for the audio. A clip
-without sound is still scored; only the audio fields are empty.
+A video gets **two** answers: one for the picture and one for the sound.
 
 ```kotlin
 import com.neuraldefend.kotlin.MediaInput
@@ -448,19 +406,10 @@ import com.neuraldefend.kotlin.NeuroVerifyClient
 import java.io.File
 
 suspend fun main() {
-    val result = NeuroVerifyClient().use { client ->
-        client.detectVideo(MediaInput.file(File("interview.mp4")))
-    }
-
-    if (result.scored) {
-        println("Video: ${result.videoRiskLevel} (${result.videoRiskScore})")
-        if (result.hasAudio) {
-            println("Audio: ${result.audioRiskLevel} (${result.audioRiskScore})")
-        } else {
-            println("Audio: not scored (${result.audioMessage})")
-        }
-    } else {
-        println("Not scored: ${result.videoMessage}")
+    NeuroVerifyClient().use { client ->
+        val result = client.detectVideo(MediaInput.file(File("interview.mp4")))
+        println("Video: ${result.videoRiskLevel}")
+        println("Audio: ${result.audioRiskLevel}")
     }
 }
 ```
@@ -468,12 +417,12 @@ suspend fun main() {
 Output:
 
 ```text
-Video: LOW (2.2)
-Audio: HIGH (8.4)
+Video: LOW
+Audio: HIGH
 ```
 
-Here the face looks real but the voice is likely synthetic, which is why the two
-modalities are reported separately.
+Here the face looks real but the voice is likely fake. A video with no sound prints
+`Audio: null`.
 
 ### 3. Turn a result into a decision
 

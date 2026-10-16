@@ -141,41 +141,24 @@ a key at all. See [Choose where the SDK runs](#choose-where-the-sdk-runs).
 
 ## Quick start: Dart image
 
-Save this as `bin/detect_image.dart`, set `NEURALDEFEND_API_KEY`, and run
-`dart run bin/detect_image.dart selfie.jpg`.
+Save as `bin/main.dart` and run `dart run`:
 
 ```dart
 import 'dart:convert';
 
 import 'package:neuraldefend/neuraldefend.dart';
 
-Future<void> main(List<String> args) async {
-  // Reads NEURALDEFEND_API_KEY when apiKey is omitted (Dart VM only).
-  final client = NeuroVerifyClient();
-  try {
-    final image = await client.detectImage(MediaInput.file(args.first));
-
-    // toJson() contains the normalized, JSON-compatible public fields.
-    print(const JsonEncoder.withIndent('  ').convert(image.toJson()));
-
-    switch (image.status) {
-      case ResultStatus.success:
-        print('image risk: ${image.riskLevel?.name} (${image.riskScore})');
-        if (image.highRisk) print('route to the review required by your policy');
-      case ResultStatus.rejected:
-        print('image was not scored (billable: ${image.billable}): ${image.message}');
-      case ResultStatus.unknown:
-        print('unrecognized outcome "${image.originalStatus}"; upgrade the SDK');
-    }
-  } finally {
-    client.close();
-  }
+Future<void> main() async {
+  final client = NeuroVerifyClient(); // uses NEURALDEFEND_API_KEY
+  final result = await client.detectImage(MediaInput.file('selfie.jpg'));
+  print(const JsonEncoder.withIndent('  ').convert(result.toJson()));
+  client.close();
 }
 ```
 
-Output (representative):
+That's it. You get the full response:
 
-```text
+```json
 {
   "status": "success",
   "scored": true,
@@ -194,55 +177,53 @@ Output (representative):
   "message": "Not likely to be Spoof or AI-generated",
   "highRisk": false
 }
-image risk: low (2.2)
 ```
+
+The field that matters most is `riskLevel`: `low`, `medium`, or `high`.
 
 ## Quick start: Dart video
 
-Save this as `bin/detect_video.dart` and run `dart run bin/detect_video.dart clip.mp4`.
-
 ```dart
+import 'dart:convert';
+
 import 'package:neuraldefend/neuraldefend.dart';
 
-Future<void> main(List<String> args) async {
+Future<void> main() async {
   final client = NeuroVerifyClient();
-  try {
-    final video = await client.detectVideo(
-      MediaInput.file(args.first),
-      maxFrames: 24,
-      sampleRate: 2,
-    );
-
-    switch (video.status) {
-      case ResultStatus.success:
-        print('video risk: ${video.videoRiskLevel?.name} (${video.videoRiskScore})');
-        if (video.hasAudio) {
-          print('audio risk: ${video.audioRiskLevel?.name} (${video.audioRiskScore})');
-        } else {
-          print('audio not scored: ${video.audioMessage}');
-        }
-        print('maximum modality score: ${video.overallRiskScore}');
-      case ResultStatus.rejected:
-        print('video was not scored: ${video.videoMessage}');
-      case ResultStatus.unknown:
-        print('unrecognized outcome "${video.originalStatus}"; upgrade the SDK');
-    }
-  } finally {
-    client.close();
-  }
+  final result = await client.detectVideo(MediaInput.file('clip.mp4'));
+  print(const JsonEncoder.withIndent('  ').convert(result.toJson()));
+  client.close();
 }
 ```
 
-Output (representative):
+You get the full response, with a separate result for the picture and for the sound:
 
-```text
-video risk: low (2.2)
-audio risk: high (8.4)
-maximum modality score: 8.4
+```json
+{
+  "status": "success",
+  "scored": true,
+  "rejected": false,
+  "uniqueTrxId": "trx_example_video_modalities",
+  "filename": "clip.mp4",
+  "contentType": "video/mp4",
+  "statusCode": 1,
+  "billable": true,
+  "aiThreatSignals": [
+    "Face Swap Detection",
+    "Audio Frequency Analysis"
+  ],
+  "hasAudio": true,
+  "videoRiskScore": 2.2,
+  "videoRiskLevel": "low",
+  "videoMessage": "Not likely to be AI-generated",
+  "audioRiskScore": 8.4,
+  "audioRiskLevel": "high",
+  "audioMessage": "Likely to be AI-generated",
+  "overallRiskScore": 8.4
+}
 ```
 
-`overallRiskScore` is an SDK convenience equal to the higher available modality score. The
-API does not return a combined score, and it does not replace modality-aware policy.
+`overallRiskScore` is simply the higher of the two scores.
 
 A runnable command-line version of both quick starts is in
 [`example/neuraldefend_example.dart`](example/neuraldefend_example.dart).
@@ -357,68 +338,50 @@ scores, transaction IDs, byte counts, timings, and messages will differ.
 
 ### 1. Check one photo
 
-The shortest possible program. Always call `close()` when you are done, so the connection
-pool is released; `try`/`finally` makes sure that happens even if something fails.
-
-```dart
-import 'package:neuraldefend/neuraldefend.dart';
-
-Future<void> main() async {
-  final client = NeuroVerifyClient(); // reads NEURALDEFEND_API_KEY
-  try {
-    final result = await client.detectImage(MediaInput.file('selfie.jpg'));
-    print('${result.status.name} ${result.riskLevel?.name} ${result.riskScore}');
-    print(result.message);
-  } finally {
-    client.close();
-  }
-}
-```
-
-Output:
-
-```text
-success low 2.2
-Not likely to be Spoof or AI-generated
-```
-
-### 2. Check a video with sound
-
-A video gets **two** separate answers: one for the picture and one for the audio. A clip
-without sound is still scored; only the audio fields are empty.
+Print just the answer instead of the whole response.
 
 ```dart
 import 'package:neuraldefend/neuraldefend.dart';
 
 Future<void> main() async {
   final client = NeuroVerifyClient();
-  try {
-    final result = await client.detectVideo(MediaInput.file('interview.mp4'));
-    if (result.scored) {
-      print('Video: ${result.videoRiskLevel?.name} (${result.videoRiskScore})');
-      if (result.hasAudio) {
-        print('Audio: ${result.audioRiskLevel?.name} (${result.audioRiskScore})');
-      } else {
-        print('Audio: not scored (${result.audioMessage})');
-      }
-    } else {
-      print('Not scored: ${result.videoMessage}');
-    }
-  } finally {
-    client.close();
-  }
+  final result = await client.detectImage(MediaInput.file('selfie.jpg'));
+  print('${result.riskLevel?.name} ${result.message}');
+  client.close();
 }
 ```
 
 Output:
 
 ```text
-Video: low (2.2)
-Audio: high (8.4)
+low Not likely to be Spoof or AI-generated
 ```
 
-Here the face looks real but the voice is likely synthetic, which is why the two
-modalities are reported separately.
+### 2. Check a video with sound
+
+A video gets **two** answers: one for the picture and one for the sound.
+
+```dart
+import 'package:neuraldefend/neuraldefend.dart';
+
+Future<void> main() async {
+  final client = NeuroVerifyClient();
+  final result = await client.detectVideo(MediaInput.file('interview.mp4'));
+  print('Video: ${result.videoRiskLevel?.name}');
+  print('Audio: ${result.audioRiskLevel?.name}');
+  client.close();
+}
+```
+
+Output:
+
+```text
+Video: low
+Audio: high
+```
+
+Here the face looks real but the voice is likely fake. A video with no sound prints
+`Audio: null`.
 
 ### 3. Turn a result into a decision
 

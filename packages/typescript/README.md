@@ -180,157 +180,70 @@ source control, example files, container images, or shell history.
 
 ### Node.js: check an image
 
-Save the following as `detect-image.mjs`, set `NEURALDEFEND_API_KEY`, then run
-`node detect-image.mjs ./selfie.jpg`.
+Save as `detect-image.mjs` and run `node detect-image.mjs`:
 
 ```js
 import { NeuroVerifyClient } from "@neuraldefend/sdk";
 
-// Get an API key from https://neuraldefend.com/ (Book a Demo), then export NEURALDEFEND_API_KEY.
-const apiKey = process.env.NEURALDEFEND_API_KEY;
-if (!apiKey) throw new Error("NEURALDEFEND_API_KEY is required");
-
-const imagePath = process.argv[2];
-if (!imagePath) {
-  console.error("Usage: node detect-image.mjs <image-path>");
-  process.exitCode = 1;
-} else {
-  const client = new NeuroVerifyClient({ apiKey });
-  const result = await client.detectImage(imagePath);
-
-  switch (result.status) {
-    case "success":
-      console.log({
-        transactionId: result.uniqueTrxId,
-        billable: result.billable,
-        riskLevel: result.riskLevel,
-        riskScore: result.riskScore,
-        message: result.message,
-      });
-      break;
-
-    case "rejected":
-      console.log({
-        transactionId: result.uniqueTrxId,
-        billable: result.billable,
-        reason: result.message,
-      });
-      break;
-
-    case "unknown":
-      console.error(
-        "The API returned an outcome this SDK does not recognize. Upgrade the SDK before using it for policy decisions.",
-      );
-      console.error({
-        transactionId: result.uniqueTrxId,
-        originalStatus: result.originalStatus,
-      });
-      break;
-  }
-}
+const result = await new NeuroVerifyClient().detectImage("selfie.jpg"); // uses NEURALDEFEND_API_KEY
+console.log(JSON.stringify(result, null, 2));
 ```
 
-Output (representative):
+That's it. You get the full response:
 
-```text
+```json
 {
-  transactionId: 'trx_example_image_low',
-  billable: true,
-  riskLevel: 'low',
-  riskScore: 2.2,
-  message: 'Not likely to be Spoof or AI-generated'
+  "uniqueTrxId": "trx_example_image_low",
+  "filename": "selfie.jpg",
+  "contentType": "image/jpeg",
+  "statusCode": 1,
+  "billable": true,
+  "aiThreatSignals": ["Visual Safety Screening", "Liveness Verification"],
+  "status": "success",
+  "scored": true,
+  "rejected": false,
+  "riskScore": 2.2,
+  "riskLevel": "low",
+  "message": "Not likely to be Spoof or AI-generated"
 }
 ```
+
+The field that matters most is `riskLevel`: `low`, `medium`, or `high`.
 
 ### Node.js: check a video
 
-Save the following as `detect-video.mjs`, set `NEURALDEFEND_API_KEY`, then run
-`node detect-video.mjs ./clip.mp4`.
-
 ```js
 import { NeuroVerifyClient } from "@neuraldefend/sdk";
 
-// Get an API key from https://neuraldefend.com/ (Book a Demo), then export NEURALDEFEND_API_KEY.
-const apiKey = process.env.NEURALDEFEND_API_KEY;
-if (!apiKey) throw new Error("NEURALDEFEND_API_KEY is required");
-
-const videoPath = process.argv[2];
-if (!videoPath) {
-  console.error("Usage: node detect-video.mjs <video-path>");
-  process.exitCode = 1;
-} else {
-  const client = new NeuroVerifyClient({ apiKey });
-  const result = await client.detectVideo(videoPath, {
-    maxFrames: 24,
-  });
-
-  switch (result.status) {
-    case "success":
-      console.log({
-        transactionId: result.uniqueTrxId,
-        billable: result.billable,
-        video: {
-          riskLevel: result.videoRiskLevel,
-          riskScore: result.videoRiskScore,
-          message: result.videoMessage,
-        },
-        audio: result.hasAudio
-          ? {
-              riskLevel: result.audioRiskLevel,
-              riskScore: result.audioRiskScore,
-              message: result.audioMessage,
-            }
-          : {
-              riskLevel: null,
-              riskScore: null,
-              message: result.audioMessage,
-            },
-        // Convenience maximum calculated by the SDK, not an API modality.
-        overallRiskScore: result.overallRiskScore,
-      });
-      break;
-
-    case "rejected":
-      console.log({
-        transactionId: result.uniqueTrxId,
-        billable: result.billable,
-        reason: result.videoMessage,
-      });
-      break;
-
-    case "unknown":
-      console.error(
-        "The API returned an outcome this SDK does not recognize. Upgrade the SDK before using it for policy decisions.",
-      );
-      console.error({
-        transactionId: result.uniqueTrxId,
-        originalStatus: result.originalStatus,
-      });
-      break;
-  }
-}
+const result = await new NeuroVerifyClient().detectVideo("clip.mp4");
+console.log(JSON.stringify(result, null, 2));
 ```
 
-Output (representative):
+You get the full response, with a separate result for the picture and for the sound:
 
-```text
+```json
 {
-  transactionId: 'trx_example_video_modalities',
-  billable: true,
-  video: {
-    riskLevel: 'low',
-    riskScore: 2.2,
-    message: 'Not likely to be AI-generated'
-  },
-  audio: { riskLevel: 'high', riskScore: 8.4, message: 'Likely to be AI-generated' },
-  overallRiskScore: 8.4
+  "uniqueTrxId": "trx_example_video_modalities",
+  "filename": "clip.mp4",
+  "contentType": "video/mp4",
+  "statusCode": 1,
+  "billable": true,
+  "aiThreatSignals": ["Face Swap Detection", "Audio Frequency Analysis"],
+  "status": "success",
+  "scored": true,
+  "rejected": false,
+  "hasAudio": true,
+  "videoRiskScore": 2.2,
+  "videoRiskLevel": "low",
+  "videoMessage": "Not likely to be AI-generated",
+  "audioRiskScore": 8.4,
+  "audioRiskLevel": "high",
+  "audioMessage": "Likely to be AI-generated",
+  "overallRiskScore": 8.4
 }
 ```
 
-The video API returns independent video and audio signals. `overallRiskScore` is an SDK
-convenience equal to the video score when no audio was scored, or the maximum of the video
-and audio scores when both were scored. Do not treat it as a server-provided overall
-verdict.
+`overallRiskScore` is simply the higher of the two scores.
 
 ### Browser: send a photo to your backend
 
@@ -387,59 +300,42 @@ representative; your scores, transaction IDs, and messages will differ.
 
 ### 1. Check one photo
 
-The shortest possible program. With no options, the client reads `NEURALDEFEND_API_KEY`.
+Print just the answer instead of the whole response.
 
 ```js
 import { NeuroVerifyClient } from "@neuraldefend/sdk";
 
-const client = new NeuroVerifyClient(); // reads NEURALDEFEND_API_KEY
-const result = await client.detectImage("selfie.jpg");
-
-console.log(result.status, result.riskLevel, result.riskScore);
-console.log(result.message);
+const result = await new NeuroVerifyClient().detectImage("selfie.jpg");
+console.log(result.riskLevel, result.message);
 ```
 
 Output:
 
 ```text
-success low 2.2
-Not likely to be Spoof or AI-generated
+low Not likely to be Spoof or AI-generated
 ```
 
 ### 2. Check a video with sound
 
-A video gets **two** separate answers: one for the picture and one for the audio. A clip
-without sound is still scored; only the audio fields are `null`.
+A video gets **two** answers: one for the picture and one for the sound.
 
 ```js
 import { NeuroVerifyClient } from "@neuraldefend/sdk";
 
-const client = new NeuroVerifyClient();
-const result = await client.detectVideo("interview.mp4");
-
-if (result.status === "success") {
-  console.log(`Video: ${result.videoRiskLevel} (${result.videoRiskScore})`);
-  if (result.hasAudio) {
-    console.log(`Audio: ${result.audioRiskLevel} (${result.audioRiskScore})`);
-  } else {
-    console.log(`Audio: not scored (${result.audioMessage})`);
-  }
-} else if (result.status === "rejected") {
-  console.log(`Not scored: ${result.videoMessage}`);
-} else {
-  console.log(`Unrecognized outcome: ${result.originalStatus}`);
-}
+const result = await new NeuroVerifyClient().detectVideo("interview.mp4");
+console.log("Video:", result.videoRiskLevel);
+console.log("Audio:", result.audioRiskLevel);
 ```
 
 Output:
 
 ```text
-Video: low (2.2)
-Audio: high (8.4)
+Video: low
+Audio: high
 ```
 
-Here the face looks real but the voice is likely synthetic, which is why the two
-modalities are reported separately.
+Here the face looks real but the voice is likely fake. A video with no sound prints
+`Audio: null`.
 
 ### 3. Turn a result into a decision
 

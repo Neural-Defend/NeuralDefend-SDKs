@@ -111,8 +111,11 @@ for new keys, staging access, or endpoint scope questions.
 
 ## Quick start
 
-Every example below checks one photo and one video. The output blocks are representative;
-your scores and transaction IDs will differ.
+Set `NEURALDEFEND_API_KEY` (see [Get an API key](#get-an-api-key)), install the SDK, and
+run the snippet. Each one checks a photo and prints the **full response** from NeuroVerify.
+Checking a video is the same call with `detectVideo` (`detect_video` in Python).
+
+The values shown are representative; your scores and transaction IDs will differ.
 
 ### Python
 
@@ -121,22 +124,33 @@ pip install neuraldefend
 ```
 
 ```python
+import json
+
 from neuraldefend import NeuroVerifyClient
 
-with NeuroVerifyClient() as client:                  # reads NEURALDEFEND_API_KEY
-    image = client.detect_image("selfie.jpg")
-    video = client.detect_video("clip.mp4")
-
-print("image:", image.risk_level, image.risk_score)
-print("video:", video.video_risk_level, "| audio:", video.audio_risk_level)
+result = NeuroVerifyClient().detect_image("selfie.jpg")
+print(json.dumps(result.to_dict(), indent=2))
 ```
 
-```text
-image: low 2.2
-video: low | audio: high
+```json
+{
+  "unique_trx_id": "trx_example_image_low",
+  "filename": "selfie.jpg",
+  "content_type": "image/jpeg",
+  "status": "success",
+  "status_code": 1,
+  "billable": true,
+  "risk_score": 2.2,
+  "risk_level": "low",
+  "message": "Not likely to be Spoof or AI-generated",
+  "ai_threat_signals": ["Visual Safety Screening", "Liveness Verification"],
+  "scored": true,
+  "rejected": false,
+  "high_risk": false
+}
 ```
 
-[Full Python guide with 10 examples →](packages/python/README.md)
+[Python guide →](packages/python/README.md)
 
 ### TypeScript and Node.js
 
@@ -144,34 +158,32 @@ video: low | audio: high
 npm install @neuraldefend/sdk
 ```
 
-```ts
+```js
 import { NeuroVerifyClient } from "@neuraldefend/sdk";
 
-const client = new NeuroVerifyClient();              // reads NEURALDEFEND_API_KEY
-const image = await client.detectImage("selfie.jpg");
-const video = await client.detectVideo("clip.mp4");
-
-console.log(image.status, video.status);
+const result = await new NeuroVerifyClient().detectImage("selfie.jpg");
+console.log(JSON.stringify(result, null, 2));
 ```
 
-```text
-success success
+```json
+{
+  "uniqueTrxId": "trx_example_image_low",
+  "filename": "selfie.jpg",
+  "contentType": "image/jpeg",
+  "statusCode": 1,
+  "billable": true,
+  "aiThreatSignals": ["Visual Safety Screening", "Liveness Verification"],
+  "status": "success",
+  "scored": true,
+  "rejected": false,
+  "riskScore": 2.2,
+  "riskLevel": "low",
+  "message": "Not likely to be Spoof or AI-generated"
+}
 ```
 
-[Full TypeScript guide →](packages/typescript/README.md)
-
-### Browser
-
-The same `@neuraldefend/sdk` package works in the browser; your bundler picks the browser
-build automatically. Pass a short-lived credential from your backend, never a production key.
-
-```ts
-import { NeuroVerifyClient } from "@neuraldefend/sdk";
-
-const client = new NeuroVerifyClient({ apiKey: shortLivedKeyFromYourBackend });
-const input = document.querySelector<HTMLInputElement>("#photo")!;
-const image = await client.detectImage(input.files![0]);
-```
+In the browser, use the same package with a short-lived key from your backend; never ship a
+production key. [TypeScript guide →](packages/typescript/README.md)
 
 ### Go
 
@@ -180,30 +192,46 @@ go get github.com/Neural-Defend/NeuralDefend-SDKs/packages/go@v1.0.0
 ```
 
 ```go
-client, err := neuraldefend.NewClient(neuraldefend.ClientOptions{
-    APIKey: os.Getenv("NEURALDEFEND_API_KEY"),
-})
-if err != nil {
-    log.Fatal(err)
-}
+package main
 
-ctx := context.Background()
-image, err := client.DetectImage(ctx, neuraldefend.FileMedia("selfie.jpg"))
-if err != nil {
-    log.Fatal(err)
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+
+	neuraldefend "github.com/Neural-Defend/NeuralDefend-SDKs/packages/go"
+)
+
+func main() {
+	client, _ := neuraldefend.NewClient(neuraldefend.ClientOptions{}) // uses NEURALDEFEND_API_KEY
+	result, _ := client.DetectImage(context.Background(), neuraldefend.FileMedia("selfie.jpg"))
+	response, _ := json.MarshalIndent(result.Raw, "", "  ")
+	fmt.Println(string(response))
 }
-video, err := client.DetectVideo(ctx, neuraldefend.FileMedia("clip.mp4"), neuraldefend.VideoOptions{})
-if err != nil {
-    log.Fatal(err)
-}
-fmt.Println(image.Status, video.Status)
 ```
 
-```text
-success success
+`result.Raw` is the response exactly as the API sent it:
+
+```json
+{
+  "ai_threat_signals": [
+    "Visual Safety Screening",
+    "Liveness Verification"
+  ],
+  "billable": "Y",
+  "content_type": "image/jpeg",
+  "filename": "selfie.jpg",
+  "message": "Not likely to be Spoof or AI-generated",
+  "risk_level": "low",
+  "risk_score": 2.2,
+  "status": "success",
+  "status_code": 1,
+  "unique_trx_id": "trx_example_image_low"
+}
 ```
 
-[Full Go guide →](packages/go/README.md)
+Errors are ignored here to keep it short; check them in real code.
+[Go guide →](packages/go/README.md)
 
 ### Java
 
@@ -214,81 +242,97 @@ implementation("com.neuraldefend:neuraldefend-sdk:1.0.0")
 
 ```java
 import com.neuraldefend.ClientOptions;
-import com.neuraldefend.ImageResult;
 import com.neuraldefend.Media;
 import com.neuraldefend.NeuroVerifyClient;
-import com.neuraldefend.VideoOptions;
-import com.neuraldefend.VideoResult;
 
-NeuroVerifyClient client = NeuroVerifyClient.newClient(new ClientOptions()); // reads NEURALDEFEND_API_KEY
-ImageResult image = client.detectImage(Media.fileMedia("selfie.jpg"));
-VideoResult video = client.detectVideo(Media.fileMedia("clip.mp4"), new VideoOptions());
-
-System.out.println("image: " + image.riskLevel + " " + image.riskScore);
+public class QuickStart {
+    public static void main(String[] args) {
+        var client = NeuroVerifyClient.newClient(new ClientOptions()); // uses NEURALDEFEND_API_KEY
+        var result = client.detectImage(Media.fileMedia("selfie.jpg"));
+        System.out.println(result.raw);
+    }
+}
 ```
+
+`result.raw` is the response exactly as the API sent it:
 
 ```text
-image: low 2.2
+{risk_level=low, unique_trx_id=trx_example_image_low, filename=selfie.jpg, status_code=1.0, content_type=image/jpeg, risk_score=2.2, ai_threat_signals=[Visual Safety Screening, Liveness Verification], message=Not likely to be Spoof or AI-generated, billable=Y, status=success}
 ```
 
-[Full Java guide →](packages/java/README.md)
+[Java guide →](packages/java/README.md)
 
 ### Kotlin and Android
 
 ```kotlin
 // build.gradle.kts
 implementation("com.neuraldefend:neuraldefend-kotlin:1.0.0")
-implementation("com.neuraldefend:neuraldefend-android:1.0.0") // Android content Uris
 ```
 
 ```kotlin
 import com.neuraldefend.kotlin.MediaInput
 import com.neuraldefend.kotlin.NeuroVerifyClient
 import java.io.File
-import kotlinx.coroutines.runBlocking
 
-// detectImage and detectVideo are suspend functions; call them from a coroutine.
-// JVM servers read NEURALDEFEND_API_KEY; Android apps must pass apiKey.
-fun main() = runBlocking {
-    NeuroVerifyClient().use { client ->
-        val image = client.detectImage(MediaInput.file(File("selfie.jpg")))
-        val video = client.detectVideo(MediaInput.file(File("clip.mp4")))
-        println("${image.status} ${video.status}")
+suspend fun main() {
+    NeuroVerifyClient().use { client -> // uses NEURALDEFEND_API_KEY
+        println(client.detectImage(MediaInput.file(File("selfie.jpg"))).toJson())
     }
 }
 ```
 
 ```text
-SUCCESS SUCCESS
+{status=success, scored=true, rejected=false, uniqueTrxId=trx_example_image_low, filename=selfie.jpg, contentType=image/jpeg, statusCode=1, billable=true, aiThreatSignals=[Visual Safety Screening, Liveness Verification], riskScore=2.2, riskLevel=low, message=Not likely to be Spoof or AI-generated, highRisk=false}
 ```
 
-On Android, upload photo-picker results with `MediaInputs.fromUri(context, uri)`.
-[Full Kotlin and Android guide →](packages/kotlin/README.md)
+On Android, pass `apiKey` explicitly and upload picker results with
+`MediaInputs.fromUri(context, uri)` from the `neuraldefend-android` artifact.
+[Kotlin and Android guide →](packages/kotlin/README.md)
 
 ### Dart and Flutter
 
 ```bash
-flutter pub add neuraldefend   # or: dart pub add neuraldefend
+dart pub add neuraldefend   # or: flutter pub add neuraldefend
 ```
 
 ```dart
+import 'dart:convert';
+
 import 'package:neuraldefend/neuraldefend.dart';
 
-// Dart servers read NEURALDEFEND_API_KEY; Flutter and web apps must pass apiKey.
-final client = NeuroVerifyClient();
-final image = await client.detectImage(MediaInput.file('selfie.jpg'));
-final video = await client.detectVideo(MediaInput.file('clip.mp4'));
-print('${image.status.name} ${video.status.name}');
-client.close();
+Future<void> main() async {
+  final client = NeuroVerifyClient(); // uses NEURALDEFEND_API_KEY
+  final result = await client.detectImage(MediaInput.file('selfie.jpg'));
+  print(const JsonEncoder.withIndent('  ').convert(result.toJson()));
+  client.close();
+}
 ```
 
-```text
-success success
+```json
+{
+  "status": "success",
+  "scored": true,
+  "rejected": false,
+  "uniqueTrxId": "trx_example_image_low",
+  "filename": "selfie.jpg",
+  "contentType": "image/jpeg",
+  "statusCode": 1,
+  "billable": true,
+  "aiThreatSignals": [
+    "Visual Safety Screening",
+    "Liveness Verification"
+  ],
+  "riskScore": 2.2,
+  "riskLevel": "low",
+  "message": "Not likely to be Spoof or AI-generated",
+  "highRisk": false
+}
 ```
 
-In Flutter apps, call NeuroVerify from your backend rather than shipping a production key
+In Flutter apps, pass `apiKey` explicitly and call NeuroVerify from your backend rather
+than shipping a production key
 ([why](packages/dart/README.md#flutter-and-web-credential-safety)).
-[Full Dart and Flutter guide →](packages/dart/README.md)
+[Dart and Flutter guide →](packages/dart/README.md)
 
 ### Swift
 
@@ -298,21 +342,42 @@ In Flutter apps, call NeuroVerify from your backend rather than shipping a produ
 ```
 
 ```swift
+import Foundation
 import NeuralDefend
 
-let client = try NeuroVerifyClient(apiKey: apiKey)
-let image = try await client.detectImage(.file(photoURL))
-let video = try await client.detectVideo(.file(clipURL))
-print(image.status, video.status)
+let client = try NeuroVerifyClient.fromEnvironment() // uses NEURALDEFEND_API_KEY
+let result = try await client.detectImage(.file(URL(fileURLWithPath: "selfie.jpg")))
+
+let encoder = JSONEncoder()
+encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+print(String(decoding: try encoder.encode(result), as: UTF8.self))
 ```
 
-```text
-success success
+```json
+{
+  "aiThreatSignals" : [
+    "Visual Safety Screening",
+    "Liveness Verification"
+  ],
+  "billable" : true,
+  "contentType" : "image/jpeg",
+  "filename" : "selfie.jpg",
+  "highRisk" : false,
+  "message" : "Not likely to be Spoof or AI-generated",
+  "rejected" : false,
+  "riskLevel" : "low",
+  "riskScore" : 2.2,
+  "scored" : true,
+  "status" : "success",
+  "statusCode" : 1,
+  "uniqueTrxId" : "trx_example_image_low"
+}
 ```
 
-In iOS and macOS apps, call NeuroVerify from your backend rather than shipping a production
-key ([why](packages/swift/README.md#get-an-api-key)).
-[Full Swift guide →](packages/swift/README.md)
+In iOS and macOS apps, create the client with `NeuroVerifyClient(apiKey:)` and call
+NeuroVerify from your backend rather than shipping a production key
+([why](packages/swift/README.md#get-an-api-key)).
+[Swift guide →](packages/swift/README.md)
 
 ### MCP server for AI assistants
 
@@ -339,7 +404,7 @@ it may read:
 
 Then ask your assistant: *"Check `selfie.jpg` in my media folder for signs of a deepfake."*
 The server exposes the `detect_image_authenticity` and `detect_video_authenticity` tools.
-[Full MCP guide →](packages/mcp/README.md)
+[MCP guide →](packages/mcp/README.md)
 
 ## Understanding results
 
