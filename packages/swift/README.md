@@ -173,9 +173,50 @@ Only `fromEnvironment()` reads environment variables. `NeuroVerifyClient(apiKey:
 
 ## Quick start: image
 
-The quickest way to try the SDK is a tiny command-line program on a Mac or Linux machine.
+```swift
+import Foundation
+import NeuralDefend
 
-**Step 1.** Create this folder layout:
+let client = try NeuroVerifyClient.fromEnvironment() // uses NEURALDEFEND_API_KEY
+let result = try await client.detectImage(.file(URL(fileURLWithPath: "selfie.jpg")))
+
+let encoder = JSONEncoder()
+encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+print(String(decoding: try encoder.encode(result), as: UTF8.self))
+```
+
+That's it. You get the full response:
+
+```json
+{
+  "aiThreatSignals" : [
+    "Visual Safety Screening",
+    "Liveness Verification"
+  ],
+  "billable" : true,
+  "contentType" : "image/jpeg",
+  "filename" : "selfie.jpg",
+  "highRisk" : false,
+  "message" : "Not likely to be Spoof or AI-generated",
+  "rejected" : false,
+  "riskLevel" : "low",
+  "riskScore" : 2.2,
+  "scored" : true,
+  "status" : "success",
+  "statusCode" : 1,
+  "uniqueTrxId" : "trx_example_image_low"
+}
+```
+
+The field that matters most is `riskLevel`: `low`, `medium`, or `high`. In an iOS or macOS
+app, create the client with `NeuroVerifyClient(apiKey:)` instead (see
+[Get an API key](#get-an-api-key)).
+
+<details>
+<summary><b>First time with Swift Package Manager?</b> Create a command-line project to run this.</summary>
+
+Create this layout, put the snippet above in `main.swift`, then run `swift run` from the
+`DetectMedia` folder:
 
 ```text
 DetectMedia/
@@ -185,7 +226,7 @@ DetectMedia/
         └── main.swift
 ```
 
-**Step 2.** Put this in `Package.swift`:
+`Package.swift`:
 
 ```swift
 // swift-tools-version: 6.0
@@ -206,119 +247,25 @@ let package = Package(
 )
 ```
 
-**Step 3.** Put this in `Sources/DetectMedia/main.swift`:
-
-```swift
-import Foundation
-import NeuralDefend
-
-guard CommandLine.arguments.count == 2 else {
-    print("usage: swift run DetectMedia IMAGE_PATH")
-    exit(1)
-}
-
-// Reads NEURALDEFEND_API_KEY. Get a key at https://neuraldefend.com/ (Book a Demo).
-let client = try NeuroVerifyClient.fromEnvironment()
-let photo = URL(fileURLWithPath: CommandLine.arguments[1])
-let result = try await client.detectImage(.file(photo))
-
-// Encoding writes the normalized fields only (never `raw`).
-let encoder = JSONEncoder()
-encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
-print(String(decoding: try encoder.encode(result), as: UTF8.self))
-
-switch result.status {
-case .success:
-    if let level = result.riskLevel, let score = result.riskScore {
-        print("image risk: \(level.rawValue) (\(score))")
-    }
-    if result.isHighRisk {
-        print("route to the review required by your policy")
-    }
-case .rejected:
-    print("image was not scored: \(result.message)")
-case .unknown:
-    print("unrecognized outcome \(result.originalStatus); upgrade the SDK")
-}
-```
-
-**Step 4.** Set `NEURALDEFEND_API_KEY` and run it from the `DetectMedia` folder:
-
-```bash
-swift run DetectMedia /path/to/selfie.jpg
-```
-
-Output:
-
-```text
-{
-  "aiThreatSignals" : [
-    "Visual Safety Screening",
-    "Liveness Verification"
-  ],
-  "billable" : true,
-  "contentType" : "image/jpeg",
-  "filename" : "selfie.jpg",
-  "highRisk" : false,
-  "message" : "Not likely to be Spoof or AI-generated",
-  "rejected" : false,
-  "riskLevel" : "low",
-  "riskScore" : 2.2,
-  "scored" : true,
-  "status" : "success",
-  "statusCode" : 1,
-  "uniqueTrxId" : "trx_example_image_low"
-}
-image risk: low (2.2)
-```
+</details>
 
 ## Quick start: video
 
-Use the same project. Replace `Sources/DetectMedia/main.swift` with:
-
 ```swift
 import Foundation
 import NeuralDefend
 
-guard CommandLine.arguments.count == 2 else {
-    print("usage: swift run DetectMedia VIDEO_PATH")
-    exit(1)
-}
-
-// Reads NEURALDEFEND_API_KEY. Get a key at https://neuraldefend.com/ (Book a Demo).
 let client = try NeuroVerifyClient.fromEnvironment()
-let clip = URL(fileURLWithPath: CommandLine.arguments[1])
-let result = try await client.detectVideo(.file(clip), maxFrames: 24, sampleRate: 2)
+let result = try await client.detectVideo(.file(URL(fileURLWithPath: "clip.mp4")))
 
 let encoder = JSONEncoder()
 encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
 print(String(decoding: try encoder.encode(result), as: UTF8.self))
-
-switch result.status {
-case .success:
-    print("video risk: \(result.videoRiskLevel?.rawValue ?? "-") (\(result.videoRiskScore ?? 0))")
-    if result.hasAudio {
-        print("audio risk: \(result.audioRiskLevel?.rawValue ?? "-") (\(result.audioRiskScore ?? 0))")
-    } else {
-        print("audio not scored: \(result.audioMessage ?? "-")")
-    }
-    print("maximum modality score: \(result.overallRiskScore ?? 0)")
-case .rejected:
-    print("video was not scored: \(result.videoMessage)")
-case .unknown:
-    print("unrecognized outcome \(result.originalStatus); upgrade the SDK")
-}
 ```
 
-Run it:
+You get the full response, with a separate result for the picture and for the sound:
 
-```bash
-swift run DetectMedia /path/to/clip.mp4
-```
-
-Output:
-
-```text
+```json
 {
   "aiThreatSignals" : [
     "Face Swap Detection",
@@ -341,14 +288,9 @@ Output:
   "videoRiskLevel" : "low",
   "videoRiskScore" : 2.2
 }
-video risk: low (2.2)
-audio risk: high (8.4)
-maximum modality score: 8.4
 ```
 
-`overallRiskScore` is a client-side convenience equal to the maximum available modality
-score. It is not a combined score returned by the API and does not replace modality-aware
-policy.
+`overallRiskScore` is simply the higher of the two scores.
 
 ## Examples
 
@@ -373,30 +315,26 @@ and messages will differ.
 
 ### 1. Check one photo
 
-The shortest possible program. Create one client and reuse it for every request.
+Print just the answer instead of the whole response.
 
 ```swift
 import Foundation
 import NeuralDefend
 
-let client = try NeuroVerifyClient.fromEnvironment()     // reads NEURALDEFEND_API_KEY
+let client = try NeuroVerifyClient.fromEnvironment()
 let result = try await client.detectImage(.file(URL(fileURLWithPath: "selfie.jpg")))
-
-print(result.status.rawValue, result.riskLevel?.rawValue ?? "-", result.riskScore ?? 0)
-print(result.message)
+print(result.riskLevel?.rawValue ?? "none", result.message)
 ```
 
 Output:
 
 ```text
-success low 2.2
-Not likely to be Spoof or AI-generated
+low Not likely to be Spoof or AI-generated
 ```
 
 ### 2. Check a video with sound
 
-A video gets **two** separate answers: one for the picture and one for the audio. A clip
-without sound is still scored; only the audio fields are `nil`.
+A video gets **two** answers: one for the picture and one for the sound.
 
 ```swift
 import Foundation
@@ -404,28 +342,19 @@ import NeuralDefend
 
 let client = try NeuroVerifyClient.fromEnvironment()
 let result = try await client.detectVideo(.file(URL(fileURLWithPath: "interview.mp4")))
-
-if result.isScored, let video = result.videoRiskLevel, let videoScore = result.videoRiskScore {
-    print("Video: \(video.rawValue) (\(videoScore))")
-    if result.hasAudio, let audio = result.audioRiskLevel, let audioScore = result.audioRiskScore {
-        print("Audio: \(audio.rawValue) (\(audioScore))")
-    } else {
-        print("Audio: not scored (\(result.audioMessage ?? "-"))")
-    }
-} else {
-    print("Not scored: \(result.videoMessage)")
-}
+print("Video:", result.videoRiskLevel?.rawValue ?? "none")
+print("Audio:", result.audioRiskLevel?.rawValue ?? "none")
 ```
 
 Output:
 
 ```text
-Video: low (2.2)
-Audio: high (8.4)
+Video: low
+Audio: high
 ```
 
-Here the face looks real but the voice is likely synthetic, which is why the two
-modalities are reported separately.
+Here the face looks real but the voice is likely fake. A video with no sound prints
+`Audio: none`.
 
 ### 3. Turn a result into a decision
 
@@ -750,7 +679,7 @@ if FileManager.default.fileExists(atPath: log.path) {
     try line.write(to: log)
 }
 
-encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
 print(String(decoding: try encoder.encode(record), as: UTF8.self))
 ```
 

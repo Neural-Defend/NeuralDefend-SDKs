@@ -157,143 +157,95 @@ key even when using the explicit option.
 
 ## Quick start: image
 
-Create a new folder, run `go mod init example.com/detectimage` and the `go get` command
-above, save this complete program as `main.go`, set `NEURALDEFEND_API_KEY`, and run
-`go run . /path/to/selfie.jpg`.
+Save as `main.go` in a module that has the SDK (`go mod init example.com/demo`, then the
+`go get` command above), and run `go run .`:
 
 ```go
 package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"log"
-	"os"
 
 	neuraldefend "github.com/Neural-Defend/NeuralDefend-SDKs/packages/go"
 )
 
 func main() {
-	if len(os.Args) != 2 {
-		log.Fatal("usage: go run . IMAGE_PATH")
-	}
-
-	// Get an API key from https://neuraldefend.com/ (Book a Demo), then export it.
-	client, err := neuraldefend.NewClient(neuraldefend.ClientOptions{
-		APIKey: os.Getenv("NEURALDEFEND_API_KEY"),
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	result, err := client.DetectImage(context.Background(), neuraldefend.FileMedia(os.Args[1]))
-	if err != nil {
-		log.Fatal(err) // setup, service, or network problem; see "Errors"
-	}
-
-	fmt.Println("transaction:", result.UniqueTrxID)
-	fmt.Println("status:     ", result.Status)
-	fmt.Println("billable:   ", result.Billable)
-
-	switch {
-	case result.Scored():
-		fmt.Printf("image risk:  %s (%.1f)\n", *result.RiskLevel, *result.RiskScore)
-		fmt.Println("message:    ", result.Message)
-		if result.HighRisk() {
-			fmt.Println("route to the review required by your policy")
-		}
-	case result.Rejected():
-		fmt.Println("image was not scored:", result.Message)
-	default:
-		fmt.Println("unrecognized future outcome:", result.Status)
-	}
+	client, _ := neuraldefend.NewClient(neuraldefend.ClientOptions{}) // uses NEURALDEFEND_API_KEY
+	result, _ := client.DetectImage(context.Background(), neuraldefend.FileMedia("selfie.jpg"))
+	response, _ := json.MarshalIndent(result.Raw, "", "  ")
+	fmt.Println(string(response))
 }
 ```
 
-Output:
+That's it. `result.Raw` is the full response exactly as the API sent it:
 
-```text
-transaction: trx_example_image_low
-status:      success
-billable:    true
-image risk:  low (2.2)
-message:     Not likely to be Spoof or AI-generated
+```json
+{
+  "ai_threat_signals": [
+    "Visual Safety Screening",
+    "Liveness Verification"
+  ],
+  "billable": "Y",
+  "content_type": "image/jpeg",
+  "filename": "selfie.jpg",
+  "message": "Not likely to be Spoof or AI-generated",
+  "risk_level": "low",
+  "risk_score": 2.2,
+  "status": "success",
+  "status_code": 1,
+  "unique_trx_id": "trx_example_image_low"
+}
 ```
 
-`RiskScore` and `RiskLevel` are pointers because they are `nil` when the image is not
-scored. Only dereference them after `Scored()` returns `true`.
+The field that matters most is `risk_level`: `low`, `medium`, or `high`. In your code, read
+the same values from typed fields such as `result.RiskLevel` (see [Examples](#examples)).
+Errors are ignored here to keep the snippet short; always check them in real code.
 
 ## Quick start: video
 
-Save this complete program as `main.go` in its own module, set `NEURALDEFEND_API_KEY`,
-and run `go run . /path/to/clip.mp4`.
-
 ```go
 package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"log"
-	"os"
 
 	neuraldefend "github.com/Neural-Defend/NeuralDefend-SDKs/packages/go"
 )
 
 func main() {
-	if len(os.Args) != 2 {
-		log.Fatal("usage: go run . VIDEO_PATH")
-	}
-
-	// Get an API key from https://neuraldefend.com/ (Book a Demo), then export it.
-	client, err := neuraldefend.NewClient(neuraldefend.ClientOptions{
-		APIKey: os.Getenv("NEURALDEFEND_API_KEY"),
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	maxFrames, sampleRate := 24, 2
-	result, err := client.DetectVideo(
-		context.Background(),
-		neuraldefend.FileMedia(os.Args[1]),
-		neuraldefend.VideoOptions{MaxFrames: &maxFrames, SampleRate: &sampleRate},
-	)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Println("transaction:", result.UniqueTrxID)
-
-	switch {
-	case result.Scored():
-		fmt.Printf("video risk: %s (%.1f)\n", *result.VideoRiskLevel, *result.VideoRiskScore)
-		if result.HasAudio() {
-			fmt.Printf("audio risk: %s (%.1f)\n", *result.AudioRiskLevel, *result.AudioRiskScore)
-		} else if result.AudioMessage != nil {
-			fmt.Println("audio not scored:", *result.AudioMessage)
-		}
-		fmt.Printf("maximum modality score: %.1f\n", *result.OverallRiskScore())
-	case result.Rejected():
-		fmt.Println("video was not scored:", result.VideoMessage)
-	default:
-		fmt.Println("unrecognized future outcome:", result.Status)
-	}
+	client, _ := neuraldefend.NewClient(neuraldefend.ClientOptions{})
+	result, _ := client.DetectVideo(context.Background(), neuraldefend.FileMedia("clip.mp4"), neuraldefend.VideoOptions{})
+	response, _ := json.MarshalIndent(result.Raw, "", "  ")
+	fmt.Println(string(response))
 }
 ```
 
-Output:
+You get the full response, with a separate result for the picture and for the sound:
 
-```text
-transaction: trx_example_video_modalities
-video risk: low (2.2)
-audio risk: high (8.4)
-maximum modality score: 8.4
+```json
+{
+  "ai_threat_signals": [
+    "Face Swap Detection",
+    "Audio Frequency Analysis"
+  ],
+  "audio_message": "Likely to be AI-generated",
+  "audio_risk_level": "high",
+  "audio_risk_score": 8.4,
+  "billable": "Y",
+  "content_type": "video/mp4",
+  "filename": "clip.mp4",
+  "status": "success",
+  "status_code": 1,
+  "unique_trx_id": "trx_example_video_modalities",
+  "video_message": "Not likely to be AI-generated",
+  "video_risk_level": "low",
+  "video_risk_score": 2.2
+}
 ```
-
-`OverallRiskScore()` is a client-side convenience equal to the maximum available modality
-score. It is not a combined score returned by the API and does not replace modality-aware
-policy.
 
 ## Examples
 
