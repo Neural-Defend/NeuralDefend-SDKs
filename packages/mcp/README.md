@@ -1,21 +1,69 @@
-# neuraldefend-mcp
+<div align="center">
 
-`neuraldefend-mcp` 2.0.0 is a secure, local Model Context Protocol (MCP) server for
-NeuroVerify image and video authenticity analysis. It gives an MCP client two tools while
-keeping API credentials out of tool arguments, restricting which local media can be read,
-and returning a bounded integration contract instead of the Python SDK's raw response.
+# NeuralDefend MCP Server
+
+**Let your AI assistant check photos and videos for deepfakes, safely, from folders you choose.**
+
+[![PyPI](https://img.shields.io/pypi/v/neuraldefend-mcp?style=flat-square&logo=pypi&logoColor=white&label=PyPI&color=3775A9)](https://pypi.org/project/neuraldefend-mcp/)
+[![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![MCP](https://img.shields.io/badge/MCP-stdio%20server-000000?style=flat-square&logo=modelcontextprotocol&logoColor=white)](https://modelcontextprotocol.io/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-22863A?style=flat-square)](LICENSE)
+
+[Quick start](#quick-start) · [Examples](#examples) · [Tools](#tool-reference) · [Security](#secure-configuration) · [Troubleshooting](#troubleshooting)
+
+</div>
+
+---
+
+## In plain words
+
+**MCP** (Model Context Protocol) is a standard way to give an AI assistant new abilities.
+This package is a small program, called an MCP *server*, that gives assistants such as
+**Claude Desktop**, **Claude Code**, **Cursor**, or **VS Code** the ability to send a photo
+or video to Neural Defend's **NeuroVerify** service and ask:
+
+> "Does this face look real, or is it likely spoofed or AI-generated?"
+
+You type a normal request like *"Check `D:\Review\selfie.jpg` for deepfakes"*. The
+assistant calls the right tool, and the server answers with a risk level. The server can
+only read files inside the folders **you** allow, and your API key never appears in the
+chat.
+
+| The assistant wants to... | Tool it calls | It gets back |
+|---|---|---|
+| Check a photo of a face | `detect_image_authenticity` | One risk level for the image |
+| Check a video | `detect_video_authenticity` | Separate risk levels for the video and the audio |
+
+Think of the risk level as a traffic light:
+
+| Risk level | Meaning | What to do |
+|---|---|---|
+| `low` 🟢 | Few signs of manipulation were found | Continue, using your normal process |
+| `medium` 🟡 | The result is unclear | Ask for more evidence or a human review |
+| `high` 🔴 | Strong signs of spoofing or AI generation | Escalate to a human reviewer |
+
+Sometimes the service cannot score a file, for example when there is no face in the
+photo. That is a normal answer called a **rejection**, not a crash. A rejection is never
+proof that the media is real. The [examples](#examples) show what each case looks like.
+
+## About this server
+
+`neuraldefend-mcp` 2.0.0 is a secure, local MCP server for NeuroVerify image and video
+authenticity analysis. It gives an MCP client two tools while keeping API credentials out
+of tool arguments, restricting which local media can be read, and returning a bounded
+integration contract instead of the Python SDK's raw response.
 
 Use the results as decision-support signals. A low-risk result is not proof that media is
 authentic, and a high-risk result should trigger human review rather than automatic
 rejection.
 
-## How it works
+### How it works
 
 The MCP client starts `neuraldefend-mcp` as a child process and communicates with it over
 standard input and standard output:
 
 ```text
-MCP client
+MCP client (Claude Desktop, Claude Code, Cursor, VS Code, ...)
   └─ local stdio (MCP JSON-RPC)
       └─ neuraldefend-mcp
           ├─ validates and opens an allowlisted local file once
@@ -37,23 +85,40 @@ time-of-check/time-of-use risk.
 - Network access to the selected NeuroVerify API environment.
 - Read access to dedicated local directories containing only media authorized for upload.
 
+This guide documents `neuraldefend-mcp==2.0.0`.
+
 ## Installation
 
-Install the published 2.0.0 release:
+Pick one of the three options. All of them provide the same `neuraldefend-mcp` command.
+
+**pip** (inside a virtual environment or your user environment):
 
 ```bash
 python -m pip install "neuraldefend-mcp==2.0.0"
 ```
 
-The package installs the `neuraldefend-mcp` command. The equivalent module entry point is:
+**pipx** (installs the command in its own isolated environment and puts it on `PATH`):
+
+```bash
+pipx install "neuraldefend-mcp==2.0.0"
+```
+
+**uvx** (no separate install step; [uv](https://docs.astral.sh/uv/) downloads and runs the
+package on demand, which suits MCP client configuration):
+
+```bash
+uvx "neuraldefend-mcp==2.0.0"
+```
+
+When installed with pip, the equivalent module entry point is:
 
 ```bash
 python -m neuraldefend_mcp
 ```
 
-Both entry points run the same stdio-only server. Starting either one directly is normally
-useful only for diagnosing configuration: the process waits for MCP messages on standard
-input after successful startup.
+Every entry point runs the same stdio-only server. Starting one directly is normally useful
+only for diagnosing configuration (see [Example 10](#10-run-the-server-by-hand-for-debugging)):
+after a successful startup the process silently waits for MCP messages on standard input.
 
 ## Get an API key
 
@@ -75,10 +140,537 @@ the MCP server environment.
 
 **Contact:** [support@neuraldefend.com](mailto:support@neuraldefend.com)
 
+## Quick start
+
+Five steps, about five minutes once you have a key.
+
+1. **Install** the server (any option from [Installation](#installation)):
+
+   ```bash
+   pipx install "neuraldefend-mcp==2.0.0"
+   ```
+
+2. **Make a review folder** that will hold only media you are allowed to check, for
+   example `/Users/alice/NeuroVerify Review` on macOS or `D:\NeuroVerify Review` on
+   Windows. The folder must already exist.
+
+3. **Tell your assistant about the server.** Every client needs the same four facts: the
+   command (`neuraldefend-mcp`), your API key, the allowed folder, and (optionally) the
+   environment. In the common `mcpServers` format:
+
+   ```json
+   {
+     "mcpServers": {
+       "neuraldefend": {
+         "command": "neuraldefend-mcp",
+         "args": [],
+         "env": {
+           "NEURALDEFEND_API_KEY": "replace-with-your-api-key",
+           "NEURALDEFEND_MCP_ALLOWED_DIRS": "/Users/alice/NeuroVerify Review"
+         }
+       }
+     }
+   }
+   ```
+
+   Examples [1](#1-connect-claude-desktop), [2](#2-connect-claude-code), and
+   [3](#3-connect-cursor-or-vs-code) show where this goes for each client.
+
+4. **Restart the client** so it starts the server with the new settings.
+
+5. **Ask in plain language:**
+
+   > Check /Users/alice/NeuroVerify Review/selfie.jpg for deepfakes.
+
+   The assistant calls `detect_image_authenticity` and replies with the risk level. Each
+   analysis may create a billable transaction, so a well-behaved assistant confirms before
+   calling the tool.
+
+## Examples
+
+Each example is self-contained. The output blocks are **representative**: your scores,
+transaction IDs, messages, signals, and the assistant's exact wording will differ. Tool
+outputs are shown as the two parts every tool result contains: the short `content` text
+for people and the `structuredContent` object for automations (explained in
+[Reading tool results](#reading-tool-results)).
+
+| # | Example | You will learn |
+|:-:|---|---|
+| 1 | [Connect Claude Desktop](#1-connect-claude-desktop) | Where the config file lives on macOS and Windows |
+| 2 | [Connect Claude Code](#2-connect-claude-code) | Adding the server with one terminal command |
+| 3 | [Connect Cursor or VS Code](#3-connect-cursor-or-vs-code) | The config shape each editor expects |
+| 4 | [Check one photo](#4-check-one-photo) | The simplest request and its result |
+| 5 | [Check a video with sound](#5-check-a-video-with-sound) | Reading the separate video and audio results |
+| 6 | [Check every image in a folder](#6-check-every-image-in-a-folder) | Batch checks and their cost |
+| 7 | [Ask about a file outside the allowed folders](#7-ask-about-a-file-outside-the-allowed-folders) | How the path guard refuses unsafe requests |
+| 8 | [Handle a rejection](#8-handle-a-rejection) | Why "no face" is an answer, not an error |
+| 9 | [Test against staging](#9-test-against-staging) | Using a staging key without touching production |
+| 10 | [Run the server by hand for debugging](#10-run-the-server-by-hand-for-debugging) | Seeing startup errors directly |
+
+### 1. Connect Claude Desktop
+
+Claude Desktop reads MCP servers from a JSON file. Open it from **Settings → Developer →
+Edit Config**, or open it directly:
+
+| System | Config file |
+|---|---|
+| macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
+
+macOS:
+
+```json
+{
+  "mcpServers": {
+    "neuraldefend": {
+      "command": "neuraldefend-mcp",
+      "args": [],
+      "env": {
+        "NEURALDEFEND_API_KEY": "replace-with-your-api-key",
+        "NEURALDEFEND_MCP_ALLOWED_DIRS": "/Users/alice/NeuroVerify Review"
+      }
+    }
+  }
+}
+```
+
+Windows (backslashes are doubled inside JSON strings, and several folders are separated
+with `;`):
+
+```json
+{
+  "mcpServers": {
+    "neuraldefend": {
+      "command": "neuraldefend-mcp",
+      "args": [],
+      "env": {
+        "NEURALDEFEND_API_KEY": "replace-with-your-api-key",
+        "NEURALDEFEND_MCP_ALLOWED_DIRS": "D:\\NeuroVerify Review;E:\\Review Queue"
+      }
+    }
+  }
+}
+```
+
+Quit Claude Desktop completely and reopen it. Desktop apps often start with a shorter
+`PATH` than your terminal, so if the server does not appear, replace `"neuraldefend-mcp"`
+with its absolute path (find it with `which neuraldefend-mcp` on macOS or
+`where neuraldefend-mcp` on Windows).
+
+Output (the assistant, after you ask *"Which NeuralDefend tools can you use?"*):
+
+```text
+I can use two tools from the "neuraldefend" server:
+- detect_image_authenticity: assesses a single-face image for authenticity risk.
+- detect_video_authenticity: assesses video and audio as independent authenticity risks.
+Both can only read files inside the folders configured for the server.
+```
+
+This file stays on your computer, but it holds your key in plain text: do not commit,
+sync, or share it.
+
+### 2. Connect Claude Code
+
+Claude Code adds MCP servers with `claude mcp add`. Options come first, then the server
+name, then `--` and the command to run. `--scope user` makes the server available in all
+your projects.
+
+macOS/Linux:
+
+```bash
+claude mcp add --transport stdio --scope user \
+  --env NEURALDEFEND_API_KEY="$NEURALDEFEND_API_KEY" \
+  --env NEURALDEFEND_MCP_ALLOWED_DIRS="/Users/alice/NeuroVerify Review" \
+  neuraldefend -- neuraldefend-mcp
+```
+
+PowerShell:
+
+```powershell
+claude mcp add --transport stdio --scope user `
+  --env "NEURALDEFEND_API_KEY=$env:NEURALDEFEND_API_KEY" `
+  --env "NEURALDEFEND_MCP_ALLOWED_DIRS=D:\NeuroVerify Review" `
+  neuraldefend -- neuraldefend-mcp
+```
+
+Your shell fills in the key from your own environment, so it never appears in your command
+history; Claude Code then stores it in its local, per-user configuration. Check the
+connection:
+
+```bash
+claude mcp list
+```
+
+Output:
+
+```text
+neuraldefend: neuraldefend-mcp  - ✓ Connected
+```
+
+Inside a Claude Code session, `/mcp` shows the same status and the two tools.
+
+### 3. Connect Cursor or VS Code
+
+**Cursor** uses the `mcpServers` shape. Put it in `~/.cursor/mcp.json` (all projects) so
+the key stays out of your repositories:
+
+```json
+{
+  "mcpServers": {
+    "neuraldefend": {
+      "command": "neuraldefend-mcp",
+      "args": [],
+      "env": {
+        "NEURALDEFEND_API_KEY": "replace-with-your-api-key",
+        "NEURALDEFEND_MCP_ALLOWED_DIRS": "/Users/alice/NeuroVerify Review"
+      }
+    }
+  }
+}
+```
+
+**VS Code** uses a top-level `servers` key in `.vscode/mcp.json` (or the user-level MCP
+configuration). Its `inputs` feature asks for the key once and stores it securely, so the
+file itself contains no secret and is safe to commit:
+
+```json
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "neuraldefend-api-key",
+      "description": "NeuralDefend API key",
+      "password": true
+    }
+  ],
+  "servers": {
+    "neuraldefend": {
+      "type": "stdio",
+      "command": "neuraldefend-mcp",
+      "args": [],
+      "env": {
+        "NEURALDEFEND_API_KEY": "${input:neuraldefend-api-key}",
+        "NEURALDEFEND_MCP_ALLOWED_DIRS": "/Users/alice/NeuroVerify Review"
+      }
+    }
+  }
+}
+```
+
+Output: after you start the server, both editors list `detect_image_authenticity` and
+`detect_video_authenticity` as available tools in agent mode.
+
+### 4. Check one photo
+
+Ask in plain words, and always give the **full (absolute) path**. The server does not
+guess which folder you mean.
+
+```text
+Check /Users/alice/NeuroVerify Review/selfie.jpg for deepfakes.
+```
+
+The assistant calls the tool with one argument:
+
+```json
+{ "file_path": "/Users/alice/NeuroVerify Review/selfie.jpg" }
+```
+
+Output (tool result):
+
+```text
+Image scored: low risk (2.2/10). Not likely to be Spoof or AI-generated Low risk is not definitive proof of authenticity.
+```
+
+```json
+{
+  "schemaVersion": "1.0",
+  "mediaType": "image",
+  "status": "success",
+  "statusCode": 1,
+  "scored": true,
+  "billable": true,
+  "transactionId": "trx_example_image_low",
+  "risk": {
+    "image": {
+      "score": 2.2,
+      "level": "low",
+      "message": "Not likely to be Spoof or AI-generated"
+    }
+  },
+  "signals": ["Visual Safety Screening", "Liveness Verification"]
+}
+```
+
+Output (assistant reply):
+
+```text
+selfie.jpg came back LOW risk (2.2 out of 10): "Not likely to be Spoof or AI-generated".
+Low risk is not proof the photo is genuine, so continue with your normal checks.
+Transaction ID: trx_example_image_low.
+```
+
+### 5. Check a video with sound
+
+A video gets **two** separate answers: one for the picture and one for the audio. You can
+ask for more sampled frames (1 to 100, default 12) for better coverage of long clips.
+
+```text
+Check /Users/alice/NeuroVerify Review/interview.mp4. Use 24 frames.
+```
+
+Tool arguments:
+
+```json
+{ "file_path": "/Users/alice/NeuroVerify Review/interview.mp4", "max_frames": 24 }
+```
+
+Output (tool result):
+
+```text
+Video scored independently. Video: high risk (8.7/10). Likely to be AI-generated Audio: low risk (2.2/10). Not likely to be AI-generated Escalate for human review; do not auto-reject from this result alone.
+```
+
+```json
+{
+  "schemaVersion": "1.0",
+  "mediaType": "video",
+  "status": "success",
+  "statusCode": 1,
+  "scored": true,
+  "billable": true,
+  "transactionId": "trx_example_video_modalities",
+  "risk": {
+    "video": {
+      "score": 8.7,
+      "level": "high",
+      "message": "Likely to be AI-generated"
+    },
+    "audio": {
+      "score": 2.2,
+      "level": "low",
+      "message": "Not likely to be AI-generated"
+    }
+  },
+  "signals": ["Face Swap Detection", "Audio Frequency Analysis", "Frame-Level Visual Analysis"]
+}
+```
+
+The face looks manipulated but the voice does not. The low audio result does **not**
+cancel out the high video result: there is no combined score, and each modality is judged
+on its own. A silent clip is still scored; its audio `score` and `level` are `null` with
+the message `No audio track detected`.
+
+### 6. Check every image in a folder
+
+The server has no "list folder" tool; it only analyzes the files it is given. An assistant
+that can see your files (Claude Code, Cursor, or VS Code agent mode) can list the folder
+itself and then call `detect_image_authenticity` once per file. In Claude Desktop, name
+the files in your request.
+
+```text
+List the images in /Users/alice/NeuroVerify Review/batch-07, tell me how many
+analyses that will be, and after I confirm, check each one and summarize the results
+in a table.
+```
+
+Output (assistant reply):
+
+```text
+There are 4 images, so this is 4 separate analyses, and each may be billable. Proceed?
+
+> yes
+
+| File              | Result   | Level  | Message                                 |
+|-------------------|----------|--------|-----------------------------------------|
+| anna.jpg          | scored   | low    | Not likely to be Spoof or AI-generated  |
+| group_photo.jpg   | rejected | —      | Multiple faces detected in the image    |
+| id_card_scan.png  | scored   | medium | Less likely to be Spoof or AI-generated |
+| printed_photo.jpg | scored   | high   | Likely to be Spoof detected             |
+
+Summary: 1 low, 1 medium, 1 high, 1 rejected. printed_photo.jpg should go to a human
+reviewer; group_photo.jpg needs a new photo with one face.
+```
+
+At most `NEURALDEFEND_MCP_MAX_CONCURRENCY` analyses (default `2`) run at the same time;
+extra calls wait their turn. Check your account rate limits before large batches.
+
+### 7. Ask about a file outside the allowed folders
+
+The server checks every path **before** anything is uploaded. Here the allowed folder is
+`/Users/alice/NeuroVerify Review`, but the request points at the Downloads folder:
+
+```text
+Check /Users/alice/Downloads/passport.jpg for deepfakes.
+```
+
+Output (tool result, marked `isError: true`):
+
+```text
+The media file is outside allowed directories.
+```
+
+```json
+{
+  "schemaVersion": "1.0",
+  "mediaType": "image",
+  "status": "error",
+  "statusCode": null,
+  "scored": false,
+  "billable": false,
+  "transactionId": null,
+  "risk": {
+    "image": null
+  },
+  "signals": [],
+  "error": {
+    "code": "local_validation",
+    "message": "The media file is outside allowed directories.",
+    "retryable": false
+  }
+}
+```
+
+Output (assistant reply):
+
+```text
+I can't check that file: it is outside the folders this server is allowed to read.
+Nothing was uploaded and nothing was billed. If you are authorized to check it, move it
+into /Users/alice/NeuroVerify Review and ask again.
+```
+
+The same guard refuses relative paths (`The media path must be absolute.`), missing files
+(`The media file does not exist.`), empty files, oversized files, and paths that go
+through symlinks or junctions. The error never echoes the path back.
+
+### 8. Handle a rejection
+
+When the service receives a file but cannot score it, the result has
+`status: "rejected"`. This is a normal answer, **not** an MCP error (`isError` is
+`false`), and it can still be billable.
+
+```text
+Check /Users/alice/NeuroVerify Review/landscape.jpg.
+```
+
+Output (tool result):
+
+```text
+Could not score image: No face detected in the image An unscorable result is not evidence that the media is authentic.
+```
+
+```json
+{
+  "schemaVersion": "1.0",
+  "mediaType": "image",
+  "status": "rejected",
+  "statusCode": 6,
+  "scored": false,
+  "billable": true,
+  "transactionId": "trx_example_image_no_face",
+  "risk": {
+    "image": {
+      "score": null,
+      "level": null,
+      "message": "No face detected in the image"
+    }
+  },
+  "signals": []
+}
+```
+
+Output (assistant reply):
+
+```text
+NeuroVerify could not score landscape.jpg because no face was detected. That does not
+mean the image is genuine. Please provide a clear, front-facing photo of exactly one
+person. (This rejection was billable; transaction trx_example_image_no_face.)
+```
+
+Do not retry the same file: the answer will not change, and each attempt is a new
+transaction. Fix the media instead.
+
+### 9. Test against staging
+
+Neural Defend can issue a separate **staging** key during onboarding for integration
+tests. Set `NEURALDEFEND_MCP_ENVIRONMENT` to `staging`, and use a separate folder of
+approved test media:
+
+```json
+{
+  "mcpServers": {
+    "neuraldefend-staging": {
+      "command": "neuraldefend-mcp",
+      "args": [],
+      "env": {
+        "NEURALDEFEND_API_KEY": "replace-with-your-staging-api-key",
+        "NEURALDEFEND_MCP_ALLOWED_DIRS": "/Users/alice/NeuroVerify Test Media",
+        "NEURALDEFEND_MCP_ENVIRONMENT": "staging",
+        "NEURALDEFEND_MCP_MAX_CONCURRENCY": "1"
+      }
+    }
+  }
+}
+```
+
+Output (tool result for a test image):
+
+```text
+Image scored: low risk (2.2/10). Not likely to be Spoof or AI-generated Low risk is not definitive proof of authenticity.
+```
+
+Only `production` and `staging` are accepted. The server cannot be pointed at any other
+URL, so a staging setup can never leak a key or media to an unknown host.
+
+### 10. Run the server by hand for debugging
+
+The server has no command-line flags; every setting comes from the environment variables
+in [Secure configuration](#secure-configuration). Running it directly in a terminal is the
+fastest way to see a startup problem that your MCP client may hide.
+
+macOS/Linux:
+
+```bash
+export NEURALDEFEND_API_KEY="replace-with-your-api-key"
+export NEURALDEFEND_MCP_ALLOWED_DIRS="/Users/alice/NeuroVerify Review"
+neuraldefend-mcp
+```
+
+PowerShell:
+
+```powershell
+$env:NEURALDEFEND_API_KEY = "replace-with-your-api-key"
+$env:NEURALDEFEND_MCP_ALLOWED_DIRS = "D:\NeuroVerify Review"
+neuraldefend-mcp
+```
+
+Output when the configuration is valid: nothing. The server is waiting for MCP messages
+on standard input. Press `Ctrl+C` to stop it.
+
+Output when something is wrong (written to standard error; exit code `2`):
+
+```text
+neuraldefend-mcp: NEURALDEFEND_MCP_ALLOWED_DIRS is required.
+```
+
+```text
+neuraldefend-mcp: Every allowed directory must exist.
+```
+
+To call the tools interactively without an AI assistant, the open-source
+[MCP Inspector](https://modelcontextprotocol.io/docs/tools/inspector) can launch the
+server for you:
+
+```bash
+npx @modelcontextprotocol/inspector \
+  -e NEURALDEFEND_API_KEY="$NEURALDEFEND_API_KEY" \
+  -e NEURALDEFEND_MCP_ALLOWED_DIRS="/Users/alice/NeuroVerify Review" \
+  neuraldefend-mcp
+```
+
 ## Secure configuration
 
 Configuration is read from the server process environment at startup. The server refuses
-to start if a required value is missing or unsafe.
+to start if a required value is missing or unsafe. There are no command-line options.
 
 | Variable | Required | Default | Accepted value | Why it is restricted |
 |---|---:|---|---|---|
@@ -100,6 +692,9 @@ Do not put a real key in:
 - a prompt or tool argument;
 - a shell-history example;
 - application logs or issue reports.
+
+Startup validates only that the key is a non-empty string; the NeuroVerify API then
+validates the credential and its endpoint scope on each request.
 
 ### Allowed directories
 
@@ -163,66 +758,20 @@ redirecting the API key and uploaded media to an arbitrary origin.
 ### Maximum concurrency
 
 `NEURALDEFEND_MCP_MAX_CONCURRENCY` limits active analyses across both tools. It must be a
-base-10 integer from `1` through `32`; booleans, decimals, zero, negatives, and larger
-values are rejected. Start with the default `2`. Raise it only after considering account
-rate limits, host resources, expected media sizes, latency, and billing controls.
+base-10 integer from `1` through `32`; booleans, decimals, zero, negatives, and larger values are
+rejected. Start with the default `2`. Raise it only after considering account rate limits,
+host resources, expected media sizes, latency, and billing controls.
 
-## MCP client configuration
+## Other MCP clients
 
 The outer configuration key varies by client, but clients that use the common
-`mcpServers` shape can use the following complete entries.
+`mcpServers` shape can use the entries below. Use a secret reference such as
+`${NEURALDEFEND_API_KEY}` only if your client documents that it expands that syntax.
+Otherwise, omit the key from the `env` object and launch the client from a securely
+populated environment, or use the client's secret-store reference. Never put a real key in
+a file that may be committed, synchronized, backed up without encryption, or shared.
 
-The `${NEURALDEFEND_API_KEY}` token below is a secret reference, not a literal key. Use it
-only if your client expands that syntax. Otherwise, omit the key from the `env` object and
-launch the MCP client from a securely populated environment, or replace the token with the
-client's documented secret-store reference. Never replace it with a real key in a file
-that may be committed, synchronized, backed up without encryption, or shared.
-
-Every complete configuration below explicitly passes `NEURALDEFEND_API_KEY` into the MCP
-server process. Obtain that key from **[neuraldefend.com](https://neuraldefend.com/)** (Book
-a Demo) after Neural Defend onboarding — never paste a real key into a committed file.
-Startup validates that it is a non-empty string; the NeuroVerify API then validates the
-credential and its endpoint scope on each request.
-
-### Windows
-
-```json
-{
-  "mcpServers": {
-    "neuraldefend": {
-      "command": "neuraldefend-mcp",
-      "args": [],
-      "env": {
-        "NEURALDEFEND_API_KEY": "${NEURALDEFEND_API_KEY}",
-        "NEURALDEFEND_MCP_ALLOWED_DIRS": "D:\\Authorized Media;E:\\Review Queue",
-        "NEURALDEFEND_MCP_ENVIRONMENT": "production",
-        "NEURALDEFEND_MCP_MAX_CONCURRENCY": "2"
-      }
-    }
-  }
-}
-```
-
-### macOS
-
-```json
-{
-  "mcpServers": {
-    "neuraldefend": {
-      "command": "neuraldefend-mcp",
-      "args": [],
-      "env": {
-        "NEURALDEFEND_API_KEY": "${NEURALDEFEND_API_KEY}",
-        "NEURALDEFEND_MCP_ALLOWED_DIRS": "/Users/alice/Authorized Media:/Volumes/ReviewQueue",
-        "NEURALDEFEND_MCP_ENVIRONMENT": "production",
-        "NEURALDEFEND_MCP_MAX_CONCURRENCY": "2"
-      }
-    }
-  }
-}
-```
-
-### Linux
+Installed command on `PATH`:
 
 ```json
 {
@@ -241,8 +790,25 @@ credential and its endpoint scope on each request.
 }
 ```
 
-If the installed console command is not on the MCP client's `PATH`, use the interpreter
-from the environment where the package was installed:
+Run through `uvx` without a separate install:
+
+```json
+{
+  "mcpServers": {
+    "neuraldefend": {
+      "command": "uvx",
+      "args": ["neuraldefend-mcp==2.0.0"],
+      "env": {
+        "NEURALDEFEND_API_KEY": "${NEURALDEFEND_API_KEY}",
+        "NEURALDEFEND_MCP_ALLOWED_DIRS": "/srv/authorized-media"
+      }
+    }
+  }
+}
+```
+
+If the console command is not on the client's `PATH`, use the interpreter from the
+environment where the package was installed:
 
 ```json
 {
@@ -252,9 +818,7 @@ from the environment where the package was installed:
       "args": ["-m", "neuraldefend_mcp"],
       "env": {
         "NEURALDEFEND_API_KEY": "${NEURALDEFEND_API_KEY}",
-        "NEURALDEFEND_MCP_ALLOWED_DIRS": "/absolute/path/to/authorized-media",
-        "NEURALDEFEND_MCP_ENVIRONMENT": "production",
-        "NEURALDEFEND_MCP_MAX_CONCURRENCY": "2"
+        "NEURALDEFEND_MCP_ALLOWED_DIRS": "/absolute/path/to/authorized-media"
       }
     }
   }
@@ -262,8 +826,8 @@ from the environment where the package was installed:
 ```
 
 On Windows, `command` may instead be an absolute path such as
-`C:\\path\\to\\venv\\Scripts\\python.exe`, and the allowed directory must use a Windows
-absolute path.
+`C:\\path\\to\\venv\\Scripts\\python.exe`, and allowed directories must use Windows
+absolute paths separated by `;`.
 
 Restart the MCP server after changing its environment or allowlist. Configuration is
 loaded once for the process lifespan.
@@ -284,6 +848,9 @@ no-face and face-policy rejections can return `billable: true`. For failures whe
 not safe to know whether the service accepted the request, `billable` is `null`.
 
 ## Tool reference
+
+The server registers itself as **NeuralDefend Media Authenticity** and exposes exactly two
+tools.
 
 ### `detect_image_authenticity(file_path)`
 
@@ -336,6 +903,8 @@ outcome:
 rejection uses `status: "rejected"` and `isError: false` because it is a valid, unscorable
 business result.
 
+The examples below are representative `structuredContent` values.
+
 ### Image success: low risk
 
 ```json
@@ -346,7 +915,7 @@ business result.
   "statusCode": 1,
   "scored": true,
   "billable": true,
-  "transactionId": "trx_c1r7n6oy69zhunjrkp0p",
+  "transactionId": "trx_example_image_low",
   "risk": {
     "image": {
       "score": 2.2,
@@ -376,7 +945,7 @@ Low risk is not definitive proof of authenticity.
   "statusCode": 1,
   "scored": true,
   "billable": true,
-  "transactionId": "trx_med123abc456def789",
+  "transactionId": "trx_example_image_medium",
   "risk": {
     "image": {
       "score": 5.5,
@@ -406,7 +975,7 @@ Medium risk should be reviewed with additional evidence.
   "statusCode": 1,
   "scored": true,
   "billable": true,
-  "transactionId": "trx_k8mdf2ab1xpqr7w3e9t6",
+  "transactionId": "trx_example_image_high",
   "risk": {
     "image": {
       "score": 8.7,
@@ -439,7 +1008,7 @@ This is a valid, potentially billable result, not an MCP error:
   "statusCode": 6,
   "scored": false,
   "billable": true,
-  "transactionId": "trx_nf123abc456def789",
+  "transactionId": "trx_example_image_no_face",
   "risk": {
     "image": {
       "score": null,
@@ -463,7 +1032,7 @@ This is a valid, potentially billable result, not an MCP error:
   "statusCode": 1,
   "scored": true,
   "billable": true,
-  "transactionId": "trx_qro0hy17yeyridi0f4yu",
+  "transactionId": "trx_example_video_high",
   "risk": {
     "video": {
       "score": 9.0,
@@ -502,7 +1071,7 @@ does not offset the high-risk video result.
   "statusCode": 1,
   "scored": true,
   "billable": true,
-  "transactionId": "trx_vid_na123abc456def789",
+  "transactionId": "trx_example_video_silent",
   "risk": {
     "video": {
       "score": 2.1,
@@ -541,7 +1110,7 @@ mean low audio risk.
   "statusCode": 6,
   "scored": false,
   "billable": true,
-  "transactionId": "trx_77lgbdbn4kec3ouwbnjt",
+  "transactionId": "trx_example_video_no_face",
   "risk": {
     "video": {
       "score": null,
@@ -694,36 +1263,51 @@ the server:
 The bounded MCP result reduces accidental leakage but does not replace governance for the
 media uploaded to the service or for transaction and risk data retained by the MCP client.
 
+Report suspected vulnerabilities privately to `support@neuraldefend.com`; do not include
+real credentials or customer media in the report.
+
 ## Troubleshooting
 
 ### Server does not start
+
+Startup errors are printed to standard error as `neuraldefend-mcp: <message>` and the
+process exits with code `2`. Run the server by hand ([Example 10](#10-run-the-server-by-hand-for-debugging))
+to see them directly.
 
 - `NEURALDEFEND_API_KEY is required.`: inject a non-empty key into the server process.
 - `NEURALDEFEND_MCP_ALLOWED_DIRS is required.`: configure at least one existing absolute
   directory.
 - `contains an empty entry`: remove a leading, trailing, or doubled path separator.
-- `must be between 1 and 32`: correct `NEURALDEFEND_MCP_MAX_CONCURRENCY`.
+- `Every allowed directory must exist.` / `must be an absolute path.`: create the folder
+  first and use its full path.
+- `Filesystem roots cannot be allowed directories.`: choose a dedicated subfolder instead
+  of `C:\` or `/`.
+- `must be between 1 and 32` or `must be a positive integer`: correct
+  `NEURALDEFEND_MCP_MAX_CONCURRENCY`.
 - `must be either 'production' or 'staging'`: remove a custom URL or unsupported
   environment name.
 - The client reports that the process exited but shows no protocol output: inspect the MCP
   client's captured standard error. Startup errors intentionally never use standard
   output.
-- `neuraldefend-mcp` is not found: use the absolute Python interpreter path with
-  `-m neuraldefend_mcp`.
+- `neuraldefend-mcp` is not found: use the command's absolute path, use `uvx`, or use the
+  absolute Python interpreter path with `-m neuraldefend_mcp`.
 
 ### Path is rejected
 
-- Pass an absolute file path. The MCP client's working directory is not used to resolve
-  relative paths.
-- Confirm the file is below an allowed directory, not merely in a path with the same text
-  prefix.
-- Confirm the file exists, is regular, non-empty, and within the applicable size limit.
-- Remove symlink, junction, reparse-point, or linked parent components. Both allowed
-  roots and invocation paths are checked component by component.
+- `The media path must be absolute.`: pass a full path. The MCP client's working directory
+  is not used to resolve relative paths.
+- `The media file is outside allowed directories.`: confirm the file is below an allowed
+  directory, not merely in a path with the same text prefix.
+- `The media file does not exist.`, `The media file is empty.`, or
+  `The media file exceeds the allowed size.`: confirm the file exists, is regular,
+  non-empty, and within the applicable size limit.
+- `The media path cannot contain symlinks, junctions, or reparse points.`: remove linked
+  components. Both allowed roots and invocation paths are checked component by component.
 - On Windows, do not use device namespaces, reserved device names, or alternate data
   streams.
-- If another process replaces or moves a file while it opens, retry only after stabilizing
-  the file. The server rejects changed handles rather than uploading uncertain content.
+- `The media file changed while it was opened.`: another process replaced or moved the
+  file. Retry only after stabilizing the file; the server rejects changed handles rather
+  than uploading uncertain content.
 - Restart the server after changing `NEURALDEFEND_MCP_ALLOWED_DIRS`.
 
 Path failures return `local_validation` without echoing the sensitive path.
@@ -762,6 +1346,14 @@ both modalities remain unscored and the business result is rejected.
 The wire-level documents describe the complete service response scenarios. Integrations
 using this MCP server should depend on the bounded `structuredContent` contract documented
 here, not on upstream-only fields.
+
+## Support
+
+Technical support: `support@neuraldefend.com`
+
+When requesting help, provide the `neuraldefend-mcp` version, the MCP client you use, the
+`error.code` or `transactionId`, and a sanitized description of the problem. Do not send
+API keys, raw customer media, or biometric/personal data.
 
 ## Development
 
