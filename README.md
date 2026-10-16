@@ -1,63 +1,120 @@
-# Neural Defend - NeuroVerify SDKs
+<div align="center">
 
-<p align="left">
-  <a href="https://pypi.org/project/neuraldefend/"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" width="36" height="36" alt="Python" title="Python SDK" /></a>
-  <a href="https://www.npmjs.com/package/@neuraldefend/sdk"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" width="36" height="36" alt="TypeScript" title="TypeScript SDK" /></a>
-  <a href="https://github.com/Neural-Defend/NeuralDefend-SDKs/tree/main/packages/go"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original-wordmark.svg" width="36" height="36" alt="Go" title="Go SDK" /></a>
-  <a href="https://pub.dev/packages/neuraldefend"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/flutter/flutter-original.svg" width="36" height="36" alt="Flutter" title="Dart and Flutter SDK" /></a>
-  <a href="https://github.com/Neural-Defend/NeuralDefend-SDKs/tree/main/packages/swift"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/swift/swift-original.svg" width="36" height="36" alt="Swift" title="Swift SDK for iOS and Apple platforms" /></a>
-  <a href="https://central.sonatype.com/artifact/com.neuraldefend/neuraldefend-kotlin"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kotlin/kotlin-original.svg" width="36" height="36" alt="Kotlin" title="Kotlin and Android SDK" /></a>
-  <a href="https://pypi.org/project/neuraldefend-mcp/"><img src="https://cdn.simpleicons.org/modelcontextprotocol/000000" width="36" height="36" alt="MCP" title="MCP server" /></a>
-</p>
+# NeuroVerify SDKs
 
-[![Python SDK on PyPI](https://img.shields.io/pypi/v/neuraldefend?style=flat-square&logo=python&logoColor=white&label=Python%201.0.3)](https://pypi.org/project/neuraldefend/)
-[![TypeScript SDK on npm](https://img.shields.io/npm/v/@neuraldefend/sdk?style=flat-square&logo=npm&logoColor=white&label=TypeScript%201.0.4)](https://www.npmjs.com/package/@neuraldefend/sdk)
-[![Go 1.0.0](https://img.shields.io/badge/Go-1.0.0-00ADD8?style=flat-square&logo=go&logoColor=white)](https://github.com/Neural-Defend/NeuralDefend-SDKs/releases/tag/packages/go/v1.0.0)
-[![Dart and Flutter SDK on pub.dev](https://img.shields.io/badge/Dart%20%2F%20Flutter-1.0.0-02569B?style=flat-square&logo=flutter&logoColor=white)](https://pub.dev/packages/neuraldefend)
-[![Swift 1.0.0](https://img.shields.io/badge/Swift-1.0.0-F05138?style=flat-square&logo=swift&logoColor=white)](https://github.com/Neural-Defend/NeuralDefend-SDKs/tree/main/packages/swift)
-[![Kotlin and Android SDK on Maven Central](https://img.shields.io/badge/Kotlin%20%2F%20Android-1.0.0-7F52FF?style=flat-square&logo=kotlin&logoColor=white)](https://central.sonatype.com/artifact/com.neuraldefend/neuraldefend-kotlin)
-[![MCP server on PyPI](https://img.shields.io/pypi/v/neuraldefend-mcp?style=flat-square&logo=pypi&logoColor=white&label=MCP%202.0.0)](https://pypi.org/project/neuraldefend-mcp/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
-[![CI](https://github.com/Neural-Defend/NeuralDefend-SDKs/actions/workflows/test.yml/badge.svg)](https://github.com/Neural-Defend/NeuralDefend-SDKs/actions/workflows/test.yml)
+**Official Neural Defend clients for detecting deepfakes, AI-generated faces, and spoofed media.**
 
-Official clients for the **NeuroVerify Detection API**, which evaluates images and videos
-for signs of AI generation, manipulation, spoofing, and related authenticity risks.
+Send a photo or video, get back a clear `low` / `medium` / `high` risk answer in a few lines of code.
 
-## Choose an integration
+[![CI](https://img.shields.io/github/actions/workflow/status/Neural-Defend/NeuralDefend-SDKs/test.yml?branch=main&style=flat-square&logo=githubactions&logoColor=white&label=CI)](https://github.com/Neural-Defend/NeuralDefend-SDKs/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-22863A?style=flat-square)](LICENSE)
+[![API docs](https://img.shields.io/badge/docs-API%20reference-0A66C2?style=flat-square&logo=gitbook&logoColor=white)](https://neuraldefend.gitbook.io/neural-defend)
+[![Website](https://img.shields.io/badge/neuraldefend.com-get%20an%20API%20key-111111?style=flat-square)](https://neuraldefend.com/)
 
-| | Integration | Best for | Install | Guide |
-|:-:|---|---|---|---|
-| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" width="22" height="22" alt="Python" /> | [Python `neuraldefend` 1.0.3](https://pypi.org/project/neuraldefend/1.0.3/) | Python services and scripts (Python 3.9+) | `pip install neuraldefend` | [Python SDK](packages/python/README.md) |
-| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" width="22" height="22" alt="Node.js" /> | [TypeScript `@neuraldefend/sdk` 1.0.4](https://www.npmjs.com/package/@neuraldefend/sdk/v/1.0.4) | Node.js 22+ and evergreen browsers | `npm install @neuraldefend/sdk` | [TypeScript SDK](packages/typescript/README.md) |
-| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original-wordmark.svg" width="22" height="22" alt="Go" /> | [Go `neuraldefend` 1.0.0](https://github.com/Neural-Defend/NeuralDefend-SDKs/tree/main/packages/go) | Go services and CLIs (Go 1.22+) | `go get github.com/Neural-Defend/NeuralDefend-SDKs/packages/go@v1.0.0` | [Go SDK](packages/go/README.md) |
-| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg" width="22" height="22" alt="Java" /> | [Java `neuraldefend-sdk` 1.0.0](https://github.com/Neural-Defend/NeuralDefend-SDKs/tree/main/packages/java) | JVM services (Java 17+) | see [Java SDK](packages/java/README.md) | [Java SDK](packages/java/README.md) |
-| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/flutter/flutter-original.svg" width="22" height="22" alt="Flutter" /> | [Dart `neuraldefend` 1.0.0](https://pub.dev/packages/neuraldefend) | Flutter apps (Android, iOS, desktop, web) and Dart servers (Dart 3.5+) | `flutter pub add neuraldefend` | [Dart and Flutter SDK](packages/dart/README.md) |
-| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/swift/swift-original.svg" width="22" height="22" alt="Swift" /> | [Swift `NeuralDefend` 1.0.0](https://github.com/Neural-Defend/NeuralDefend-SDKs/tree/main/packages/swift) | iOS, iPadOS, macOS, Mac Catalyst, and visionOS apps, and Swift on Linux (Swift 6.0+) | Swift Package Manager: `https://github.com/Neural-Defend/NeuralDefend-SDKs` from `1.0.0` | [Swift SDK](packages/swift/README.md) |
-| <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kotlin/kotlin-original.svg" width="22" height="22" alt="Kotlin" /> | [Kotlin `com.neuraldefend:neuraldefend-kotlin` 1.0.0](https://central.sonatype.com/artifact/com.neuraldefend/neuraldefend-kotlin/1.0.0) | Android apps (API 21+) and Kotlin on the JVM (Java 8+) | `implementation("com.neuraldefend:neuraldefend-kotlin:1.0.0")` | [Kotlin and Android SDK](packages/kotlin/README.md) |
-| <img src="https://cdn.simpleicons.org/modelcontextprotocol/000000" width="22" height="22" alt="MCP" /> | [MCP `neuraldefend-mcp` 2.0.0](https://pypi.org/project/neuraldefend-mcp/2.0.0/) | MCP-compatible agents and tools (Python 3.10+) | `pip install neuraldefend-mcp` | [MCP server](packages/mcp/README.md) |
+[Choose an SDK](#choose-an-sdk) · [Get an API key](#get-an-api-key) · [Quick start](#quick-start) · [Understanding results](#understanding-results) · [Documentation](#documentation) · [Support](#support)
 
-Use the Python, TypeScript, Go, Dart, Java, Swift, or Kotlin SDK for application code. Use the MCP server when an agent
-needs controlled access to authorized local media; it requires an explicit directory
-allowlist.
+</div>
+
+---
+
+## What is NeuroVerify?
+
+**NeuroVerify** is Neural Defend's media-authenticity API. It looks at a face photo or a
+video and tells you how likely it is that the media was **faked**: printed or replayed in
+front of a camera (spoofing), generated by AI, face-swapped, or given a cloned voice.
+
+These SDKs wrap the API so you never have to build HTTP requests, multipart uploads,
+retries, or response parsing yourself. Every SDK works the same way:
+
+```mermaid
+flowchart LR
+    A["Your app<br/>photo or video"] --> B["NeuroVerify SDK<br/>validates, uploads, retries"]
+    B --> C["NeuroVerify API"]
+    C --> D{"Result"}
+    D --> E["🟢 low"]
+    D --> F["🟡 medium"]
+    D --> G["🔴 high"]
+    D --> H["⚪ rejected<br/>e.g. no face"]
+```
+
+1. **Create a client** with your API key.
+2. **Call `detectImage`** for a photo or **`detectVideo`** for a video.
+3. **Read the risk level** and decide what your app should do.
+
+## Choose an SDK
+
+| Language | Package | Version | Install | Guide |
+|---|---|---|---|---|
+| **Python** | `neuraldefend` | [![PyPI](https://img.shields.io/pypi/v/neuraldefend?style=flat-square&logo=python&logoColor=white&label=&color=3776AB)](https://pypi.org/project/neuraldefend/) | `pip install neuraldefend` | [Python guide](packages/python/README.md) |
+| **TypeScript / JavaScript** | `@neuraldefend/sdk` | [![npm](https://img.shields.io/npm/v/@neuraldefend/sdk?style=flat-square&logo=npm&logoColor=white&label=&color=CB3837)](https://www.npmjs.com/package/@neuraldefend/sdk) | `npm install @neuraldefend/sdk` | [TypeScript guide](packages/typescript/README.md) |
+| **Go** | `packages/go` | [![Go](https://img.shields.io/badge/v1.0.0-00ADD8?style=flat-square&logo=go&logoColor=white)](https://github.com/Neural-Defend/NeuralDefend-SDKs/tree/main/packages/go) | `go get github.com/Neural-Defend/NeuralDefend-SDKs/packages/go@v1.0.0` | [Go guide](packages/go/README.md) |
+| **Java** | `com.neuraldefend:neuraldefend-sdk` | [![Java](https://img.shields.io/badge/v1.0.0-ED8B00?style=flat-square&logo=openjdk&logoColor=white)](https://github.com/Neural-Defend/NeuralDefend-SDKs/tree/main/packages/java) | `implementation("com.neuraldefend:neuraldefend-sdk:1.0.0")` | [Java guide](packages/java/README.md) |
+| **Kotlin / Android** | `com.neuraldefend:neuraldefend-kotlin` | [![Kotlin](https://img.shields.io/badge/v1.0.0-7F52FF?style=flat-square&logo=kotlin&logoColor=white)](https://central.sonatype.com/artifact/com.neuraldefend/neuraldefend-kotlin) | `implementation("com.neuraldefend:neuraldefend-kotlin:1.0.0")` | [Kotlin guide](packages/kotlin/README.md) |
+| **Dart / Flutter** | `neuraldefend` | [![pub](https://img.shields.io/pub/v/neuraldefend?style=flat-square&logo=flutter&logoColor=white&label=&color=02569B)](https://pub.dev/packages/neuraldefend) | `flutter pub add neuraldefend` | [Dart and Flutter guide](packages/dart/README.md) |
+| **Swift** | `NeuralDefend` | [![Swift](https://img.shields.io/badge/v1.0.0-F05138?style=flat-square&logo=swift&logoColor=white)](https://github.com/Neural-Defend/NeuralDefend-SDKs/tree/main/packages/swift) | Swift Package Manager | [Swift guide](packages/swift/README.md) |
+| **MCP server** | `neuraldefend-mcp` | [![PyPI](https://img.shields.io/pypi/v/neuraldefend-mcp?style=flat-square&logo=modelcontextprotocol&logoColor=white&label=&color=111111)](https://pypi.org/project/neuraldefend-mcp/) | `pip install neuraldefend-mcp` | [MCP guide](packages/mcp/README.md) |
+
+**Which one should I use?**
+
+- Building a **backend service, script, or CLI**? Use the SDK for your server language:
+  Python, TypeScript (Node.js), Go, Java, or Kotlin.
+- Building a **mobile or desktop app**? Use Kotlin (Android), Swift (iOS and macOS), or
+  Dart (Flutter), and keep production keys on your backend (see
+  [Keep your key safe](#keep-your-key-safe)).
+- Building a **website**? Use the TypeScript SDK in the browser with a short-lived key
+  from your backend.
+- Want an **AI assistant** (Claude, Cursor, VS Code) to check files for you? Use the
+  MCP server.
+
+| SDK | Runtime requirements |
+|---|---|
+| Python | Python 3.9+ |
+| TypeScript | Node.js 22+ or an evergreen browser |
+| Go | Go 1.22+ |
+| Java | Java 17+ |
+| Kotlin / Android | Kotlin on the JVM (Java 8+), Android API 21+ |
+| Dart / Flutter | Dart 3.5+; Android, iOS, web, and desktop |
+| Swift | Swift 6.0+; iOS, iPadOS, macOS, Mac Catalyst, visionOS, and Linux |
+| MCP server | Python 3.10+ and an MCP-compatible client |
 
 ## Get an API key
 
-NeuroVerify API keys are issued by **Neural Defend** after customer onboarding:
+NeuroVerify API keys are issued by **Neural Defend** after customer onboarding.
 
 1. Visit **[neuraldefend.com](https://neuraldefend.com/)** and choose **Book a Demo**.
-2. After onboarding, store your key in `NEURALDEFEND_API_KEY` (Python, Node.js, Go, Dart VM, JVM, MCP,
-   Swift on servers) or pass it explicitly to the client constructor.
-3. Contact [support@neuraldefend.com](mailto:support@neuraldefend.com) for existing
-   accounts, staging keys, or endpoint scope questions.
-4. API reference: [Neural Defend documentation](https://neuraldefend.gitbook.io/neural-defend).
+2. After onboarding, you receive a key for the image and/or video endpoint. Ask for a
+   **staging key** as well if you want a safe place to test.
+3. Store the key in the `NEURALDEFEND_API_KEY` environment variable. Server SDKs read it
+   automatically.
+
+macOS / Linux:
+
+```bash
+export NEURALDEFEND_API_KEY="replace-with-your-api-key"
+```
+
+Windows PowerShell:
+
+```powershell
+$env:NEURALDEFEND_API_KEY = "replace-with-your-api-key"
+```
+
+Existing customers can contact [support@neuraldefend.com](mailto:support@neuraldefend.com)
+for new keys, staging access, or endpoint scope questions.
+
+### Keep your key safe
+
+- Never commit a key to source control or paste it into logs or tickets.
+- Never put a long-lived production key inside a browser, Android, iOS, or Flutter app.
+  Anyone can extract it. Call NeuroVerify from your backend, or have your backend hand
+  the app a short-lived credential.
 
 ## Quick start
 
-Obtain an API key through Neural Defend onboarding (see [Get an API key](#get-an-api-key)),
-store it in `NEURALDEFEND_API_KEY`, and install the client you need. Each snippet creates
-a client and runs image plus video detection.
+Every example below checks one photo and one video. The output blocks are representative;
+your scores and transaction IDs will differ.
 
-### <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg" width="22" height="22" valign="middle" alt="Python" /> Python
+### Python
 
 ```bash
 pip install neuraldefend
@@ -66,26 +123,57 @@ pip install neuraldefend
 ```python
 from neuraldefend import NeuroVerifyClient
 
-with NeuroVerifyClient() as client:
+with NeuroVerifyClient() as client:                  # reads NEURALDEFEND_API_KEY
     image = client.detect_image("selfie.jpg")
     video = client.detect_video("clip.mp4")
+
+print("image:", image.risk_level, image.risk_score)
+print("video:", video.video_risk_level, "| audio:", video.audio_risk_level)
 ```
 
-### <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" width="22" height="22" valign="middle" alt="Node.js" /> Node.js
+```text
+image: low 2.2
+video: low | audio: high
+```
+
+[Full Python guide with 10 examples →](packages/python/README.md)
+
+### TypeScript and Node.js
 
 ```bash
 npm install @neuraldefend/sdk
 ```
 
-```js
+```ts
 import { NeuroVerifyClient } from "@neuraldefend/sdk";
 
-const client = new NeuroVerifyClient();
+const client = new NeuroVerifyClient();              // reads NEURALDEFEND_API_KEY
 const image = await client.detectImage("selfie.jpg");
 const video = await client.detectVideo("clip.mp4");
+
+console.log(image.status, video.status);
 ```
 
-### <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/go/go-original-wordmark.svg" width="22" height="22" valign="middle" alt="Go" /> Go
+```text
+success success
+```
+
+[Full TypeScript guide →](packages/typescript/README.md)
+
+### Browser
+
+The same `@neuraldefend/sdk` package works in the browser; your bundler picks the browser
+build automatically. Pass a short-lived credential from your backend, never a production key.
+
+```ts
+import { NeuroVerifyClient } from "@neuraldefend/sdk";
+
+const client = new NeuroVerifyClient({ apiKey: shortLivedKeyFromYourBackend });
+const input = document.querySelector<HTMLInputElement>("#photo")!;
+const image = await client.detectImage(input.files![0]);
+```
+
+### Go
 
 ```bash
 go get github.com/Neural-Defend/NeuralDefend-SDKs/packages/go@v1.0.0
@@ -98,11 +186,86 @@ client, err := neuraldefend.NewClient(neuraldefend.ClientOptions{
 if err != nil {
     log.Fatal(err)
 }
-image, err := client.DetectImage(context.Background(), neuraldefend.FileMedia("selfie.jpg"))
-video, err := client.DetectVideo(context.Background(), neuraldefend.FileMedia("clip.mp4"), neuraldefend.VideoOptions{})
+
+ctx := context.Background()
+image, err := client.DetectImage(ctx, neuraldefend.FileMedia("selfie.jpg"))
+if err != nil {
+    log.Fatal(err)
+}
+video, err := client.DetectVideo(ctx, neuraldefend.FileMedia("clip.mp4"), neuraldefend.VideoOptions{})
+if err != nil {
+    log.Fatal(err)
+}
+fmt.Println(image.Status, video.Status)
 ```
 
-### <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/flutter/flutter-original.svg" width="22" height="22" valign="middle" alt="Flutter" /> Dart and Flutter
+```text
+success success
+```
+
+[Full Go guide →](packages/go/README.md)
+
+### Java
+
+```kotlin
+// build.gradle.kts
+implementation("com.neuraldefend:neuraldefend-sdk:1.0.0")
+```
+
+```java
+import com.neuraldefend.ClientOptions;
+import com.neuraldefend.ImageResult;
+import com.neuraldefend.Media;
+import com.neuraldefend.NeuroVerifyClient;
+import com.neuraldefend.VideoOptions;
+import com.neuraldefend.VideoResult;
+
+NeuroVerifyClient client = NeuroVerifyClient.newClient(new ClientOptions()); // reads NEURALDEFEND_API_KEY
+ImageResult image = client.detectImage(Media.fileMedia("selfie.jpg"));
+VideoResult video = client.detectVideo(Media.fileMedia("clip.mp4"), new VideoOptions());
+
+System.out.println("image: " + image.riskLevel + " " + image.riskScore);
+```
+
+```text
+image: low 2.2
+```
+
+[Full Java guide →](packages/java/README.md)
+
+### Kotlin and Android
+
+```kotlin
+// build.gradle.kts
+implementation("com.neuraldefend:neuraldefend-kotlin:1.0.0")
+implementation("com.neuraldefend:neuraldefend-android:1.0.0") // Android content Uris
+```
+
+```kotlin
+import com.neuraldefend.kotlin.MediaInput
+import com.neuraldefend.kotlin.NeuroVerifyClient
+import java.io.File
+import kotlinx.coroutines.runBlocking
+
+// detectImage and detectVideo are suspend functions; call them from a coroutine.
+// JVM servers read NEURALDEFEND_API_KEY; Android apps must pass apiKey.
+fun main() = runBlocking {
+    NeuroVerifyClient().use { client ->
+        val image = client.detectImage(MediaInput.file(File("selfie.jpg")))
+        val video = client.detectVideo(MediaInput.file(File("clip.mp4")))
+        println("${image.status} ${video.status}")
+    }
+}
+```
+
+```text
+SUCCESS SUCCESS
+```
+
+On Android, upload photo-picker results with `MediaInputs.fromUri(context, uri)`.
+[Full Kotlin and Android guide →](packages/kotlin/README.md)
+
+### Dart and Flutter
 
 ```bash
 flutter pub add neuraldefend   # or: dart pub add neuraldefend
@@ -115,13 +278,19 @@ import 'package:neuraldefend/neuraldefend.dart';
 final client = NeuroVerifyClient();
 final image = await client.detectImage(MediaInput.file('selfie.jpg'));
 final video = await client.detectVideo(MediaInput.file('clip.mp4'));
+print('${image.status.name} ${video.status.name}');
 client.close();
 ```
 
-In Flutter apps, call NeuroVerify from your backend rather than shipping a production key;
-see the [Dart and Flutter guide](packages/dart/README.md#flutter-and-web-credential-safety).
+```text
+success success
+```
 
-### <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/swift/swift-original.svg" width="22" height="22" valign="middle" alt="Swift" /> Swift (iOS and Apple platforms)
+In Flutter apps, call NeuroVerify from your backend rather than shipping a production key
+([why](packages/dart/README.md#flutter-and-web-credential-safety)).
+[Full Dart and Flutter guide →](packages/dart/README.md)
+
+### Swift
 
 ```swift
 // Package.swift
@@ -134,51 +303,25 @@ import NeuralDefend
 let client = try NeuroVerifyClient(apiKey: apiKey)
 let image = try await client.detectImage(.file(photoURL))
 let video = try await client.detectVideo(.file(clipURL))
+print(image.status, video.status)
+```
+
+```text
+success success
 ```
 
 In iOS and macOS apps, call NeuroVerify from your backend rather than shipping a production
-key; see the [Swift guide](packages/swift/README.md#get-an-api-key).
+key ([why](packages/swift/README.md#get-an-api-key)).
+[Full Swift guide →](packages/swift/README.md)
 
-### <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kotlin/kotlin-original.svg" width="22" height="22" valign="middle" alt="Kotlin" /> Kotlin and Android
-
-```kotlin
-// build.gradle.kts
-implementation("com.neuraldefend:neuraldefend-kotlin:1.0.0")
-implementation("com.neuraldefend:neuraldefend-android:1.0.0") // Android content Uris
-```
-
-```kotlin
-import com.neuraldefend.kotlin.MediaInput
-import com.neuraldefend.kotlin.NeuroVerifyClient
-
-// JVM servers read NEURALDEFEND_API_KEY; Android apps must pass apiKey.
-NeuroVerifyClient().use { client ->
-    val image = client.detectImage(MediaInput.file(File("selfie.jpg")))
-    val video = client.detectVideo(MediaInput.file(File("clip.mp4")))
-}
-```
-
-On Android, upload picker results with `MediaInputs.fromUri(context, uri)` and call
-NeuroVerify from your backend rather than shipping a production key; see the
-[Kotlin and Android guide](packages/kotlin/README.md#android-credential-safety).
-
-### <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/chrome/chrome-original.svg" width="22" height="22" valign="middle" alt="Browser" /> Browser
-
-The same `@neuraldefend/sdk` package is used; bundlers select the browser build. Pass a
-short-lived credential from your backend — never a long-lived production key.
-
-```js
-import { NeuroVerifyClient } from "@neuraldefend/sdk";
-
-const client = new NeuroVerifyClient({ apiKey });
-const image = await client.detectImage(file);
-```
-
-### <img src="https://cdn.simpleicons.org/modelcontextprotocol/000000" width="22" height="22" valign="middle" alt="MCP" /> MCP
+### MCP server for AI assistants
 
 ```bash
 pip install neuraldefend-mcp
 ```
+
+Add the server to your MCP client (for example Claude Desktop) and allow only the folders
+it may read:
 
 ```json
 {
@@ -194,48 +337,88 @@ pip install neuraldefend-mcp
 }
 ```
 
-The server exposes `detect_image_authenticity` and `detect_video_authenticity` for
-allowlisted local files.
+Then ask your assistant: *"Check `selfie.jpg` in my media folder for signs of a deepfake."*
+The server exposes the `detect_image_authenticity` and `detect_video_authenticity` tools.
+[Full MCP guide →](packages/mcp/README.md)
 
-For input types, configuration, retries, and result handling, see the
-[Python](packages/python/README.md), [TypeScript](packages/typescript/README.md),
-[Go](packages/go/README.md), [Dart and Flutter](packages/dart/README.md),
-[Swift](packages/swift/README.md), [Kotlin and Android](packages/kotlin/README.md), and
-[MCP](packages/mcp/README.md) guides. For complete
-response scenarios, see the
-[image API guide](docs/client/unified-face-authenticity.md) and
-[video API guide](docs/client/unified-video-authenticity.md).
+## Understanding results
 
-> **Use results as decision support.** Branch on the response `status`, not HTTP 200
-> alone: rejected media may return HTTP 200 and no score. Low risk is not proof of
-> authenticity, and high risk should trigger human review rather than automatic
-> rejection. Requests and retries may create billable transactions. Upload only
-> authorized media, protect API keys, and apply appropriate privacy, residency,
-> retention, deletion, logging, and access controls to biometric or other sensitive
-> data. Never embed a long-lived production API key in browser or mobile app code.
+Every SDK returns the same information, named in that language's style
+(`risk_level` in Python, `riskLevel` in TypeScript, `RiskLevel` in Go, and so on).
+
+### The risk level is a traffic light
+
+| Risk level | Meaning | Recommended action |
+|---|---|---|
+| 🟢 `low` | Few signs of manipulation were found | Continue with your normal process |
+| 🟡 `medium` | The result is inconclusive | Ask for more evidence or a human review |
+| 🔴 `high` | Strong signs of spoofing or AI generation | Escalate to a human reviewer |
+
+Branch on the risk **level**, not on your own numeric threshold; the service may tune its
+scoring bands over time.
+
+### Photos and videos
+
+| | Photo (`detectImage`) | Video (`detectVideo`) |
+|---|---|---|
+| Answers | One face risk score and level | A video risk **and** a separate audio risk |
+| Max size | 10 MiB | 1,500,000,000 bytes |
+| Formats | JPG, PNG, BMP, TIFF, WebP, HEIC, HEIF | MP4, AVI, MOV, MKV, WMV, FLV, WebM, OGG |
+| Face rule | Exactly one face, at least 224 × 224 pixels | Frames with exactly one face are scored |
+
+### Rejections are answers, not errors
+
+Sometimes NeuroVerify checks a file but cannot score it, for example when a photo has no
+face, has several faces, or is too blurry. The SDK returns this as a normal result with
+`status = "rejected"` and a human-readable `message`, sometimes even with HTTP 200. Show
+the message to the user and ask for better media.
+
+Errors (exceptions) are reserved for problems such as a missing API key, an invalid key, a
+rate limit, or a network outage.
+
+### Example result
+
+```json
+{
+  "unique_trx_id": "trx_example_image_low",
+  "status": "success",
+  "billable": true,
+  "risk_score": 2.2,
+  "risk_level": "low",
+  "message": "Not likely to be Spoof or AI-generated",
+  "ai_threat_signals": ["Visual Safety Screening", "Liveness Verification"]
+}
+```
+
+Keep the `unique_trx_id`: support and billing use it to find your request.
+
+> [!IMPORTANT]
+> **Use results as decision support.** A low risk is not proof that media is authentic,
+> and a high risk should trigger human review rather than automatic rejection. Requests
+> and retries may create billable transactions. Upload only media you are authorized to
+> process, protect API keys, and apply appropriate privacy, residency, retention,
+> deletion, logging, and access controls to biometric and other sensitive data.
 
 ## Documentation
 
-- [Python SDK guide](packages/python/README.md) and [changelog](packages/python/CHANGELOG.md)
-- [TypeScript SDK guide](packages/typescript/README.md) and [changelog](packages/typescript/CHANGELOG.md)
-- [MCP server guide](packages/mcp/README.md) and [changelog](packages/mcp/CHANGELOG.md)
-- [Go SDK guide](packages/go/README.md) and [changelog](packages/go/CHANGELOG.md)
-- [Dart and Flutter SDK guide](packages/dart/README.md) and [changelog](packages/dart/CHANGELOG.md)
-- [Swift SDK guide](packages/swift/README.md) and [changelog](packages/swift/CHANGELOG.md)
-- [Kotlin and Android SDK guide](packages/kotlin/README.md) and [changelog](packages/kotlin/CHANGELOG.md)
-- [Image endpoint and response scenarios](docs/client/unified-face-authenticity.md)
-- [Video endpoint and response scenarios](docs/client/unified-video-authenticity.md)
-- [OpenAPI contract](spec/public.yaml) and [architecture decisions](docs/adr/README.md)
-- [Contributing](CONTRIBUTING.md), [release process](docs/releasing.md), and
-  [security policy](SECURITY.md)
+| Topic | Link |
+|---|---|
+| SDK guides | [Python](packages/python/README.md) · [TypeScript](packages/typescript/README.md) · [Go](packages/go/README.md) · [Java](packages/java/README.md) · [Kotlin](packages/kotlin/README.md) · [Dart](packages/dart/README.md) · [Swift](packages/swift/README.md) · [MCP](packages/mcp/README.md) |
+| Changelogs | [Python](packages/python/CHANGELOG.md) · [TypeScript](packages/typescript/CHANGELOG.md) · [Go](packages/go/CHANGELOG.md) · [Java](packages/java/CHANGELOG.md) · [Kotlin](packages/kotlin/CHANGELOG.md) · [Dart](packages/dart/CHANGELOG.md) · [Swift](packages/swift/CHANGELOG.md) · [MCP](packages/mcp/CHANGELOG.md) · [Repository](CHANGELOG.md) |
+| Image endpoint scenarios | [Unified Face Authenticity Score](docs/client/unified-face-authenticity.md) |
+| Video endpoint scenarios | [Unified Video Authenticity Score](docs/client/unified-video-authenticity.md) |
+| API contract | [OpenAPI spec](spec/public.yaml) · [Hosted API reference](https://neuraldefend.gitbook.io/neural-defend) |
+| Project | [Architecture decisions](docs/adr/README.md) · [Contributing](CONTRIBUTING.md) · [Release process](docs/releasing.md) · [Security policy](SECURITY.md) |
 
-## Support and releases
+## Support
 
-- Technical support and private vulnerability reports: support@neuraldefend.com
-- Issues: [GitHub Issues](https://github.com/Neural-Defend/NeuralDefend-SDKs/issues)
-- Releases: [GitHub Releases](https://github.com/Neural-Defend/NeuralDefend-SDKs/releases)
-- Repository changes: [CHANGELOG.md](CHANGELOG.md)
+- **Technical support and private vulnerability reports:** [support@neuraldefend.com](mailto:support@neuraldefend.com)
+- **Bugs and feature requests:** [GitHub Issues](https://github.com/Neural-Defend/NeuralDefend-SDKs/issues)
+- **Releases:** [GitHub Releases](https://github.com/Neural-Defend/NeuralDefend-SDKs/releases)
+
+When asking for help, include the SDK name and version, the endpoint, and the
+`unique_trx_id` or request ID. Never send API keys or real customer media.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+Released under the [MIT License](LICENSE).

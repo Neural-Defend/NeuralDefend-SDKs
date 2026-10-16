@@ -1,4 +1,47 @@
+<div align="center">
+
 # NeuralDefend Python SDK
+
+**Detect deepfakes, AI-generated faces, and spoofed media from Python in a few lines of code.**
+
+[![PyPI](https://img.shields.io/pypi/v/neuraldefend?style=flat-square&logo=pypi&logoColor=white&label=PyPI&color=3775A9)](https://pypi.org/project/neuraldefend/)
+[![Python](https://img.shields.io/badge/python-3.9%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-22863A?style=flat-square)](LICENSE)
+
+[Quick start](#quick-start-image) · [Examples](#examples) · [Results](#result-handling) · [Errors](#exceptions) · [Troubleshooting](#troubleshooting)
+
+</div>
+
+---
+
+## In plain words
+
+You give the SDK a photo or a video. It sends the file to Neural Defend's **NeuroVerify**
+service and gives you back an answer like this:
+
+> "This face has a **low** / **medium** / **high** risk of being fake."
+
+That is the whole idea. You do not need to know anything about machine learning, HTTP, or
+file uploads; the SDK handles all of that for you.
+
+| You want to... | Call | You get back |
+|---|---|---|
+| Check a photo of a face | `client.detect_image("photo.jpg")` | An `ImageResult` with one risk level |
+| Check a video | `client.detect_video("clip.mp4")` | A `VideoResult` with a video risk and an audio risk |
+
+Think of the risk level as a traffic light:
+
+| Risk level | Meaning | What to do |
+|---|---|---|
+| `low` 🟢 | Few signs of manipulation were found | Continue, using your normal process |
+| `medium` 🟡 | The result is unclear | Ask for more evidence or a human review |
+| `high` 🔴 | Strong signs of spoofing or AI generation | Escalate to a human reviewer |
+
+Sometimes the service cannot score a file, for example when there is no face in the
+photo. That is a normal answer called a **rejection**, not a crash. The
+[examples](#examples) show how to handle each case.
+
+## About this SDK
 
 The official synchronous Python client for the NeuroVerify image and video authenticity
 API. Version `1.0.3` provides typed result objects, streaming multipart uploads, bounded
@@ -181,6 +224,379 @@ if __name__ == "__main__":
 `overall_risk_score` is a client-side convenience equal to the maximum available modality
 score. It is not a combined score returned by the API and does not replace modality-aware
 policy.
+
+## Examples
+
+Each example is complete: copy it into a `.py` file, set `NEURALDEFEND_API_KEY`, and run
+it. The output shown under each example is representative; your scores, transaction IDs,
+and messages will differ.
+
+| # | Example | You will learn |
+|:-:|---|---|
+| 1 | [Check one photo](#1-check-one-photo) | The smallest useful program |
+| 2 | [Check a video with sound](#2-check-a-video-with-sound) | Reading the separate video and audio results |
+| 3 | [Turn a result into a decision](#3-turn-a-result-into-a-decision) | Mapping low, medium, high, and rejected to actions |
+| 4 | [Upload bytes from memory](#4-upload-bytes-from-memory) | Checking files that never touch the disk |
+| 5 | [Check a whole folder](#5-check-a-whole-folder) | Batch processing with a summary table |
+| 6 | [Handle every kind of error](#6-handle-every-kind-of-error) | Telling bad input, bad keys, and outages apart |
+| 7 | [Save an audit record](#7-save-an-audit-record) | Keeping transaction IDs for billing and support |
+| 8 | [Add a check to a web API](#8-add-a-check-to-a-web-api) | Using the SDK inside a FastAPI endpoint |
+| 9 | [Test against staging](#9-test-against-staging) | Using the staging environment safely |
+| 10 | [Tune video sampling](#10-tune-video-sampling) | Trading speed for coverage on long videos |
+
+### 1. Check one photo
+
+The shortest possible program. The `with` block opens a connection and closes it for you.
+
+```python
+from neuraldefend import NeuroVerifyClient
+
+with NeuroVerifyClient() as client:  # reads NEURALDEFEND_API_KEY
+    result = client.detect_image("selfie.jpg")
+
+print(result.status, result.risk_level, result.risk_score)
+print(result.message)
+```
+
+Output:
+
+```text
+success low 2.2
+Not likely to be Spoof or AI-generated
+```
+
+### 2. Check a video with sound
+
+A video gets **two** separate answers: one for the picture and one for the audio. A clip
+without sound is still scored; only the audio fields are empty.
+
+```python
+from neuraldefend import NeuroVerifyClient
+
+with NeuroVerifyClient() as client:
+    result = client.detect_video("interview.mp4")
+
+if result.scored:
+    print(f"Video: {result.video_risk_level} ({result.video_risk_score})")
+    if result.has_audio:
+        print(f"Audio: {result.audio_risk_level} ({result.audio_risk_score})")
+    else:
+        print(f"Audio: not scored ({result.audio_message})")
+else:
+    print(f"Not scored: {result.video_message}")
+```
+
+Output:
+
+```text
+Video: low (2.2)
+Audio: high (8.4)
+```
+
+Here the face looks real but the voice is likely synthetic, which is why the two
+modalities are reported separately.
+
+### 3. Turn a result into a decision
+
+Your application usually needs one of a few actions. Write that mapping once and reuse
+it. Always branch on the **risk level**, never on your own numeric threshold, because the
+service may tune its scoring bands.
+
+```python
+from neuraldefend import ImageResult, NeuroVerifyClient
+
+
+def decide(result: ImageResult) -> str:
+    if result.rejected:
+        return f"ASK FOR A NEW PHOTO - {result.message}"
+    if not result.scored:
+        return f"MANUAL REVIEW - unrecognized status {result.status!r}"
+    return {
+        "low": "CONTINUE",
+        "medium": "MANUAL REVIEW",
+        "high": "ESCALATE",
+    }.get(result.risk_level, "MANUAL REVIEW")
+
+
+with NeuroVerifyClient() as client:
+    for path in ["selfie.jpg", "printed_photo.jpg", "landscape.jpg"]:
+        print(f"{path:<20} -> {decide(client.detect_image(path))}")
+```
+
+Output:
+
+```text
+selfie.jpg           -> CONTINUE
+printed_photo.jpg    -> ESCALATE
+landscape.jpg        -> ASK FOR A NEW PHOTO - No face detected in the image
+```
+
+### 4. Upload bytes from memory
+
+When a file arrives from a web form, a queue, or object storage, you often have bytes
+instead of a path. Pass the bytes and a `filename`; the filename tells the SDK the format.
+
+```python
+from pathlib import Path
+
+from neuraldefend import NeuroVerifyClient
+
+image_bytes = Path("selfie.jpg").read_bytes()  # or bytes from your storage service
+
+with NeuroVerifyClient() as client:
+    result = client.detect_image(image_bytes, filename="selfie.jpg")
+
+print(f"{len(image_bytes):,} bytes checked -> {result.risk_level}")
+```
+
+Output:
+
+```text
+482,113 bytes checked -> low
+```
+
+Open file objects work too: `client.detect_image(open("selfie.jpg", "rb"))`. See
+[Input types](#input-types-and-stream-lifecycle) for streams and retries.
+
+### 5. Check a whole folder
+
+Reuse one client for many files; it keeps the connection open and is much faster than
+creating a client per file.
+
+```python
+from collections import Counter
+from pathlib import Path
+
+from neuraldefend import NeuroVerifyClient
+
+IMAGE_TYPES = {".jpg", ".jpeg", ".png", ".webp", ".heic"}
+folder = Path("uploads")
+summary = Counter()
+
+with NeuroVerifyClient() as client:
+    for path in sorted(folder.iterdir()):
+        if path.suffix.lower() not in IMAGE_TYPES:
+            continue
+        result = client.detect_image(path)
+        outcome = result.risk_level if result.scored else "rejected"
+        summary[outcome] += 1
+        print(f"{path.name:<24} {outcome:<9} {result.message}")
+
+print("\nSummary:", dict(summary))
+```
+
+Output:
+
+```text
+anna.jpg                 low       Not likely to be Spoof or AI-generated
+group_photo.jpg          rejected  Multiple faces detected in the image
+id_card_scan.png         medium    Less likely to be Spoof or AI-generated
+printed_photo.jpg        high      Likely to be Spoof detected
+
+Summary: {'low': 1, 'rejected': 1, 'medium': 1, 'high': 1}
+```
+
+Each call is a separate transaction and may be billable. Check your rate limits before
+running large batches.
+
+### 6. Handle every kind of error
+
+There are three different situations, and each one needs a different fix:
+
+| Situation | How it shows up | Who fixes it |
+|---|---|---|
+| The file was checked but could not be scored | A result with `rejected == True` | The end user sends better media |
+| Your setup is wrong (missing key, bad path) | `ValidationError`, `AuthenticationError`, `ScopeError` | You, the developer |
+| The service or network had a problem | `RateLimitError`, `ServerError`, `TimeoutError`, `NetworkError` | Try again later |
+
+```python
+from neuraldefend import (
+    AuthenticationError,
+    NeuroVerifyClient,
+    NeuroVerifyError,
+    RateLimitError,
+    ScopeError,
+    ValidationError,
+)
+
+try:
+    with NeuroVerifyClient() as client:
+        result = client.detect_image("selfie.jpg")
+except ValidationError as error:
+    print(f"Fix the input or configuration: {error.detail}")
+except AuthenticationError:
+    print("The API key is invalid or expired. Check NEURALDEFEND_API_KEY.")
+except ScopeError:
+    print("This key cannot use the image endpoint. Ask Neural Defend to add it.")
+except RateLimitError as error:
+    print(f"Too many requests. Try again in {error.retry_after} seconds.")
+except NeuroVerifyError as error:
+    print(f"Service problem ({type(error).__name__}), request id: {error.request_id}")
+else:
+    if result.rejected:
+        print(f"Please upload a different photo: {result.message}")
+    else:
+        print(f"Risk: {result.risk_level}")
+```
+
+Output when the key is missing:
+
+```text
+Fix the input or configuration: api_key is required (pass it explicitly or set NEURALDEFEND_API_KEY)
+```
+
+Output when the photo has no face:
+
+```text
+Please upload a different photo: No face detected in the image
+```
+
+The [Exceptions](#exceptions) section lists every error class.
+
+### 7. Save an audit record
+
+Every result has a `unique_trx_id`. Store it: it is what support and billing will ask for.
+`to_dict()` gives you a plain dictionary that is safe to turn into JSON.
+
+```python
+import json
+from datetime import datetime, timezone
+
+from neuraldefend import NeuroVerifyClient
+
+with NeuroVerifyClient() as client:
+    result = client.detect_image("selfie.jpg")
+
+record = {
+    "checked_at": datetime.now(timezone.utc).isoformat(),
+    "transaction_id": result.unique_trx_id,
+    "status": result.status,
+    "risk_level": result.risk_level,
+    "billable": result.billable,
+}
+
+with open("audit.jsonl", "a", encoding="utf-8") as log:
+    log.write(json.dumps(record) + "\n")
+
+print(json.dumps(record, indent=2))
+```
+
+Output:
+
+```json
+{
+  "checked_at": "2026-10-16T09:41:07.512310+00:00",
+  "transaction_id": "trx_example_image_low",
+  "status": "success",
+  "risk_level": "low",
+  "billable": true
+}
+```
+
+Store only the fields you need. Avoid logging filenames or `result.raw`, which may contain
+personal data.
+
+### 8. Add a check to a web API
+
+This [FastAPI](https://fastapi.tiangolo.com/) endpoint accepts an upload and returns the
+SDK's normalized result. One client is created at startup and shared by all requests.
+Install the extras first with `pip install fastapi uvicorn python-multipart`.
+
+```python
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, HTTPException, UploadFile
+
+from neuraldefend import NeuroVerifyClient, NeuroVerifyError, ValidationError
+
+client = NeuroVerifyClient()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    client.close()  # release connections when the server stops
+
+
+app = FastAPI(lifespan=lifespan)
+
+
+@app.post("/verify-selfie")
+def verify_selfie(photo: UploadFile) -> dict:
+    # A plain `def` endpoint runs in a worker thread, so the blocking SDK call is safe here.
+    try:
+        result = client.detect_image(photo.file, filename=photo.filename or "upload.jpg")
+    except ValidationError as error:
+        raise HTTPException(status_code=422, detail=error.detail)
+    except NeuroVerifyError:
+        raise HTTPException(status_code=503, detail="Verification is temporarily unavailable")
+    return result.to_dict()
+```
+
+Run it with `uvicorn app:app`, then call it:
+
+```bash
+curl -F "photo=@selfie.jpg" http://127.0.0.1:8000/verify-selfie
+```
+
+Output:
+
+```json
+{"unique_trx_id": "trx_example_image_low", "filename": "selfie.jpg", "content_type": "image/jpeg", "status": "success", "status_code": 1, "billable": true, "risk_score": 2.2, "risk_level": "low", "message": "Not likely to be Spoof or AI-generated", "ai_threat_signals": ["Visual Safety Screening", "Liveness Verification"], "scored": true, "rejected": false, "high_risk": false}
+```
+
+### 9. Test against staging
+
+Neural Defend can issue a separate staging key during onboarding. `staging()` always uses
+the staging server, so a test can never reach production by mistake.
+
+```python
+import os
+
+from neuraldefend import NeuroVerifyClient
+
+with NeuroVerifyClient.staging(
+    api_key=os.environ["NEURALDEFEND_STAGING_API_KEY"],
+    max_retries=0,  # fail fast in tests
+) as client:
+    result = client.detect_image("tests/fixtures/selfie.jpg")
+
+print(f"staging: {result.status} / {result.risk_level}")
+```
+
+Output:
+
+```text
+staging: success / low
+```
+
+### 10. Tune video sampling
+
+The service looks at 12 frames by default. Long videos can use more frames for better
+coverage; quick checks can use fewer for speed. `max_frames` accepts 1 to 100.
+
+```python
+import time
+
+from neuraldefend import NeuroVerifyClient
+
+with NeuroVerifyClient(timeout=300) as client:  # allow more time for large uploads
+    for frames in (6, 24, 48):
+        started = time.perf_counter()
+        result = client.detect_video("webinar.mp4", max_frames=frames)
+        seconds = time.perf_counter() - started
+        print(f"{frames:>2} frames -> video {result.video_risk_level} in {seconds:.1f}s")
+```
+
+Output:
+
+```text
+ 6 frames -> video low in 4.8s
+24 frames -> video low in 9.3s
+48 frames -> video low in 15.6s
+```
+
+Each call above is a separate, billable transaction. Pick one setting for production.
 
 ## Result handling
 
