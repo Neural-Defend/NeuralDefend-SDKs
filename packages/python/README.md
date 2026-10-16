@@ -251,7 +251,7 @@ The shortest possible program. The `with` block opens a connection and closes it
 ```python
 from neuraldefend import NeuroVerifyClient
 
-with NeuroVerifyClient() as client:          # reads NEURALDEFEND_API_KEY
+with NeuroVerifyClient() as client:  # reads NEURALDEFEND_API_KEY
     result = client.detect_image("selfie.jpg")
 
 print(result.status, result.risk_level, result.risk_score)
@@ -341,7 +341,7 @@ from pathlib import Path
 
 from neuraldefend import NeuroVerifyClient
 
-image_bytes = Path("selfie.jpg").read_bytes()   # or bytes from your storage service
+image_bytes = Path("selfie.jpg").read_bytes()  # or bytes from your storage service
 
 with NeuroVerifyClient() as client:
     result = client.detect_image(image_bytes, filename="selfie.jpg")
@@ -515,7 +515,7 @@ client = NeuroVerifyClient()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     yield
-    client.close()                 # release connections when the server stops
+    client.close()  # release connections when the server stops
 
 
 app = FastAPI(lifespan=lifespan)
@@ -557,7 +557,7 @@ from neuraldefend import NeuroVerifyClient
 
 with NeuroVerifyClient.staging(
     api_key=os.environ["NEURALDEFEND_STAGING_API_KEY"],
-    max_retries=0,          # fail fast in tests
+    max_retries=0,  # fail fast in tests
 ) as client:
     result = client.detect_image("tests/fixtures/selfie.jpg")
 
@@ -580,7 +580,7 @@ import time
 
 from neuraldefend import NeuroVerifyClient
 
-with NeuroVerifyClient(timeout=300) as client:      # allow more time for large uploads
+with NeuroVerifyClient(timeout=300) as client:  # allow more time for large uploads
     for frames in (6, 24, 48):
         started = time.perf_counter()
         result = client.detect_video("webinar.mp4", max_frames=frames)
