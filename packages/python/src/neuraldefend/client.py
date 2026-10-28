@@ -1,6 +1,7 @@
 """Hand-written streaming facade for the NeuroVerify API."""
 
 import io
+import json
 import logging
 import math
 import os
@@ -8,6 +9,7 @@ import random as random_module
 import stat
 import time
 import warnings
+import weakref
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -44,6 +46,9 @@ DEFAULT_MAX_RETRIES = 3
 IMAGE_MAX_BYTES = 10 * 1024 * 1024
 VIDEO_MAX_BYTES = 1_500_000_000
 MAX_RETRY_AFTER = 3600.0
+# Score payloads are a few kilobytes. 8 MiB leaves room for extra fields
+# without letting a hostile body exhaust memory.
+MAX_RESPONSE_BYTES = 8 * 1024 * 1024
 SDK_VERSION = "1.0.3"
 
 _IMAGE_MIME_TYPES: dict[str, str] = {
@@ -119,6 +124,33 @@ class _LimitedReader:
         return result
 
 
+class _HardCap:
+    """Stop a seekable upload that grows past the size checked before sending."""
+
+    def __init__(self, source: BinaryIO, limit: int) -> None:
+        self._source = source
+        self._limit = limit
+        self._count = 0
+
+    def read(self, size: int = -1) -> bytes:
+        if self._count > self._limit:
+            raise ValidationError("file exceeds the endpoint size limit")
+        if self._count == self._limit:
+            extra = self._source.read(1)
+            if extra:
+                raise ValidationError("file exceeds the endpoint size limit")
+            return b""
+        remaining = self._limit - self._count
+        requested = remaining if size < 0 or size > remaining else size
+        value = self._source.read(requested)
+        if not isinstance(value, bytes):
+            raise ValidationError("file-like object must return bytes from read()")
+        self._count += len(value)
+        if self._count > self._limit:
+            raise ValidationError("file exceeds the endpoint size limit")
+        return value
+
+
 class _Upload:
     def __init__(
         self,
@@ -162,7 +194,7 @@ class _Upload:
                 raise
             except (OSError, ValueError, TypeError) as exc:
                 raise ValidationError("file-like object could not be rewound for retry") from exc
-            yield self.stream
+            yield cast(BinaryIO, _HardCap(self.stream, self.max_bytes))
             return
 
         yield cast(BinaryIO, _LimitedReader(self.stream, self.prefix, self.max_bytes))
@@ -184,6 +216,7 @@ class NeuroVerifyClient:
         user_agent: Optional[str] = None,
         *,
         allow_custom_base_url: bool = False,
+        allow_http_for_testing: bool = False,
         transport: Optional[httpx.BaseTransport] = None,
         _sleep: Callable[[float], None] = time.sleep,
         _random: Callable[[], float] = random_module.random,
@@ -204,13 +237,17 @@ class NeuroVerifyClient:
             raise ValidationError("max_retries must be an integer from 0 through 3")
         if not isinstance(allow_custom_base_url, bool):
             raise ValidationError("allow_custom_base_url must be a boolean")
+        if not isinstance(allow_http_for_testing, bool):
+            raise ValidationError("allow_http_for_testing must be a boolean")
 
         resolved_url = (
             base_url if base_url is not None else os.getenv("NEURALDEFEND_BASE_URL", PRODUCTION_URL)
         )
+        # A custom transport is a production hook (proxies, mutual TLS, tests).
+        # It must not bypass HTTPS or the host allowlist.
         self._base_url = self._validate_base_url(
             resolved_url,
-            has_test_transport=transport is not None,
+            allow_http=allow_http_for_testing,
             allow_custom_base_url=allow_custom_base_url,
         )
         self._api_key = resolved_key.strip()
@@ -220,6 +257,9 @@ class NeuroVerifyClient:
         self._sleep = _sleep
         self._random = _random
         self._clock = _clock
+        self._response_bodies: weakref.WeakKeyDictionary[httpx.Response, bytes] = (
+            weakref.WeakKeyDictionary()
+        )
         self._client = httpx.Client(
             base_url=self._base_url,
             timeout=self._timeout,
@@ -236,7 +276,7 @@ class NeuroVerifyClient:
     def _validate_base_url(
         value: str,
         *,
-        has_test_transport: bool,
+        allow_http: bool,
         allow_custom_base_url: bool,
     ) -> str:
         if not isinstance(value, str) or not value.strip():
@@ -256,14 +296,10 @@ class NeuroVerifyClient:
             raise ValidationError(
                 "base_url must be an origin URL without credentials, path, query, or fragment"
             )
-        if parsed.scheme != "https" and not (has_test_transport and parsed.scheme == "http"):
+        if parsed.scheme != "https" and not (allow_http and parsed.scheme == "http"):
             raise ValidationError("base_url must use HTTPS")
         origin = str(parsed).rstrip("/")
-        if (
-            origin not in (PRODUCTION_URL, STAGING_URL)
-            and not has_test_transport
-            and allow_custom_base_url is not True
-        ):
+        if origin not in (PRODUCTION_URL, STAGING_URL) and allow_custom_base_url is not True:
             raise ValidationError(
                 "a non-Neural Defend base_url requires allow_custom_base_url=True "
                 "because it receives the API key and uploaded media"
@@ -625,7 +661,9 @@ class NeuroVerifyClient:
         self, response: httpx.Response, envelope_name: str
     ) -> tuple[Mapping[str, Any], Mapping[str, Any]]:
         try:
-            decoded = response.json()
+            decoded = self._decode_json(response)
+        except ProtocolError:
+            raise
         except (ValueError, UnicodeDecodeError) as exc:
             raise ProtocolError(
                 "response body is not valid JSON",
@@ -781,12 +819,38 @@ class NeuroVerifyClient:
     def _response_detail(self, response: httpx.Response) -> str:
         detail = f"HTTP {response.status_code}"
         try:
-            decoded = response.json()
+            decoded = self._decode_json(response)
             if isinstance(decoded, dict) and isinstance(decoded.get("detail"), str):
                 detail = decoded["detail"]
+        except ProtocolError:
+            raise
         except (ValueError, UnicodeDecodeError):
             pass
         return self._redact(detail)
+
+    def _response_bytes(self, response: httpx.Response) -> bytes:
+        cached = self._response_bodies.get(response)
+        if cached is not None:
+            return cached
+        chunks: list[bytes] = []
+        total = 0
+        for chunk in response.iter_bytes():
+            total += len(chunk)
+            if total > MAX_RESPONSE_BYTES:
+                response.close()
+                raise ProtocolError(
+                    "The response body exceeded 8 MiB.",
+                    status_code=response.status_code,
+                    request_id=self._request_id(response),
+                )
+            chunks.append(chunk)
+        payload = b"".join(chunks)
+        self._response_bodies[response] = payload
+        return payload
+
+    def _decode_json(self, response: httpx.Response) -> Any:
+        payload = self._response_bytes(response)
+        return json.loads(payload.decode("utf-8"))
 
     @staticmethod
     def _request_id(
