@@ -1269,17 +1269,20 @@ type ClientOptions struct {
 | `AllowHTTPForTesting` | `false` | Permits an `http://` origin for local tests. |
 | `Timeout` | `120 * time.Second` | Per-attempt HTTP timeout. Zero means the default; a negative value returns a `*ValidationError`. |
 | `MaxRetries` | `3` (when `nil`) | Automatic retries for HTTP 429/500/503, from `0` through `3`. A pointer so that `0` can be set explicitly. The default allows four total HTTP attempts. |
-| `HTTPClient` | SDK-built client | Custom `*http.Client`, intended for controlled testing. |
+| `HTTPClient` | SDK-built client | Custom `*http.Client` for proxies, mutual TLS, or tests. The SDK copies it, applies `Timeout`, and disables redirects. It does not relax HTTPS or the host allowlist. |
 | `UserAgent` | `neuraldefend-go/1.0.0` | Custom `User-Agent` header. |
 | `Sleep`, `Random`, `Clock` | `time.Sleep`, built-in jitter source, current UTC time | Hooks used by the SDK's deterministic retry tests. Leave them unset in applications. |
 
-Notes on `HTTPClient`: the SDK uses a supplied client as-is, so the `Timeout` option and
-the SDK's no-redirect policy are **not** applied to it; configure both yourself.
-Supplying `HTTPClient` (or setting `AllowHTTPForTesting`) also permits `http://` origins
-and lifts the custom-origin check, so only do this in tests or with an origin you trust.
+Notes on `HTTPClient`: the SDK copies a supplied client and does not mutate it. The copy
+uses the SDK `Timeout` and never follows redirects, so the API key and uploaded media are
+not forwarded to another origin. Supplying `HTTPClient` does not permit `http://` origins
+and does not lift the custom-origin check. Use `AllowHTTPForTesting` only for a local test
+server, and `AllowCustomBaseURL` only for an origin you trust.
 
-Without a custom `HTTPClient`, redirects are never followed, and the API key is redacted
-from SDK-generated error details and from `Raw`.
+The API key is redacted from SDK-generated error details and from `Raw`. Response bodies
+larger than 8 MiB are rejected. Upload filenames are reduced to a single path segment, and
+quotes and line breaks in that name are percent-encoded so they cannot inject multipart
+headers.
 
 Configuration precedence:
 
@@ -1479,9 +1482,8 @@ security rejections are normally non-billable. Always use the actual returned va
   is suspected.
 - Do not send a production key or customer media to an untrusted `BaseURL`.
   `AllowCustomBaseURL: true` is a deliberate trust decision.
-- The SDK's own HTTP client does not follow redirects, so credentials and media are not
-  forwarded to another origin. If you supply `HTTPClient`, set its `CheckRedirect` to
-  keep that protection.
+- The SDK never follows redirects, including when you supply `HTTPClient`, so credentials
+  and media are not forwarded to another origin.
 - Minimize production logging. Prefer transaction IDs and status fields over filenames,
   `Raw`, media bytes, headers, or keys.
 - Do not disguise content with a different extension; the server performs format and

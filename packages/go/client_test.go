@@ -339,6 +339,124 @@ func TestErrorEnvelopeOnHTTP200RaisesServerError(t *testing.T) {
 	}
 }
 
+func TestCustomHTTPClientDoesNotImplicitlyAllowInsecureOrigins(t *testing.T) {
+	httpClient := &http.Client{}
+	_, err := neuraldefend.NewClient(neuraldefend.ClientOptions{
+		APIKey:     "key",
+		BaseURL:    "http://127.0.0.1:9",
+		HTTPClient: httpClient,
+	})
+	if err == nil || !strings.Contains(err.Error(), "HTTPS") {
+		t.Fatalf("expected HTTPS rejection, got %v", err)
+	}
+
+	_, err = neuraldefend.NewClient(neuraldefend.ClientOptions{
+		APIKey:     "key",
+		BaseURL:    "https://api.example.com",
+		HTTPClient: httpClient,
+	})
+	if err == nil || !strings.Contains(err.Error(), "allow_custom_base_url") {
+		t.Fatalf("expected allowlist rejection, got %v", err)
+	}
+	if httpClient.CheckRedirect != nil || httpClient.Timeout != 0 {
+		t.Fatal("caller HTTP client was mutated")
+	}
+}
+
+func TestCustomHTTPClientDoesNotFollowRedirects(t *testing.T) {
+	calls := 0
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		http.Redirect(w, r, "/detect/image", http.StatusFound)
+	}))
+	t.Cleanup(server.Close)
+
+	raw := &http.Client{}
+	maxRetries := 0
+	client, err := neuraldefend.NewClient(neuraldefend.ClientOptions{
+		APIKey:              "key",
+		BaseURL:             server.URL,
+		AllowCustomBaseURL:  true,
+		AllowHTTPForTesting: true,
+		HTTPClient:          raw,
+		MaxRetries:          &maxRetries,
+	})
+	if err != nil {
+		t.Fatalf("new client: %v", err)
+	}
+	_, err = client.DetectImage(context.Background(), neuraldefend.BytesMedia("x.jpg", []byte("x")))
+	httpErr, ok := err.(*neuraldefend.HttpError)
+	if !ok || httpErr.StatusCode != http.StatusFound {
+		t.Fatalf("expected HTTP 302, got %v", err)
+	}
+	if calls != 1 {
+		t.Fatalf("redirect was followed, calls=%d", calls)
+	}
+	if raw.CheckRedirect != nil {
+		t.Fatal("caller CheckRedirect was mutated")
+	}
+}
+
+func TestMultipartFilenameCannotInjectHeaders(t *testing.T) {
+	var body []byte
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		body, _ = io.ReadAll(r.Body)
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte(`{"detail":"no"}`))
+	}
+	maxRetries := 0
+	client := testClient(t, handler, neuraldefend.ClientOptions{MaxRetries: &maxRetries})
+	_, err := client.DetectImage(
+		context.Background(),
+		neuraldefend.BytesMedia("evil.jpg\"\r\nX-Injected: yes", []byte("x")),
+	)
+	if _, ok := err.(*neuraldefend.AuthenticationError); !ok {
+		t.Fatalf("expected auth error, got %v", err)
+	}
+	if bytes.Contains(body, []byte("\r\nX-Injected:")) {
+		t.Fatalf("filename injected a header: %s", body)
+	}
+	if !bytes.Contains(body, []byte(`filename="evil.jpg%22%0D%0AX-Injected: yes"`)) {
+		t.Fatalf("filename was not encoded: %s", body)
+	}
+
+	_, err = client.DetectImage(
+		context.Background(),
+		neuraldefend.BytesMedia("../../secret.jpg", []byte("x")),
+	)
+	if !bytes.Contains(body, []byte(`filename="secret.jpg"`)) {
+		t.Fatalf("path was not stripped: %s", body)
+	}
+}
+
+func TestOversizedResponseIsRejected(t *testing.T) {
+	handler := func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.ReadAll(r.Body)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = io.Copy(w, io.LimitReader(neverEnding('x'), 8*1024*1024+1))
+	}
+	maxRetries := 0
+	client := testClient(t, handler, neuraldefend.ClientOptions{MaxRetries: &maxRetries})
+	_, err := client.DetectImage(context.Background(), neuraldefend.BytesMedia("x.jpg", []byte("x")))
+	protocolErr, ok := err.(*neuraldefend.ProtocolError)
+	if !ok {
+		t.Fatalf("expected ProtocolError, got %T %v", err, err)
+	}
+	if !strings.Contains(protocolErr.Error(), "8 MiB") {
+		t.Fatalf("unexpected error: %v", protocolErr)
+	}
+}
+
+type neverEnding byte
+
+func (b neverEnding) Read(p []byte) (int, error) {
+	for i := range p {
+		p[i] = byte(b)
+	}
+	return len(p), nil
+}
+
 type nonSeekable struct {
 	value  []byte
 	offset int
