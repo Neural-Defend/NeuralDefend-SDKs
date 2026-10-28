@@ -5,6 +5,10 @@ Package Manager releases use plain tags such as `1.0.0`.
 
 ## [Unreleased]
 
+### Security
+
+- Response bodies larger than 8 MiB are rejected before JSON parsing.
+
 ## [1.0.0] - 2026-10-14
 
 ### Added

@@ -183,6 +183,18 @@ describe("requests", () => {
     );
   });
 
+  it("rejects a response body larger than 8 MiB", async () => {
+    const fetch = vi
+      .fn<typeof globalThis.fetch>()
+      .mockResolvedValue(
+        new Response(new Uint8Array(8 * 1024 * 1024 + 1), { status: 200 }),
+      );
+    const client = new NeuroVerifyClient({ apiKey: "key", fetch });
+    await expect(
+      client.detectImage(new Uint8Array([1]), { filename: "photo.jpg" }),
+    ).rejects.toBeInstanceOf(ProtocolError);
+  });
+
   it("requires explicit opt-in before sending secrets to a custom origin", () => {
     expect(
       () =>

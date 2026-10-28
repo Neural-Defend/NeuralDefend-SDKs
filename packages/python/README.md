@@ -859,6 +859,7 @@ NeuroVerifyClient(
     user_agent=None,
     *,
     allow_custom_base_url=False,
+    allow_http_for_testing=False,
     transport=None,
 )
 ```
@@ -875,9 +876,11 @@ NeuroVerifyClient(
   `neuraldefend-python/1.0.3`.
 - `allow_custom_base_url: bool`: explicit opt-in required for a non-Neural Defend origin.
   That origin receives the API key and uploaded media.
-- `transport: httpx.BaseTransport | None`: advanced transport injection, intended for
-  controlled testing. Supplying one also permits an HTTP test origin; production traffic
-  must use HTTPS.
+- `allow_http_for_testing: bool`: permits an `http://` origin for a local test server.
+  Production traffic must stay on HTTPS. A custom `transport` does not enable this.
+- `transport: httpx.BaseTransport | None`: advanced transport injection, for proxies,
+  mutual TLS, or tests. Supplying one does not relax HTTPS or the host allowlist,
+  because that transport still receives the API key and uploaded media.
 
 The implementation also has three actual underscore-prefixed constructor arguments used
 by deterministic retry tests: `_sleep` defaults to `time.sleep`, `_random` defaults to

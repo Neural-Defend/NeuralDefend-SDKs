@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -26,7 +27,12 @@ const (
 	defaultTimeout    = 120 * time.Second
 	defaultMaxRetries = 3
 	maxRetryAfter     = 3600.0
+	// maxResponseBytes caps a response body. Score payloads are a few kilobytes;
+	// 8 MiB leaves room for extra fields without letting a hostile body exhaust memory.
+	maxResponseBytes int64 = 8 * 1024 * 1024
 )
+
+var errResponseTooLarge = errors.New("response body exceeded 8 MiB")
 
 // ClientOptions configures a NeuroVerify client.
 type ClientOptions struct {
@@ -97,8 +103,9 @@ func NewClient(opts ClientOptions) (*Client, error) {
 		baseURL = PRODUCTION_URL
 	}
 
-	allowHTTP := opts.AllowHTTPForTesting || opts.HTTPClient != nil
-	baseURL, err := validateBaseURL(baseURL, allowHTTP, opts.AllowCustomBaseURL)
+	// A caller-supplied HTTP client is a production transport. It must not
+	// bypass HTTPS or the host allowlist; plain HTTP opts in with AllowHTTPForTesting.
+	baseURL, err := validateBaseURL(baseURL, opts.AllowHTTPForTesting, opts.AllowCustomBaseURL)
 	if err != nil {
 		return nil, err
 	}
@@ -108,15 +115,7 @@ func NewClient(opts ClientOptions) (*Client, error) {
 		userAgent = fmt.Sprintf("neuraldefend-go/%s", Version)
 	}
 
-	httpClient := opts.HTTPClient
-	if httpClient == nil {
-		httpClient = &http.Client{
-			Timeout: timeout,
-			CheckRedirect: func(req *http.Request, via []*http.Request) error {
-				return http.ErrUseLastResponse
-			},
-		}
-	}
+	httpClient := detachedHTTPClient(opts.HTTPClient, timeout)
 
 	sleep := opts.Sleep
 	if sleep == nil {
@@ -142,6 +141,22 @@ func NewClient(opts ClientOptions) (*Client, error) {
 		random:     random,
 		clock:      clock,
 	}, nil
+}
+
+// detachedHTTPClient copies a caller-supplied client without mutating it, then
+// forces the SDK timeout and refuses redirects. Redirects would forward the
+// API key and the uploaded media. A nil base gets a fresh client.
+func detachedHTTPClient(base *http.Client, timeout time.Duration) *http.Client {
+	client := &http.Client{}
+	if base != nil {
+		copied := *base
+		client = &copied
+	}
+	client.Timeout = timeout
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+	return client
 }
 
 // BaseURL returns the configured API origin.
@@ -280,6 +295,10 @@ func (c *Client) send(ctx context.Context, path string, upload *preparedUpload, 
 
 		resp, err := c.httpClient.Do(req)
 		if err != nil {
+			var validation *ValidationError
+			if errors.As(err, &validation) {
+				return nil, validation
+			}
 			if isTimeout(err) {
 				return nil, newTimeoutError(c.redact(err.Error()))
 			}
@@ -317,8 +336,17 @@ func (c *Client) buildMultipart(upload *preparedUpload) (io.ReadCloser, string, 
 			_ = pw.CloseWithError(err)
 			return
 		}
-		if _, err := io.Copy(part, reader); err != nil {
+		// Stop one byte past the checked size so a file that grows during the
+		// upload cannot stream without bound, and so the request fails instead
+		// of sending a silently truncated body.
+		limited := &io.LimitedReader{R: reader, N: upload.maxBytes + 1}
+		n, err := io.Copy(part, limited)
+		if err != nil {
 			_ = pw.CloseWithError(err)
+			return
+		}
+		if n > upload.maxBytes {
+			_ = pw.CloseWithError(&ValidationError{Detail: "file exceeds the endpoint size limit"})
 			return
 		}
 	}()
@@ -496,8 +524,15 @@ func (c *Client) raiseSimpleHTTPErrors(resp *http.Response) error {
 }
 
 func (c *Client) parseEnvelope(resp *http.Response, envelopeName string) (map[string]any, map[string]any, error) {
-	raw, err := io.ReadAll(resp.Body)
+	raw, err := readBounded(resp.Body)
 	if err != nil {
+		if errors.Is(err, errResponseTooLarge) {
+			return nil, nil, newProtocolError(
+				"The response body exceeded 8 MiB.",
+				resp.StatusCode,
+				c.requestID(resp, nil),
+			)
+		}
 		return nil, nil, newProtocolError("response body is not valid JSON", resp.StatusCode, c.requestID(resp, nil))
 	}
 	var decoded map[string]any
@@ -796,8 +831,11 @@ func (c *Client) unknownHTTPError(resp *http.Response) error {
 
 func (c *Client) responseDetail(resp *http.Response) string {
 	detail := fmt.Sprintf("HTTP %d", resp.StatusCode)
-	raw, err := io.ReadAll(resp.Body)
+	raw, err := readBounded(resp.Body)
 	if err != nil {
+		if errors.Is(err, errResponseTooLarge) {
+			return "The response body exceeded 8 MiB."
+		}
 		return c.redact(detail)
 	}
 	resp.Body = io.NopCloser(bytes.NewReader(raw))
@@ -853,6 +891,18 @@ func sanitizeValue(item any, apiKey string) any {
 	default:
 		return item
 	}
+}
+
+func readBounded(r io.Reader) ([]byte, error) {
+	limited := &io.LimitedReader{R: r, N: maxResponseBytes + 1}
+	data, err := io.ReadAll(limited)
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(data)) > maxResponseBytes {
+		return nil, errResponseTooLarge
+	}
+	return data, nil
 }
 
 func isFinite(value float64) bool {
