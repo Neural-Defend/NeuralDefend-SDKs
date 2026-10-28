@@ -489,6 +489,25 @@ final class NeuroVerifyClientTest {
         assertEquals(List.of(Duration.ofSeconds(3600)), sleeps);
     }
 
+    @Test
+    void oversizedResponseIsRejected() {
+        okio.Buffer body = new okio.Buffer();
+        body.write(new byte[8 * 1024 * 1024 + 1]);
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(body));
+        ClientOptions options = testOptions();
+        options.maxRetries = 0;
+        NeuroVerifyClient client = NeuroVerifyClient.newClient(options);
+
+        ProtocolException error =
+                assertThrows(
+                        ProtocolException.class,
+                        () ->
+                                client.detectImage(
+                                        Media.bytesMedia(
+                                                "x.jpg", "x".getBytes(StandardCharsets.UTF_8))));
+        assertTrue(error.getDetail().contains("8 MiB"), error.getDetail());
+    }
+
     private ClientOptions testOptions() {
         ClientOptions options = new ClientOptions();
         options.apiKey = "secret-test-key";

@@ -4,6 +4,11 @@ All notable changes to this package follow Keep a Changelog and Semantic Version
 
 ## [Unreleased]
 
+### Security
+
+- Response bodies larger than 8 MiB are rejected.
+- An upload that grows past its checked size fails instead of streaming without a limit.
+
 ### Added
 
 - Maven Central publishing via `com.vanniktech.maven.publish` and the protected
