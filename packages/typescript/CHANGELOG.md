@@ -5,6 +5,10 @@ and Semantic Versioning.
 
 ## [Unreleased]
 
+### Security
+
+- Response bodies larger than 8 MiB are rejected before JSON parsing.
+
 ## [1.0.4] - 2026-08-22
 
 ### Changed

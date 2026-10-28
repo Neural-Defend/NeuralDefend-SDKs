@@ -768,6 +768,31 @@ void main() {
       client.close();
     });
 
+    test('an oversized response is rejected', () async {
+      handler = (request) async {
+        await request.drain<void>();
+        request.response.statusCode = HttpStatus.ok;
+        final chunk = Uint8List(64 * 1024);
+        var sent = 0;
+        const limit = 8 * 1024 * 1024;
+        while (sent <= limit) {
+          request.response.add(chunk);
+          sent += chunk.length;
+        }
+        await request.response.close();
+      };
+      final client = socketClient();
+      await expectLater(
+        client.detectImage(_jpeg()),
+        throwsA(isA<ProtocolError>().having(
+          (error) => error.detail,
+          'detail',
+          contains('8 MiB'),
+        )),
+      );
+      client.close();
+    });
+
     test('redirects are never followed', () async {
       var calls = 0;
       handler = (request) async {
