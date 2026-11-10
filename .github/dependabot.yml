@@ -67,6 +67,9 @@ updates:
       - dependency-name: "com.squareup.okhttp3:okhttp"
       - dependency-name: "org.jetbrains.kotlinx:kotlinx-coroutines-core"
       - dependency-name: "org.jetbrains.kotlinx:kotlinx-serialization-json"
+      # JUnit 6 requires Java 17, but the Kotlin SDK is built and tested on Java 8+.
+      - dependency-name: "org.junit:junit-bom"
+        versions: [">= 6"]
     groups:
       kotlin-dependencies:
         patterns:
