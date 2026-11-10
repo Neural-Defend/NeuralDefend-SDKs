@@ -4,6 +4,15 @@ All notable changes to this package follow Keep a Changelog and Semantic Version
 
 ## [Unreleased]
 
+### Security
+
+- A custom `transport` no longer permits plain HTTP or a non-Neural Defend origin. Plain
+  HTTP test servers opt in with `allow_http_for_testing=True`.
+- Response bodies larger than 8 MiB are rejected, and a seekable upload that grows past
+  its checked size fails closed.
+- The generated file deserializer keeps `Content-Disposition` filenames inside the
+  temporary directory.
+
 ## [1.0.3] - 2026-08-22
 
 ### Changed

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -25,6 +26,9 @@ typedef UploadProgressCallback = void Function(int sentBytes, int totalBytes);
 const Duration _defaultTimeout = Duration(seconds: 120);
 const Duration _defaultRetryAfterCap = Duration(seconds: 60);
 const int _maxAllowedRetries = 3;
+
+/// Score payloads are a few kilobytes. 8 MiB leaves room for extra fields.
+const int _maxResponseBytes = 8 * 1024 * 1024;
 
 /// Replaceable timing and randomness used by retry tests.
 class ClientRuntime {
@@ -357,7 +361,7 @@ class NeuroVerifyClient {
     try {
       final work = () async {
         final streamed = await _http.send(request);
-        return http.Response.fromStream(streamed);
+        return _readBoundedResponse(streamed);
       }();
       return await _race(work, cancel.future);
     } catch (error) {
@@ -379,6 +383,33 @@ class NeuroVerifyClient {
     } finally {
       timer.cancel();
     }
+  }
+
+  Future<http.Response> _readBoundedResponse(
+    http.StreamedResponse streamed,
+  ) async {
+    final builder = BytesBuilder(copy: false);
+    var total = 0;
+    await for (final chunk in streamed.stream) {
+      total += chunk.length;
+      if (total > _maxResponseBytes) {
+        throw ProtocolError(
+          'The response body exceeded 8 MiB.',
+          statusCode: streamed.statusCode,
+          requestId: streamed.headers['x-request-id'],
+        );
+      }
+      builder.add(chunk);
+    }
+    return http.Response.bytes(
+      builder.takeBytes(),
+      streamed.statusCode,
+      headers: streamed.headers,
+      request: streamed.request,
+      isRedirect: streamed.isRedirect,
+      persistentConnection: streamed.persistentConnection,
+      reasonPhrase: streamed.reasonPhrase,
+    );
   }
 
   Duration _retryDelay(http.Response response, int attempt) {

@@ -33,7 +33,6 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import okio.BufferedSink;
-import okio.Okio;
 
 /** Public NeuroVerify API client with streaming multipart uploads. */
 public final class NeuroVerifyClient {
@@ -43,6 +42,8 @@ public final class NeuroVerifyClient {
     private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(120);
     private static final int DEFAULT_MAX_RETRIES = 3;
     private static final double MAX_RETRY_AFTER = 3600.0;
+    /** Score payloads are a few kilobytes. 8 MiB leaves room for extra fields. */
+    private static final long MAX_RESPONSE_BYTES = 8L * 1024L * 1024L;
     private static final Gson GSON = new Gson();
     private static final java.lang.reflect.Type MAP_TYPE =
             new TypeToken<Map<String, Object>>() {}.getType();
@@ -352,7 +353,20 @@ public final class NeuroVerifyClient {
                     @Override
                     public void writeTo(BufferedSink sink) throws IOException {
                         try (InputStream input = upload.openAttempt()) {
-                            sink.writeAll(Okio.source(input));
+                            byte[] buffer = new byte[8192];
+                            long sent = 0;
+                            while (true) {
+                                int read = input.read(buffer);
+                                if (read < 0) {
+                                    break;
+                                }
+                                sent += read;
+                                if (sent > upload.maxBytes) {
+                                    throw new ValidationException(
+                                            "file exceeds the endpoint size limit");
+                                }
+                                sink.write(buffer, 0, read);
+                            }
                         } catch (ValidationException ex) {
                             throw new IOException(ex.getDetail(), ex);
                         }
@@ -526,7 +540,9 @@ public final class NeuroVerifyClient {
     private Map<String, Object> parseEnvelope(Response response, String envelopeName) {
         String raw;
         try {
-            raw = response.body() == null ? "" : response.body().string();
+            raw = readBoundedBody(response);
+        } catch (ProtocolException ex) {
+            throw ex;
         } catch (IOException ex) {
             throw new ProtocolException(
                     "response body is not valid JSON",
@@ -770,15 +786,31 @@ public final class NeuroVerifyClient {
             return redact(detail);
         }
         try {
-            String raw = response.body().string();
+            String raw = readBoundedBody(response);
             Map<String, Object> decoded = GSON.fromJson(raw, MAP_TYPE);
             if (decoded != null && decoded.get("detail") instanceof String value) {
                 detail = value;
             }
+        } catch (ProtocolException ex) {
+            throw ex;
         } catch (IOException | JsonSyntaxException ignored) {
             // Keep HTTP status detail.
         }
         return redact(detail);
+    }
+
+    private String readBoundedBody(Response response) throws IOException {
+        if (response.body() == null) {
+            return "";
+        }
+        okio.BufferedSource source = response.body().source();
+        if (source.request(MAX_RESPONSE_BYTES + 1)) {
+            throw new ProtocolException(
+                    "The response body exceeded 8 MiB.",
+                    response.code(),
+                    requestId(response, null));
+        }
+        return source.readUtf8();
     }
 
     private String requestId(Response response, Map<String, Object> score) {

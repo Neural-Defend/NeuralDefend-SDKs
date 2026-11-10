@@ -68,9 +68,12 @@ final class Transport: Sendable {
 
 /// State of one upload task, shared between the caller, its timer, and the session delegate.
 private final class Exchange: @unchecked Sendable {
+    private static let maxResponseBytes = 8 * 1024 * 1024
+
     enum EndReason {
         case cancelled
         case timedOut
+        case responseTooLarge
     }
 
     private let lock = NSLock()
@@ -135,6 +138,16 @@ private final class Exchange: @unchecked Sendable {
 
     func append(_ data: Data) {
         lock.lock()
+        let overflows =
+            data.count > Self.maxResponseBytes
+            || body.count > Self.maxResponseBytes - data.count
+        if overflows {
+            let shouldCancel = reason == nil && !finished
+            if shouldCancel { reason = .responseTooLarge }
+            lock.unlock()
+            if shouldCancel { task.cancel() }
+            return
+        }
         body.append(data)
         lock.unlock()
     }
@@ -180,6 +193,17 @@ private final class Exchange: @unchecked Sendable {
             return .failure(.cancelled)
         case .timedOut?:
             return .failure(timedOut())
+        case .responseTooLarge?:
+            return .failure(
+                .protocol(
+                    ErrorDetails(
+                        message: "The response body exceeded 8 MiB.",
+                        statusCode: (response as? HTTPURLResponse)?.statusCode,
+                        requestID: (response as? HTTPURLResponse)?
+                            .value(forHTTPHeaderField: "x-request-id")
+                    )
+                )
+            )
         case nil:
             break
         }

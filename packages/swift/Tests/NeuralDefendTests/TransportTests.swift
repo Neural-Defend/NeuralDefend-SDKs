@@ -127,6 +127,26 @@ struct TransportTests {
         }
     }
 
+    @Test("an oversized response is rejected before it is parsed")
+    func oversizedResponse() async throws {
+        let server = try LocalHTTPServer { _, _ in
+            .respond(
+                status: 200,
+                headers: ["Content-Type": "application/json"],
+                body: Data(count: 8 * 1024 * 1024 + 1)
+            )
+        }
+        try await withServer(server) { _ in
+            let client = try makeClient(server)
+            let error = await captureError { _ = try await client.detectImage(sampleImage) }
+            guard case .protocol(let details)? = error else {
+                Issue.record("expected a protocol error, got \(String(describing: error))")
+                return
+            }
+            #expect(details.message.contains("8 MiB"))
+        }
+    }
+
     @Test("a refused connection raises a network error without the API key")
     func refusedConnection() async throws {
         let port = try LocalHTTPServer.closedPort()

@@ -25,6 +25,8 @@ def _client_with_handler(handler: Any, **kwargs: Any) -> NeuroVerifyClient:
     return NeuroVerifyClient(
         "secret-test-key",
         base_url="http://test.local",
+        allow_custom_base_url=True,
+        allow_http_for_testing=True,
         transport=httpx.MockTransport(handler),
         **kwargs,
     )
@@ -304,6 +306,8 @@ def test_configuration_precedence_and_headers(monkeypatch: pytest.MonkeyPatch) -
         base_url="http://explicit.local",
         user_agent="custom-agent",
         max_retries=0,
+        allow_custom_base_url=True,
+        allow_http_for_testing=True,
         transport=httpx.MockTransport(handler),
     )
     try:
@@ -338,6 +342,14 @@ def test_staging_is_deterministic(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_tls_is_required_without_test_transport() -> None:
     with pytest.raises(ValidationError, match="HTTPS"):
         NeuroVerifyClient("key", base_url="http://insecure.local")
+
+
+def test_custom_transport_does_not_bypass_origin_policy() -> None:
+    transport = httpx.MockTransport(lambda request: httpx.Response(200, json={}))
+    with pytest.raises(ValidationError, match="HTTPS"):
+        NeuroVerifyClient("key", base_url="http://127.0.0.1:9", transport=transport)
+    with pytest.raises(ValidationError, match="allow_custom_base_url"):
+        NeuroVerifyClient("key", base_url="https://api.example.com", transport=transport)
 
 
 def test_custom_base_url_requires_explicit_opt_in() -> None:
@@ -387,6 +399,8 @@ def test_api_key_is_redacted_from_repr_and_errors() -> None:
         key,
         base_url="http://test.local",
         max_retries=0,
+        allow_custom_base_url=True,
+        allow_http_for_testing=True,
         transport=httpx.MockTransport(handler),
     )
     try:
@@ -577,6 +591,20 @@ def test_seekable_stream_rewinds_to_beginning_and_is_not_closed() -> None:
     assert not source.closed
 
 
+def test_seekable_read_that_returns_more_than_the_limit_is_rejected() -> None:
+    class Greedy(io.BytesIO):
+        def read(self, size: int = -1) -> bytes:
+            del size
+            return bytes(client_module.IMAGE_MAX_BYTES + 1)
+
+    client = _client_with_handler(lambda request: httpx.Response(200, request=request))
+    try:
+        with pytest.raises(ValidationError, match="endpoint size limit"):
+            client.detect_image(Greedy(b"a"), filename="x.jpg")
+    finally:
+        client.close()
+
+
 def test_text_stream_is_rejected() -> None:
     client = _client_with_handler(lambda request: httpx.Response(200, request=request))
     try:
@@ -641,6 +669,38 @@ def test_context_manager_closes_client() -> None:
     with client as entered:
         assert entered is client
     assert client._client.is_closed
+
+
+def test_filename_quotes_and_newlines_cannot_inject_headers() -> None:
+    seen: dict[str, bytes] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["body"] = request.read()
+        return httpx.Response(401, json={"detail": "no"}, request=request)
+
+    client = _client_with_handler(handler, max_retries=0)
+    try:
+        with pytest.warns(UserWarning, match="unsupported file extension"):
+            with pytest.raises(AuthenticationError):
+                client.detect_image(b"x", filename='evil.jpg"\r\nX-Injected: yes')
+    finally:
+        client.close()
+    assert b"\r\nX-Injected:" not in seen["body"]
+
+
+def test_oversized_response_is_rejected() -> None:
+    payload = b"x" * (8 * 1024 * 1024 + 1)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        request.read()
+        return httpx.Response(200, content=payload, request=request)
+
+    client = _client_with_handler(handler, max_retries=0)
+    try:
+        with pytest.raises(ProtocolError, match="8 MiB"):
+            client.detect_image(b"x", filename="x.jpg")
+    finally:
+        client.close()
 
 
 @pytest.mark.parametrize(

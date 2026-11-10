@@ -697,7 +697,6 @@ class ApiClient:
         """
         fd, path = tempfile.mkstemp(dir=self.configuration.temp_folder_path)
         os.close(fd)
-        os.remove(path)
 
         content_disposition = response.getheader("Content-Disposition")
         if content_disposition:
@@ -705,9 +704,14 @@ class ApiClient:
                 r'filename=[\'"]?([^\'"\s]+)[\'"]?',
                 content_disposition
             )
-            assert m is not None, "Unexpected 'content-disposition' header value"
-            filename = m.group(1)
-            path = os.path.join(os.path.dirname(path), filename)
+            # Use only the final path segment. A Content-Disposition filename
+            # such as ../../evil must not escape the temporary directory.
+            if m is not None:
+                filename = os.path.basename(m.group(1).replace("\\", "/"))
+                if filename not in ("", ".", ".."):
+                    directory = os.path.dirname(path)
+                    os.remove(path)
+                    path = os.path.join(directory, filename)
 
         with open(path, "wb") as f:
             f.write(response.data)

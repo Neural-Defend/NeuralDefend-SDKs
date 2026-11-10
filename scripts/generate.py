@@ -65,6 +65,41 @@ _TO_JSON_PYDANTIC_V2 = (
 )
 _LONG_LEGACY = "'long': int, # TODO remove as only py3 is supported?"
 _LONG_CLEAN = "'long': int,"
+# The 7.14.0 template joins a server-supplied Content-Disposition filename onto the
+# temporary directory, so a name such as ../../evil can escape it. Keep only the final
+# path segment and fall back to the mkstemp path for empty, "." or ".." names.
+_DESERIALIZE_FILE_LEGACY = (
+    "        os.close(fd)\n"
+    "        os.remove(path)\n"
+    "\n"
+    '        content_disposition = response.getheader("Content-Disposition")\n'
+    "        if content_disposition:\n"
+    "            m = re.search(\n"
+    "                r'filename=[\\'\"]?([^\\'\"\\s]+)[\\'\"]?',\n"
+    "                content_disposition\n"
+    "            )\n"
+    "            assert m is not None, \"Unexpected 'content-disposition' header value\"\n"
+    "            filename = m.group(1)\n"
+    "            path = os.path.join(os.path.dirname(path), filename)\n"
+)
+_DESERIALIZE_FILE_SAFE = (
+    "        os.close(fd)\n"
+    "\n"
+    '        content_disposition = response.getheader("Content-Disposition")\n'
+    "        if content_disposition:\n"
+    "            m = re.search(\n"
+    "                r'filename=[\\'\"]?([^\\'\"\\s]+)[\\'\"]?',\n"
+    "                content_disposition\n"
+    "            )\n"
+    "            # Use only the final path segment. A Content-Disposition filename\n"
+    "            # such as ../../evil must not escape the temporary directory.\n"
+    "            if m is not None:\n"
+    '                filename = os.path.basename(m.group(1).replace("\\\\", "/"))\n'
+    '                if filename not in ("", ".", ".."):\n'
+    "                    directory = os.path.dirname(path)\n"
+    "                    os.remove(path)\n"
+    "                    path = os.path.join(directory, filename)\n"
+)
 
 
 def _load_object(path: Path) -> dict[str, Any]:
@@ -263,11 +298,18 @@ def _postprocess_python_generated(root: Path) -> None:
     api_client = root / "api_client.py"
     if api_client.is_file():
         text = api_client.read_text(encoding="utf-8")
-        if _LONG_LEGACY in text:
-            api_client.write_text(
-                text.replace(_LONG_LEGACY, _LONG_CLEAN),
-                encoding="utf-8",
+        patched = text.replace(_LONG_LEGACY, _LONG_CLEAN).replace(
+            _DESERIALIZE_FILE_LEGACY, _DESERIALIZE_FILE_SAFE
+        )
+        if _DESERIALIZE_FILE_SAFE not in patched:
+            # Fail loudly rather than silently ship the path-traversal template if a
+            # generator upgrade changes this block.
+            raise SpecError(
+                "Python api_client.py file deserialization no longer matches the "
+                "known template; update _DESERIALIZE_FILE_LEGACY in scripts/generate.py"
             )
+        if patched != text:
+            api_client.write_text(patched, encoding="utf-8")
 
 
 def _copy_java_generated(source_root: Path, destination: Path) -> None:

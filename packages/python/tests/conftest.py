@@ -44,6 +44,8 @@ def client_for_case() -> Callable[[dict[str, Any]], NeuroVerifyClient]:
             "test-key",
             base_url="http://test.local",
             max_retries=0,
+            allow_custom_base_url=True,
+            allow_http_for_testing=True,
             transport=httpx.MockTransport(handler),
         )
         clients.append(client)

@@ -90,7 +90,7 @@ func (m Media) withKind(kind mediaKind, maxBytes int64, extensions map[string]st
 		if err != nil {
 			return nil, &ValidationError{Detail: "file path does not exist or is not readable"}
 		}
-		if info.IsDir() {
+		if !info.Mode().IsRegular() {
 			return nil, &ValidationError{Detail: "file path must reference a regular file"}
 		}
 		if info.Size() == 0 {
@@ -197,6 +197,7 @@ func newPreparedUpload(
 	extensions map[string]struct{},
 	prefix ...[]byte,
 ) (*preparedUpload, error) {
+	filename = sanitizeUploadFilename(filename)
 	ext := strings.ToLower(filepath.Ext(filename))
 	_, supported := extensions[ext]
 	u := &preparedUpload{
@@ -279,6 +280,28 @@ func (r *limitedReader) Read(p []byte) (int, error) {
 		return len(out), &ValidationError{Detail: "file exceeds the endpoint size limit"}
 	}
 	return len(out), err
+}
+
+// sanitizeUploadFilename keeps a multipart filename inside one quoted
+// parameter. Quotes, CR, and LF would otherwise inject headers or a body
+// prefix because mime/multipart writes the value unchanged. Directory
+// components are dropped so the part name is only a file name.
+func sanitizeUploadFilename(name string) string {
+	name = strings.TrimSpace(name)
+	name = strings.ReplaceAll(name, "\\", "/")
+	if slash := strings.LastIndex(name, "/"); slash >= 0 {
+		name = name[slash+1:]
+	}
+	name = filepath.Base(name)
+	if name == "." || name == ".." || name == "" {
+		return "upload"
+	}
+	return strings.NewReplacer(
+		"\x00", "%00",
+		"\r", "%0D",
+		"\n", "%0A",
+		`"`, "%22",
+	).Replace(name)
 }
 
 func MIMEForFilename(filename string) string {

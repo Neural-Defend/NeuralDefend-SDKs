@@ -30,6 +30,8 @@ import { FetchTransport, type Transport } from "./transport.js";
 const PRODUCTION_URL = "https://deepscan.neuraldefend.com";
 const STAGING_URL = "https://stage.deepscan.neuraldefend.com";
 const RISK_LEVELS = new Set<RiskLevel>(["low", "medium", "high"]);
+/** Score payloads are a few kilobytes. 8 MiB leaves room for extra fields. */
+const MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
 
 export interface NeuroVerifyClientOptions {
   readonly apiKey?: string;
@@ -371,11 +373,48 @@ function parseVideo(
   );
 }
 
+async function readBoundedBody(response: Response): Promise<Uint8Array> {
+  const reader = response.body?.getReader();
+  if (!reader) {
+    const buffered = new Uint8Array(await response.arrayBuffer());
+    if (buffered.byteLength > MAX_RESPONSE_BYTES) {
+      throw new ProtocolError("The response body exceeded 8 MiB.", {
+        statusCode: response.status,
+      });
+    }
+    return buffered;
+  }
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+    total += value.byteLength;
+    if (total > MAX_RESPONSE_BYTES) {
+      await reader.cancel().catch(() => undefined);
+      throw new ProtocolError("The response body exceeded 8 MiB.", {
+        statusCode: response.status,
+      });
+    }
+    chunks.push(value);
+  }
+  const body = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return body;
+}
+
 async function parseJson(response: Response): Promise<Record<string, unknown>> {
   let value: unknown;
   try {
-    value = await response.clone().json();
-  } catch {
+    const body = await readBoundedBody(response);
+    value = JSON.parse(new TextDecoder().decode(body));
+  } catch (error) {
+    if (error instanceof ProtocolError) throw error;
     throw new ProtocolError("The server returned malformed JSON.", {
       statusCode: response.status,
     });

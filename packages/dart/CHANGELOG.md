@@ -4,6 +4,10 @@ All notable changes to this package follow Keep a Changelog and Semantic Version
 
 ## [Unreleased]
 
+### Security
+
+- Response bodies larger than 8 MiB are rejected before JSON parsing.
+
 ## [1.0.0] - 2026-10-05
 
 ### Added

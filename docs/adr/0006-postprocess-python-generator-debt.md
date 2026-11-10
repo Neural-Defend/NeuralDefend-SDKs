@@ -28,6 +28,13 @@ generation and before the generated tree is copied into package destinations:
 2. Remove the stale TODO comment from the `long` → `int` mapping (the mapping itself
    remains harmless on Python 3).
 
+3. Harden `ApiClient.__deserialize_file`: the template joins a server-supplied
+   `Content-Disposition` filename onto the temporary directory, so a name such as
+   `../../evil` could escape it. Keep only the final path segment, fall back to the
+   `mkstemp` path for empty, `.` or `..` names, and drop the `assert`. Post-processing
+   raises `SpecError` if the template block no longer matches, so a generator upgrade
+   cannot silently reintroduce the unsafe code.
+
 Track the upstream limitation in `generator/config.json` under `accepted_upstream_debt`.
 
 ## Consequences

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import os
 import json
 import sys
 import tempfile
@@ -433,7 +434,8 @@ class GeneratorTests(unittest.TestCase):
                 encoding="utf-8",
             )
             (root / "api_client.py").write_text(
-                "        'long': int, # TODO remove as only py3 is supported?\n",
+                "        'long': int, # TODO remove as only py3 is supported?\n"
+                + generate._DESERIALIZE_FILE_LEGACY,
                 encoding="utf-8",
             )
 
@@ -448,6 +450,52 @@ class GeneratorTests(unittest.TestCase):
             api_client_text = (root / "api_client.py").read_text(encoding="utf-8")
             self.assertNotIn("TODO", api_client_text)
             self.assertIn("'long': int,", api_client_text)
+            self.assertIn(generate._DESERIALIZE_FILE_SAFE, api_client_text)
+            self.assertNotIn("assert m is not None", api_client_text)
+
+    def test_python_postprocess_contains_content_disposition_filename(self) -> None:
+        # Execute the patched block to prove a traversal filename stays in the temp dir.
+        namespace: dict[str, object] = {}
+        body = "def place(path, response):\n" + "".join(
+            line[4:] + "\n" if line else "\n"
+            for line in generate._DESERIALIZE_FILE_SAFE.splitlines()[1:]
+        ) + "    return path\n"
+        exec("import os, re\n" + body, namespace)  # test-only: fixed, trusted input
+        place = namespace["place"]
+
+        class Response:
+            def __init__(self, header: str) -> None:
+                self.header = header
+
+            def getheader(self, _name: str) -> str:
+                return self.header
+
+        with tempfile.TemporaryDirectory() as temporary:
+            for header, expected in [
+                ('attachment; filename="../../evil.txt"', "evil.txt"),
+                ("attachment; filename=..\\..\\evil.txt", "evil.txt"),
+                ('attachment; filename="report.json"', "report.json"),
+            ]:
+                fd, path = tempfile.mkstemp(dir=temporary)
+                os.close(fd)
+                result = place(path, Response(header))  # type: ignore[operator]
+                self.assertEqual(Path(result).parent, Path(temporary))
+                self.assertEqual(Path(result).name, expected)
+            for header in ['attachment; filename=".."', "inline"]:
+                fd, path = tempfile.mkstemp(dir=temporary)
+                os.close(fd)
+                self.assertEqual(place(path, Response(header)), path)  # type: ignore[operator]
+
+    def test_python_postprocess_rejects_unknown_file_template(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "_core"
+            root.mkdir()
+            (root / "api_client.py").write_text(
+                "        path = os.path.join(os.path.dirname(path), filename)\n",
+                encoding="utf-8",
+            )
+            with self.assertRaises(generate.SpecError):
+                generate._postprocess_python_generated(root)
 
 
 if __name__ == "__main__":
