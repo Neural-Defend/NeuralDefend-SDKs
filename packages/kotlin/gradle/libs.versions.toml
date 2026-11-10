@@ -1,8 +1,8 @@
 [versions]
 # Build tooling.
 kotlin = "2.4.21"
-agp = "9.4.1"
-dokka = "2.2.0"
+agp = "9.5.1"
+dokka = "2.3.0"
 
 # Published runtime dependencies. These are deliberate lower bounds so apps that already
 # use older compatible releases are not forced to upgrade; CI also tests the newest
@@ -15,7 +15,7 @@ serialization = "1.7.3"
 junit5 = "5.14.4"
 junit4 = "4.13.2"
 robolectric = "4.17"
-okhttpExample = "5.5.0"
+okhttpExample = "5.5.1"
 coroutinesExample = "1.11.0"
 composeBom = "2026.09.00"
 activityCompose = "1.13.0"
