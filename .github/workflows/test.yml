@@ -233,9 +233,12 @@ jobs:
       - name: Install dependencies
         working-directory: packages/dart/example/flutter_app
         run: flutter pub get
+      # Flutter 3.50 reports the deprecated package:flutter/material.dart import as
+      # an info. The example still supports Flutter 3.24, which has no package:material_ui,
+      # so that info stays non-fatal. Warnings and errors still fail the job.
       - name: Analyze
         working-directory: packages/dart/example/flutter_app
-        run: flutter analyze
+        run: flutter analyze --no-fatal-infos
       - name: Widget tests
         working-directory: packages/dart/example/flutter_app
         run: flutter test
