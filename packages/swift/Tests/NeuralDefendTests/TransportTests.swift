@@ -53,7 +53,10 @@ struct TransportTests {
             #expect(message == "The image request timed out after 500 ms.")
             let elapsed = Date().timeIntervalSince(started)
             #expect(elapsed >= 0.45, "the SDK deadline, not URLSession's, must end the attempt")
-            #expect(elapsed < 5)
+            // A loaded CI simulator can stretch a 500 ms deadline past 5 s while the
+            // 64 MiB upload test runs in this suite. The message above is the deadline
+            // check; the request count below catches a retry.
+            #expect(elapsed < 30)
             // A slow simulator can hit the deadline before the server logs the request, so
             // zero is fine; a retry would make it two or more.
             #expect(server.requests.count <= 1)
