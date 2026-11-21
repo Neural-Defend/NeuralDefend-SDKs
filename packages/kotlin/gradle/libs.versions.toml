@@ -1,7 +1,7 @@
 [versions]
 # Build tooling.
 kotlin = "2.4.21"
-agp = "9.5.1"
+agp = "9.5.2"
 dokka = "2.3.0"
 
 # Published runtime dependencies. These are deliberate lower bounds so apps that already
@@ -14,7 +14,7 @@ serialization = "1.7.3"
 # Tests and the example app (not published).
 junit5 = "5.14.4"
 junit4 = "4.13.2"
-robolectric = "4.17"
+robolectric = "4.18.1"
 okhttpExample = "5.5.1"
 coroutinesExample = "1.11.0"
 composeBom = "2026.09.00"
